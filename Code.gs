@@ -1,6 +1,3 @@
-// ==========================================================
-// ======== 중앙 관제 시스템 vFINAL-12 (다크테마, 선수교체, 경기시작 버튼 등 UI/UX 최종) ========
-// ==========================================================
 
 const CONFIG = {
   STATS_SHEET: "선수별능력치", // 선수들의 기본 능력치 (공격, 수비, 포지션)가 기록된 시트 이름
@@ -277,210 +274,168 @@ function getPlayerRoleClassification(player, playerArchiveStats) {
   return '올라운더형';
 }
 
-// --- 핵심 로직 (팀 배분 알고리즘 확장) ---
 function performTeamAllocation(algorithm) {
-  return safeExecute(() => {
-    const state = getAppState(); // 현재 앱 상태를 가져옵니다.
-    const masterPlayers = getMasterPlayersFromSheet(); // 마스터 선수 목록 (능력치 포함)
-    const playerArchiveStats = getPlayerStatsFromArchive(); // 선수별 과거 기록 통계 (신규)
-
-    // 참석 중인 선수들만 필터링하고 전체 선수 정보 (능력치 포함)를 유지합니다.
-    const attendingPlayers = masterPlayers.filter(p => state.attendingPlayerNames.includes(p.name));
-    
-    let teams = { 
-      RED: { players: [], goalkeeper: null }, 
-      BLUE: { players: [], goalkeeper: null }, 
-      YELLOW: { players: [], goalkeeper: null } 
-    }; // 배분될 팀 객체 (키퍼 정보 포함)
-    const teamNames = Object.keys(teams); // 팀 이름 배열
-
-    // 할당할 선수 목록 (섞기 전 원본)
-    let playersToAllocate = [...attendingPlayers]; 
-
-    // 각 알고리즘별 로직 분기
-    switch (algorithm) {
-      case 'balanced':
-        Logger.log("팀 배분 알고리즘: 밸런스");
-        const getPower = (p) => (p.att || 0) + (p.def || 0); // 선수의 총 능력치 계산
-        playersToAllocate.sort((a, b) => getPower(b) - getPower(a)); // 능력치 높은 순으로 정렬
-
-        playersToAllocate.forEach(player => {
-          // 각 팀의 현재 총 능력치와 선수 수를 계산합니다.
-          const teamTotals = teamNames.map(name => ({
-            name,
-            totalPower: teams[name].players.reduce((sum, p) => sum + getPower(masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}), 0),
-            playerCount: teams[name].players.length
-          }));
-          // 총 능력치가 가장 낮고, 그 다음으로 선수 수가 적은 팀에 우선 배정합니다.
-          teamTotals.sort((a, b) => a.totalPower - b.totalPower || a.playerCount - b.playerCount);
-          teams[teamTotals[0].name].players.push(player); // 가장 약한 팀에 선수 추가
-        });
-        break;
-
-      case 'antiReunion': // 재회 방지 알고리즘
-        Logger.log("팀 배분 알고리즘: 재회 방지");
-        const pastTeamCompositions = getPastTeamCompositions(); // 과거 팀 구성 데이터 가져오기
-
-        // 각 선수가 최근 몇 경기 동안 누구와 같은 팀에 있었는지 추적
-        const playerCohesionScores = {}; // {playerName: {partnerName: cohesionScore}}
-        pastTeamCompositions.forEach(record => {
-          record.players.forEach(p1Name => {
-            if (!playerCohesionScores[p1Name]) playerCohesionScores[p1Name] = {};
-            record.players.forEach(p2Name => {
-              if (p1Name !== p2Name) {
-                playerCohesionScores[p1Name][p2Name] = (playerCohesionScores[p1Name][p2Name] || 0) + 1;
-              }
-            });
-          });
-        });
-
-        playersToAllocate.sort(() => 0.5 - Math.random()); // 일단 무작위로 섞음 (초기 분산)
-
-        // 선수들을 재회 지수(Reunion Score)가 가장 낮은 팀에 배정
-        playersToAllocate.forEach(player => {
-          let minReunionScore = Infinity;
-          let bestTeam = '';
-
-          teamNames.forEach(teamName => {
-            let currentReunionScore = 0;
-            // 현재 팀에 이미 배정된 선수들과의 재회 지수 계산
-            teams[teamName].players.forEach(assignedPlayer => {
-              // 현재 배정하려는 선수와 이미 배정된 선수의 과거 함께 뛴 횟수를 합산
-              currentReunionScore += (playerCohesionScores[player.name]?.[assignedPlayer.name] || 0);
-            });
-
-            // 현재 배정하려는 선수가 과거 이 팀에 많이 속했다면 가중치 부여 (선택적)
-            // 이는 getPastTeamCompositions에서 팀명도 기록하므로 활용 가능
-            const playerOwnTeamHistory = pastTeamCompositions.filter(rec => rec.teamName === teamName && rec.players.includes(player.name)).length;
-            currentReunionScore += playerOwnTeamHistory * 0.5; // 과거 자기 팀에 속한 횟수 가중치
-
-            if (currentReunionScore < minReunionScore) {
-              minReunionScore = currentReunionScore;
-              bestTeam = teamName;
-            } else if (currentReunionScore === minReunionScore) {
-              // 재회 지수가 같다면 팀의 현재 선수 수로 균형 맞추기
-              if (teams[teamName].players.length < teams[bestTeam].players.length) {
-                bestTeam = teamName;
-              }
-            }
-          });
-          teams[bestTeam].players.push(player); // 가장 낮은 재회 지수를 가진 팀에 선수 추가
-        });
-        break;
-
-      case 'tacticalRole': // 전술 역할 기반 알고리즘
-        Logger.log("팀 배분 알고리즘: 전술 역할 기반");
-        // 선수들을 역할(골키퍼, 공격형, 수비형, 올라운더형)별로 분류
-        const rolePlayers = { '골키퍼': [], '공격형': [], '수비형': [], '올라운더형': [] };
-        attendingPlayers.forEach(p => {
-          rolePlayers[getPlayerRoleClassification(p, playerArchiveStats)].push(p);
-        });
-
-        // 각 역할별 선수들을 능력치 높은 순으로 정렬 (더 강한 역할 선수를 먼저 배정)
-        Object.values(rolePlayers).forEach(list => list.sort((a, b) => ((b.att || 0) + (b.def || 0)) - ((a.att || 0) + (a.def || 0))));
-
-        // 1. 골키퍼 먼저 배정 (각 팀에 1명씩)
-        teamNames.forEach(teamName => {
-          if (rolePlayers['골키퍼'].length > 0) {
-            const gk = rolePlayers['골키퍼'].shift();
-            teams[teamName].players.push(gk);
-            teams[teamName].goalkeeper = gk.name; // 팀에 골키퍼 지정
-          }
-        });
-
-        // 2. 나머지 선수들을 역할별 우선순위에 따라 배정
-        // 우선순위: 수비형 -> 공격형 -> 올라운더형 (전술적 중요도에 따라 조절 가능)
-        ['수비형', '공격형', '올라운더형'].forEach(role => {
-          rolePlayers[role].forEach(player => {
-            let minDeficit = -Infinity; // 역할 부족 정도 (높을수록 더 필요)
-            let bestTeam = '';
-
-            teamNames.forEach(teamName => {
-              const currentTeamRoles = { '공격형': 0, '수비형': 0, '올라운더형': 0 };
-              teams[teamName].players.forEach(p => {
-                // 현재 팀의 선수들이 어떤 역할로 분류되는지 계산
-                const pRole = getPlayerRoleClassification(p, playerArchiveStats);
-                if (currentTeamRoles[pRole] !== undefined) { // 골키퍼는 이미 배정되었으므로 제외
-                  currentTeamRoles[pRole]++;
-                }
-              });
-              
-              // 현재 팀이 특정 역할이 얼마나 부족한지 계산 (이상적인 목표 - 현재 인원)
-              // 여기서는 일단 각 역할의 선수들이 고르게 분배되도록 함 (평균 인원 - 현재 역할 인원)
-              const deficit = (playersToAllocate.length / teamNames.length) - currentTeamRoles[role]; 
-
-              // 가장 많이 부족한 팀, 혹은 비슷한 부족도라면 능력치 합이 낮은 팀
-              if (deficit > minDeficit) { // 해당 역할이 더 많이 부족한 팀 우선
-                minDeficit = deficit;
-                bestTeam = teamName;
-              } else if (deficit === minDeficit) { // 부족도가 같다면 밸런스 알고리즘 보조 사용
-                const getTeamPower = (t) => teams[t].players.reduce((sum, p) => sum + ((masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).att + (masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).def), 0);
-                if (getTeamPower(teamName) < getTeamPower(bestTeam)) {
-                    bestTeam = teamName;
-                }
-              }
-            });
-            teams[bestTeam].players.push(player); // 가장 필요한 팀에 선수 추가
-          });
-        });
-        break;
-
-      case 'winLossBalance': // 승패 균형 조정 알고리즘
-        Logger.log("팀 배분 알고리즘: 승패 균형 조정");
-        const playerWinLossStats = getPlayerStatsFromArchive(); // 선수별 과거 승패 기록 가져오기
-
-        // 선수들을 승률이 낮은 (패배가 많은) 순서대로 정렬
-        playersToAllocate.sort((a, b) => {
-          const statsA = playerWinLossStats[a.name] || {games: 0, wins: 0, losses: 0};
-          const statsB = playerWinLossStats[b.name] || {games: 0, wins: 0, losses: 0};
-          
-          const winRateA = statsA.games > 0 ? statsA.wins / statsA.games : 0;
-          const winRateB = statsB.games > 0 ? statsB.wins / statsB.games : 0;
-
-          // 승률이 낮은 선수를 먼저 배정하여 강한 팀에 배치될 기회를 줍니다.
-          return winRateA - winRateB;
-        });
-
-        // 밸런스 알고리즘과 유사하게 배정하되, 승률이 낮은 선수에게 더 유리한 팀을 찾아주는 방식
-        playersToAllocate.forEach(player => {
-          let minTeamPower = Infinity;
-          let bestTeam = '';
-
-          teamNames.forEach(teamName => {
-            const currentTeamPower = teams[teamName].players.reduce((sum, p) => sum + ((masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).att + (masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).def), 0);
-            const currentTeamPlayerCount = teams[teamName].players.length;
-
-            if (currentTeamPower < minTeamPower) { // 팀 파워가 가장 낮은 팀에 우선 배정
-              minTeamPower = currentTeamPower;
-              bestTeam = teamName;
-            } else if (currentTeamPower === minTeamPower && currentTeamPlayerCount < teams[bestTeam].players.length) {
-              bestTeam = teamName; // 파워가 같으면 선수 수가 적은 팀
-            }
-          });
-          teams[bestTeam].players.push(player);
-        });
-        break;
-
-      default: // random (기본값)
-        Logger.log("팀 배분 알고리즘: 랜덤");
-        playersToAllocate.sort(() => 0.5 - Math.random()); // 무작위로 섞음
-        playersToAllocate.forEach((player, i) => teams[teamNames[i % teamNames.length]].players.push(player)); // 순서대로 배정
-        break;
-    }
-
-    // 최종적으로 팀 객체에는 선수 이름만 저장되도록 매핑합니다. (UI 로직 호환성)
-    // players 배열과 goalkeeper 필드를 유지합니다.
-    state.teams = { 
-      RED: { players: teams.RED.players.map(p => p.name), goalkeeper: teams.RED.goalkeeper }, 
-      BLUE: { players: teams.BLUE.players.map(p => p.name), goalkeeper: teams.BLUE.goalkeeper }, 
-      YELLOW: { players: teams.YELLOW.players.map(p => p.name), goalkeeper: teams.YELLOW.goalkeeper } 
-    }; 
-    state.currentScreen = 'screen-team-allocation'; // 팀 배분 화면으로 전환
-    saveAppState(state); // 변경된 상태를 캐시에 저장
-    return state; // 최종 상태를 반환합니다.
-  });
+  return safeExecute(() => {
+    const state = getAppState();
+    const masterPlayers = getMasterPlayersFromSheet();
+    const playerArchiveStats = getPlayerStatsFromArchive();
+    const attendingPlayers = masterPlayers.filter(p => state.attendingPlayerNames.includes(p.name));
+    let teams = {
+      RED: { players: [], goalkeeper: null },
+      BLUE: { players: [], goalkeeper: null },
+      YELLOW: { players: [], goalkeeper: null }
+    };
+    const teamNames = Object.keys(teams);
+    let playersToAllocate = [...attendingPlayers];
+    switch (algorithm) {
+      case 'balanced':
+        Logger.log("팀 배분 알고리즘: 밸런스");
+        const getPower = (p) => (p.att || 0) + (p.def || 0);
+        playersToAllocate.sort((a, b) => getPower(b) - getPower(a));
+        playersToAllocate.forEach(player => {
+          const teamTotals = teamNames.map(name => ({
+            name,
+            totalPower: teams[name].players.reduce((sum, p) => sum + getPower(masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}), 0),
+            playerCount: teams[name].players.length
+          }));
+          teamTotals.sort((a, b) => a.totalPower - b.totalPower || a.playerCount - b.playerCount);
+          teams[teamTotals[0].name].players.push(player);
+        });
+        break;
+      case 'antiReunion':
+        Logger.log("팀 배분 알고리즘: 재회 방지");
+        const pastTeamCompositions = getPastTeamCompositions();
+        const playerCohesionScores = {};
+        pastTeamCompositions.forEach(record => {
+          record.players.forEach(p1Name => {
+            if (!playerCohesionScores[p1Name]) playerCohesionScores[p1Name] = {};
+            record.players.forEach(p2Name => {
+              if (p1Name !== p2Name) {
+                playerCohesionScores[p1Name][p2Name] = (playerCohesionScores[p1Name][p2Name] || 0) + 1;
+              }
+            });
+          });
+        });
+        playersToAllocate.sort(() => 0.5 - Math.random());
+        playersToAllocate.forEach(player => {
+          let minReunionScore = Infinity;
+          let bestTeam = '';
+          teamNames.forEach(teamName => {
+            let currentReunionScore = 0;
+            teams[teamName].players.forEach(assignedPlayer => {
+              currentReunionScore += (playerCohesionScores[player.name]?.[assignedPlayer.name] || 0);
+            });
+            const playerOwnTeamHistory = pastTeamCompositions.filter(rec => rec.teamName === teamName && rec.players.includes(player.name)).length;
+            currentReunionScore += playerOwnTeamHistory * 0.5;
+            if (currentReunionScore < minReunionScore) {
+              minReunionScore = currentReunionScore;
+              bestTeam = teamName;
+            } else if (currentReunionScore === minReunionScore) {
+              if (teams[teamName].players.length < teams[bestTeam].players.length) {
+                bestTeam = teamName;
+              }
+            }
+          });
+          teams[bestTeam].players.push(player);
+        });
+        break;
+      case 'tacticalRole':
+        Logger.log("팀 배분 알고리즘: 전술 역할 기반");
+        const rolePlayers = { '골키퍼': [], '공격형': [], '수비형': [], '올라운더형': [] };
+        attendingPlayers.forEach(p => {
+          rolePlayers[getPlayerRoleClassification(p, playerArchiveStats)].push(p);
+        });
+        Object.values(rolePlayers).forEach(list => list.sort((a, b) => ((b.att || 0) + (b.def || 0)) - ((a.att || 0) + (a.def || 0))));
+        teamNames.forEach(teamName => {
+          if (rolePlayers['골키퍼'].length > 0) {
+            const gk = rolePlayers['골키퍼'].shift();
+            teams[teamName].players.push(gk);
+            teams[teamName].goalkeeper = gk.name;
+          }
+        });
+        ['수비형', '공격형', '올라운더형'].forEach(role => {
+          rolePlayers[role].forEach(player => {
+            let minDeficit = -Infinity;
+            let bestTeam = '';
+            teamNames.forEach(teamName => {
+              const currentTeamRoles = { '공격형': 0, '수비형': 0, '올라운더형': 0 };
+              teams[teamName].players.forEach(p => {
+                const pRole = getPlayerRoleClassification(p, playerArchiveStats);
+                if (currentTeamRoles[pRole] !== undefined) {
+                  currentTeamRoles[pRole]++;
+                }
+              });
+              const deficit = (playersToAllocate.length / teamNames.length) - currentTeamRoles[role];
+              if (deficit > minDeficit) {
+                minDeficit = deficit;
+                bestTeam = teamName;
+              } else if (deficit === minDeficit) {
+                const getTeamPower = (t) => teams[t].players.reduce((sum, p) => sum + ((masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).att + (masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).def), 0);
+                if (getTeamPower(teamName) < getTeamPower(bestTeam)) {
+                    bestTeam = teamName;
+                }
+              }
+            });
+            teams[bestTeam].players.push(player);
+          });
+        });
+        break;
+      case 'winLossBalance':
+        Logger.log("팀 배분 알고리즘: 승패 균형 조정");
+        const playerWinLossStats = getPlayerStatsFromArchive();
+        playersToAllocate.sort((a, b) => {
+          const statsA = playerWinLossStats[a.name] || {games: 0, wins: 0, losses: 0};
+          const statsB = playerWinLossStats[b.name] || {games: 0, wins: 0, losses: 0};
+          const winRateA = statsA.games > 0 ? statsA.wins / statsA.games : 0;
+          const winRateB = statsB.games > 0 ? statsB.wins / statsB.games : 0;
+          return winRateA - winRateB;
+        });
+        playersToAllocate.forEach(player => {
+          let minTeamPower = Infinity;
+          let bestTeam = '';
+          teamNames.forEach(teamName => {
+            const currentTeamPower = teams[teamName].players.reduce((sum, p) => sum + ((masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).att + (masterPlayers.find(mp => mp.name === p.name) || {att:0, def:0}).def), 0);
+            const currentTeamPlayerCount = teams[teamName].players.length;
+            if (currentTeamPower < minTeamPower) {
+              minTeamPower = currentTeamPower;
+              bestTeam = teamName;
+            } else if (currentTeamPower === minTeamPower && currentTeamPlayerCount < teams[bestTeam].players.length) {
+              bestTeam = teamName;
+            }
+          });
+          teams[bestTeam].players.push(player);
+        });
+        break;
+      default:
+        Logger.log("팀 배분 알고리즘: 랜덤");
+        playersToAllocate.sort(() => 0.5 - Math.random());
+        playersToAllocate.forEach((player, i) => teams[teamNames[i % teamNames.length]].players.push(player));
+        break;
+    }
+    // [신규] 캡틴과 부캡틴을 랜덤으로 지정하는 로직을 먼저 실행
+    Object.keys(teams).forEach(teamName => {
+      const playersInTeam = teams[teamName].players;
+      if (playersInTeam.length > 1) {
+        const shuffledPlayers = playersInTeam.sort(() => 0.5 - Math.random());
+        teams[teamName].captain = shuffledPlayers[0].name;
+        teams[teamName].viceCaptain = shuffledPlayers[1].name;
+      } else {
+        teams[teamName].captain = null;
+        teams[teamName].viceCaptain = null;
+      }
+    });
+    // 최종적으로 팀 객체에는 선수 이름만 저장되도록 매핑합니다. (UI 로직 호환성)
+    // players 배열과 goalkeeper 필드를 유지합니다.
+    state.teams = {
+      RED: { players: teams.RED.players.map(p => p.name), goalkeeper: teams.RED.goalkeeper, captain: teams.RED.captain, viceCaptain: teams.RED.viceCaptain },
+      BLUE: { players: teams.BLUE.players.map(p => p.name), goalkeeper: teams.BLUE.goalkeeper, captain: teams.BLUE.captain, viceCaptain: teams.BLUE.viceCaptain },
+      YELLOW: { players: teams.YELLOW.players.map(p => p.name), goalkeeper: teams.YELLOW.goalkeeper, captain: teams.YELLOW.captain, viceCaptain: teams.YELLOW.viceCaptain }
+    };
+    state.currentScreen = 'screen-team-allocation';
+    saveAppState(state);
+    return state;
+  });
 }
-
 // 경기 시작 함수 (경기 시간 설정 기능 및 구장명 추가)
 function startMatch(teamNames, selectedDuration, selectedField) {
   return safeExecute(() => {
