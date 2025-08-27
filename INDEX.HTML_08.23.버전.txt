@@ -488,8 +488,10 @@
                     <div class="grid grid-cols-2 gap-2">
                         ${players.map(p => `
                             <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${teamName}" class="btn bg-gray-700 text-gray-100 w-full text-left text-3xl">
-                                ${p}
-                            </button>
+    ${p}
+    ${p === teamData.captain ? '<span class="text-yellow-400">⭐</span>' : ''}
+    ${p === teamData.viceCaptain ? '<span class="text-zinc-400">⭐</span>' : ''}
+</button>
                         `).join('')}
                     </div>
                 </div>
@@ -549,7 +551,7 @@
                 <div class="text-center">
                     <p class="text-3xl text-gray-400 font-bold">Match #${count}</p>
                     <p class="text-2xl text-gray-300 font-semibold mt-2">${h2hDisplay}</p>
-                    <p class="text-2xl text-gray-300 font-semibold">${matchesPlayedDisplay}</p>
+                    
                     <div class="flex justify-center items-center text-7xl font-black my-4">
                         <span class="${teamColorClasses[teamA.name]}">${teamA.name}</span>
                         <span class="mx-8 text-gray-100">${teamA.score} : ${teamB.score}</span>
@@ -563,8 +565,8 @@
                 
                 <div class="flex justify-center border-b border-gray-600 mb-6 gap-x-12">
                     <button class="tab-button active" data-tab="players">라인업</button>
-                    <button class="tab-button" data-tab="team-stats">팀 스탯</button>
-                    <button class="tab-button" data-tab="player-stats">개인 기록 순위</button>
+                    <button class="tab-button" data-tab="team-stats">팀 순위</button>
+                    <button class="tab-button" data-tab="player-stats">개인기록 순위</button>
                 </div>
 
                 <div id="tab-content-players" class="tab-content active">
@@ -581,7 +583,7 @@
                                             <button data-action="open-record-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn bg-gray-700 text-gray-100 flex-grow text-left text-4xl">
                                                 ${p}
                                             </button>
-                                            <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn btn-secondary text-2xl px-4">🔄</button>
+                                            <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn btn-secondary text-4xl px-4">🔄</button>
                                         </div>
                                     `).join('')}
                                 </div>
@@ -589,21 +591,9 @@
                         `).join('')}
                     </div>
                 </div>
-
                 <div id="tab-content-team-stats" class="tab-content">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        ${[teamA.name, teamB.name].map(teamName => {
-                            const stats = localState.sessionStats.teamStats[teamName];
-                            return `
-                                <div class="card space-y-2">
-                                    <h3 class="text-4xl font-black ${teamColorClasses[teamName]}">${teamName}</h3>
-                                    <p class="text-2xl">승: ${stats.wins} 무: ${stats.draws} 패: ${stats.losses}</p>
-                                    <p class="text-2xl">득점: ${stats.goalsFor} 실점: ${stats.goalsAgainst}</p>
-                                    <p class="text-2xl">득실차: ${stats.goalsFor - stats.goalsAgainst}</p>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
+    ${renderTeamRankingsTable()}
+</div>
                 </div>
 
                 <div id="tab-content-player-stats" class="tab-content">
@@ -612,7 +602,7 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <button data-action="undo" class="btn btn-secondary text-4xl">스탯 취소</button>
-                    <button data-action="end-match" class="btn btn-danger text-4xl">현재 경기 종료</button>
+                    <button data-action="end-match" class="btn btn-primary text-4xl">현재 경기 종료</button>
                 </div>
                 
                 <button data-action="finish-session-to-summary" class="btn btn-danger w-full bg-red-800 text-4xl">🚨 전체 세션 종료</button>
@@ -1080,6 +1070,59 @@ function renderSessionSummaryScreen() {
                 break;
         }
     });
+
+    // [신규] 팀 순위 표를 렌더링하는 함수 (세션 요약 화면에서 분리)
+function renderTeamRankingsTable() {
+    const { teamStats } = localState.sessionStats;
+    const teamsArray = Object.keys(teamStats)
+        .filter(teamName => teamStats[teamName].matchesPlayed > 0)
+        .map(teamName => {
+            const stats = teamStats[teamName];
+            const points = (stats.wins * 3) + (stats.draws * 1);
+            const goalDifference = stats.goalsFor - stats.goalsAgainst;
+            const winRate = (stats.wins + stats.losses) > 0 ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1) + '%' : '-';
+            return { name: teamName, played: stats.matchesPlayed, wins: stats.wins, draws: stats.draws, losses: stats.losses, gf: stats.goalsFor, ga: stats.goalsAgainst, gd: goalDifference, points: points, winRate: winRate };
+        })
+        .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.gd !== a.gd) return b.gd - a.gd;
+            return b.gf - a.gf;
+        });
+
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
+
+    const tableHtml = `
+        <div class="card mb-8 overflow-x-auto">
+            <h2 class="text-4xl font-bold mb-4 text-gray-100">오늘의 팀 순위</h2>
+            <table class="w-full text-5xl edit-table">
+                <thead>
+                    <tr>
+                        <th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${teamsArray.map((t, index) => `
+                        <tr>
+                            <td class="font-bold">${index + 1}</td>
+                            <td class="font-bold ${teamColorClasses[t.name]}">${t.name} ${index === 0 ? '<span>🏆</span>' : ''}</td>
+                            <td>${t.played}</td>
+                            <td>${t.wins}</td>
+                            <td>${t.draws}</td>
+                            <td>${t.losses}</td>
+                            <td>${t.gf}</td>
+                            <td>${t.ga}</td>
+                            <td>${t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+                            <td>${t.winRate}</td>
+                            <td class="font-bold text-blue-400">${t.points}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    return tableHtml;
+}
 
     // --- 기타 유틸리티 함수 (모달 열기 등) ---
     function openSelectNextTeamModal(drawingTeams, waitingTeam) {
