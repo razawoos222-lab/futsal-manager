@@ -7,6 +7,8 @@ const CONFIG = {
 const CACHE = CacheService.getScriptCache(); // Apps Script 캐시 서비스 사용 (데이터 임시 저장)
 const CACHE_KEY = 'FUTSAL_APP_STATE_FINAL_V12'; // 캐시 키 (앱 상태를 식별하기 위함)
 
+let batchSaveTimer = null;
+let lastBatchSave = 0;
 
 // --- 웹 앱 진입점 ---
 // 웹 앱이 처음 로드될 때 실행되는 함수입니다.
@@ -521,30 +523,31 @@ function startMatch(teamNames, selectedDuration, selectedField) {
   });
 }
 
-
-// [수정 완료] 이벤트 기록 시 '남은 시간(seconds)'도 함께 받도록 수정된 함수
-function recordEvent(eventData, seconds) { // <-- seconds 인자 추가
-  return safeExecute(() => {
+function recordEvent(eventData, seconds) {
+  const outerStart = new Date().getTime();
+  Logger.log('🔴 recordEvent 함수 시작');
+  
+  const result = safeExecute(() => {
+    const innerStart = new Date().getTime();
+    Logger.log('🟡 safeExecute 내부 시작');
+    
     const s = getAppState();
+    const getStateTime = new Date().getTime();
+    Logger.log(`📖 getAppState 완료: ${getStateTime - innerStart}ms`);
 
-
+    // 기존 로직... (동일)
     if (!s.match.timerRunning && s.match.seconds > 0) {
       throw new Error("경기가 시작되지 않았거나 일시정지 상태에서는 기록할 수 없습니다. 타이머를 시작해주세요.");
     }
-   
-    // *** 핵심 수정사항 ***
-    // 클라이언트에서 보낸 현재 남은 시간을 서버 상태에 즉시 반영
+    
     if (typeof seconds === 'number' && !isNaN(seconds)) {
         s.match.seconds = seconds;
     }
 
-
     const time = new Date().toLocaleTimeString('en-GB');
     s.match.timeline.unshift({ ...eventData, time });
 
-
     const { player, stat, teamName, assistPlayer } = eventData;
-
 
     if (s.sessionStats.playerStats[player]) {
       if (stat !== 'ownGoal') {
@@ -567,52 +570,24 @@ function recordEvent(eventData, seconds) { // <-- seconds 인자 추가
       s.sessionStats.teamStats[concedingTeam.name].goalsAgainst++;
     }
 
+    const beforeSave = new Date().getTime();
+    Logger.log(`⚙️ 로직 처리 완료: ${beforeSave - getStateTime}ms`);
 
     saveAppState(s);
+    
+    const afterSave = new Date().getTime();
+    Logger.log(`💾 saveAppState 완료: ${afterSave - beforeSave}ms`);
+
+    const innerEnd = new Date().getTime();
+    Logger.log(`🟡 safeExecute 내부 완료: ${innerEnd - innerStart}ms`);
+    
     return s;
   });
-}
 
-
-// 마지막 기록을 되돌리는 함수입니다. (도움, 자살골 되돌리기 포함)
-function undoLastEvent() {
-  return safeExecute(() => {
-    const s = getAppState(); // 현재 앱 상태를 가져옵니다.
-    if (s.match.timeline.length === 0) return s; // 타임라인이 비어있으면 변경 없이 반환
-
-
-    const lastEvent = s.match.timeline.shift(); // 가장 최근 기록을 제거하고 가져옵니다.
-    const { player, stat, teamName, assistPlayer } = lastEvent;
-
-
-    // 선수 개인 스탯 되돌리기
-    if (s.sessionStats.playerStats[player]) {
-      if (stat === 'ownGoal') {
-        // 자살골은 스탯 변경 없었으므로 되돌릴 것도 없음
-      } else {
-        s.sessionStats.playerStats[player][stat]--;
-      }
-    }
-    // 도움 선수 스탯 되돌리기
-    if (stat === 'goal' && assistPlayer && s.sessionStats.playerStats[assistPlayer]) {
-      s.sessionStats.playerStats[assistPlayer].assist--;
-    }
-   
-    // 득점일 경우 팀 점수 및 팀 통계 되돌리기
-    if (stat === 'goal') {
-      const [teamToUndo, teamToRestore] = teamName === s.match.teamA.name ? [s.match.teamA, s.match.teamB] : [s.match.teamB, s.match.teamA];
-      teamToUndo.score--; // 점수 감소
-      s.sessionStats.teamStats[teamToUndo.name].goalsFor--; // 득점 감소
-      s.sessionStats.teamStats[teamToRestore.name].goalsAgainst--; // 실점 감소
-    } else if (stat === 'ownGoal') { // 자살골일 경우
-      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name ? [s.match.teamB, s.match.teamA] : [s.match.teamA, s.match.teamB];
-      scoringTeam.score--; // 상대 팀 점수 감소
-      s.sessionStats.teamStats[scoringTeam.name].goalsFor--; // 상대 팀 득점 감소
-      s.sessionStats.teamStats[concedingTeam.name].goalsAgainst--; // 자살골 팀 실점 감소
-    }
-    saveAppState(s); // 변경된 상태를 저장합니다.
-    return s; // 업데이트된 상태를 반환합니다.
-  });
+  const outerEnd = new Date().getTime();
+  Logger.log(`🔴 recordEvent 함수 완료: ${outerEnd - outerStart}ms`);
+  
+  return result;
 }
 
 
