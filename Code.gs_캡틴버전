@@ -663,52 +663,6 @@ function endMatch() {
     }
 
 
-    // [신규] 클린시트 보너스 강화 (1:0, 2:0 승리 시)
-    const masterPlayers = getMasterPlayersFromSheet(); // 선수 능력치 가져옴
-    const playerArchiveStats = getPlayerStatsFromArchive(); // 선수 과거 기록 가져옴
-
-
-    if (teamA.score > teamB.score && teamB.score === 0 && (teamA.score === 1 || teamA.score === 2)) { // 팀 A가 1:0 또는 2:0으로 클린시트 승리
-      Logger.log(`${teamA.name} 팀 클린시트 보너스 적용 (1:0 또는 2:0 승리)`);
-      // 키퍼에게 수비 점수 1점 부여
-      const winnerGoalkeeper = s.teams[teamA.name].goalkeeper;
-      if (winnerGoalkeeper && playerStats[winnerGoalkeeper]) {
-        playerStats[winnerGoalkeeper].defense++;
-        Logger.log(`${winnerGoalkeeper} (키퍼) 수비 점수 +1`);
-      }
-      // 수비형/올라운더형 선수에게 수비 점수 1점 부여
-      s.teams[teamA.name].players.forEach(pName => {
-        const player = masterPlayers.find(mp => mp.name === pName);
-        if (player) {
-          const role = getPlayerRoleClassification(player, playerArchiveStats);
-          if (role === '수비형' || role === '올라운더형') {
-            if (playerStats[pName]) playerStats[pName].defense++;
-            Logger.log(`${pName} (${role}) 수비 점수 +1`);
-          }
-        }
-      });
-    } else if (teamB.score > teamA.score && teamA.score === 0 && (teamB.score === 1 || teamB.score === 2)) { // 팀 B가 1:0 또는 2:0으로 클린시트 승리
-      Logger.log(`${teamB.name} 팀 클린시트 보너스 적용 (1:0 또는 2:0 승리)`);
-      // 키퍼에게 수비 점수 1점 부여
-      const winnerGoalkeeper = s.teams[teamB.name].goalkeeper;
-      if (winnerGoalkeeper && playerStats[winnerGoalkeeper]) {
-        playerStats[winnerGoalkeeper].defense++;
-        Logger.log(`${winnerGoalkeeper} (키퍼) 수비 점수 +1`);
-      }
-      // 수비형/올라운더형 선수에게 수비 점수 1점 부여
-      s.teams[teamB.name].players.forEach(pName => {
-        const player = masterPlayers.find(mp => mp.name === pName);
-        if (player) {
-          const role = getPlayerRoleClassification(player, playerArchiveStats);
-          if (role === '수비형' || role === '올라운더형') {
-            if (playerStats[pName]) playerStats[pName].defense++;
-            Logger.log(`${pName} (${role}) 수비 점수 +1`);
-          }
-        }
-      });
-    }
-
-
     // [신규] 세션 내 선수별 경기 수 및 승무패 업데이트 (세션 통계 초기화 명확화)
     const allPlayersInMatch = [...s.teams[teamA.name].players, ...s.teams[teamB.name].players];
     const allGoalkeepersInMatch = [s.teams[teamA.name].goalkeeper, s.teams[teamB.name].goalkeeper].filter(Boolean); // null 제거
@@ -1233,6 +1187,40 @@ function getMpWeights() {
   return weights;
 }
 
+function updateMPScores() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('통계');
+  if (!sheet) {
+    console.log("통계 시트를 찾을 수 없습니다.");
+    return;
+  }
+  
+  const playersDataRange = sheet.getRange(3, 1, sheet.getLastRow() - 2, 8);
+  const players = playersDataRange.getValues();
+  
+  const updateData = players.map(player => {
+    const wins = player[2] || 0; // 승리
+    const draws = player[3] || 0; // 무승부
+    const losses = player[4] || 0; // 패배
+    const goals = player[5] || 0; // 득점
+    const assists = player[6] || 0; // 도움
+    const saves = player[7] || 0; // 선방
+    const defense = player[8] || 0; // 수비
+    
+    // 변경된 MP 계산 로직
+    // 1. 득점/도움 점수를 3점에서 2점으로 변경
+    // 2. 승점(승리*3 + 무승부*1)을 MP에 포함
+    const winPoints = wins * 3 + draws * 1;
+    const activityPoints = goals * 2 + assists * 2 + saves * 1 + defense * 1;
+    
+    // 총 MP = 승점 + 활동 점수
+    const totalMP = winPoints + activityPoints;
+    
+    return [totalMP];
+  });
+  
+  // MP 점수를 한 번에 업데이트
+  sheet.getRange(3, 9, updateData.length, 1).setValues(updateData);
+}
 
 /**
  * 선수 한 명의 기록 데이터를 받아 MP를 계산합니다.
@@ -1267,57 +1255,4 @@ function calculateMP(playerRecord) {
 
 
   return mp;
-}
-
-
-/**
- * '설정' 시트에서 MP 계산 가중치를 객체 형태로 가져옵니다.
- * CacheService를 사용하여 10분 동안 캐싱하여 시트 읽기 횟수를 최소화합니다.
- * @returns {Object} 각 항목을 key로, 가중치를 value로 갖는 객체. 예: {득점: 3, 도움: 3, ...}
- */
-function getMpWeights() {
-  const cache = CacheService.getScriptCache();
-  const cachedData = cache.get('mpWeights');
-
-
-  if (cachedData) {
-    return JSON.parse(cachedData);
-  }
-
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('설정');
-
-
-  if (!sheet) {
-    Logger.log("'설정' 시트를 찾을 수 없습니다.");
-    return {};
-  }
-
-
-  // V V V 바로 이 부분의 A2를 A1으로 수정했습니다! V V V
-  const range = sheet.getRange('A1:B' + sheet.getLastRow());
-  const values = range.getValues();
-
-
-  const weights = {};
-  values.forEach(row => {
-    const key = row[0];
-    const value = row[1];
-    if (key && !isNaN(value)) {
-      weights[key] = Number(value);
-    }
-  });
-
-
-  // 디버깅용 코드는 이제 필요 없으니 삭제해도 좋습니다.
-  // Logger.log('↓↓↓ 스크립트가 시트에서 읽어온 최종 데이터 ↓↓↓');
-  // Logger.log(weights);
-
-
-  cache.put('mpWeights', JSON.stringify(weights), 600);
-
-
-  Logger.log('스프레드시트에서 MP 가중치를 읽어와 캐시에 저장했습니다.');
-  return weights;
 }
