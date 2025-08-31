@@ -417,33 +417,39 @@
     }
 
 
-    // --- 타이머 로직 ---
-    function startTimer() {
-        if (timerInterval) clearInterval(timerInterval);
-        serverCall('toggleTimerState', true);
-       
-        let seconds = localState.match.seconds;
-        timerInterval = setInterval(() => {
-            seconds--;
-            if (seconds < 0) seconds = 0;
-            localState.match.seconds = seconds;
-            updateTimerDisplay(seconds);
+// --- 타이머 로직 ---
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    serverCall('toggleTimerState', true);
+    
+    let seconds = localState.match.seconds;
+    timerInterval = setInterval(() => {
+        seconds--;
+        if (seconds < 0) seconds = 0;
+        localState.match.seconds = seconds;
+        updateTimerDisplay(seconds);
 
+        // 수정된 부분: 타이머가 0이 되면 pauseTimer()를 호출하여 상태를 변경
+        if (seconds <= 0) {
+            pauseTimer();
+        }
+    }, 1000);
+}
 
-            if (seconds <= 0) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                alert('시간 종료! "현재 경기 종료" 버튼을 눌러주세요.');
-            }
-        }, 1000);
-    }
-
-
-    function pauseTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        serverCall('toggleTimerState', false, localState.match.seconds);
-    }
+    // index.html의 pauseTimer() 함수
+function pauseTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    serverCall('toggleTimerState', false, localState.match.seconds).then(() => {
+        // 서버 상태 업데이트 성공 후, UI를 변경
+        const toggleTimerBtn = document.querySelector('#screen-match-controller [data-action="toggle-timer"]');
+        if (toggleTimerBtn) {
+            toggleTimerBtn.textContent = '시작';
+            toggleTimerBtn.classList.remove('btn-secondary');
+            toggleTimerBtn.classList.add('btn-primary');
+        }
+    });
+}
 
 
     function updateTimerDisplay(seconds) {
@@ -707,7 +713,6 @@
                 toggleTimerBtn.classList.add('btn-primary');
             }
         }
-        if (timerRunning && !timerInterval) startTimer();
 
 
         document.querySelectorAll('.tab-button').forEach(button => {
