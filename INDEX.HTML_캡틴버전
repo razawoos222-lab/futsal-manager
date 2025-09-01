@@ -194,25 +194,36 @@
 
 
     <!-- 2. 팀 배분 & 라인업 화면 -->
-    <div id="screen-team-allocation" class="hidden w-full max-w-5xl mx-auto text-center space-y-8">
-        <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
-        <div class="flex flex-col sm:flex-row gap-4">
-            <!-- 팀 배분 알고리즘 선택 드롭다운 (새로운 옵션 추가) -->
-            <select id="assignment-strategy" class="w-full p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-4xl">
-                <option value="balanced">밸런스 (추천)</option>
-                <option value="random">랜덤</option>
-                <option value="antiReunion">재회 방지 (새로운 조합)</option>
-                <option value="tacticalRole">전술 역할 기반 (포지션 균형)</option>
-                <option value="winLossBalance">승패 균형 조정 (동기 부여)</option>
-            </select>
-            <!-- 다시 배분 버튼 -->
-            <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
+ <div id="screen-team-allocation" class="hidden w-full max-w-5xl mx-auto text-center space-y-8">
+    <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
+
+    <div class="card p-4 space-y-2">
+        <label for="mix-ratio-slider" class="text-3xl font-bold text-gray-100">스탯비중</label>
+        <p class="text-xl text-gray-400">임의스탯 ↔ 경기기록</p>
+        <input type="range" id="mix-ratio-slider" min="0" max="4" value="0" class="w-full h-4 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        <div class="flex justify-between text-lg font-semibold text-gray-300 px-1">
+            <span>100% 임의스탯</span>
+            <span>75/25</span>
+            <span>50/50</span>
+            <span>25/75</span>
+            <span>100% 기록</span>
         </div>
-        <!-- 팀 배분 결과를 표시하는 컨테이너입니다. 화면 너비에 꽉 차게 조정됩니다. -->
-        <div id="team-allocation-container" class="flex flex-col gap-6"></div> <!-- 가로가 아닌 세로로 배치 -->
-        <!-- '경기 준비 완료' 버튼만 남기고, 다른 버튼은 제거했습니다. -->
-        <button data-action="go-to-match-select" class="btn btn-primary w-full text-3xl">경기 준비 완료</button>
     </div>
+    <div class="flex flex-col sm:flex-row gap-4">
+        <select id="assignment-strategy" class="w-full p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-4xl">
+            <option value="balanced">밸런스</option>
+            <option value="snakeMethod">스네이크 방식</option>
+            <option value="mpBased">Match Points기반</option>
+            <option value="mpPerGameBased">Match Points/Game 기반</option>
+            <option value="winRateBased">승률 기반</option>
+            <option value="random">완전 랜덤</option>
+        </select>
+        <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
+    </div>
+    
+    <div id="team-allocation-container" class="flex flex-col gap-6"></div>
+    <button data-action="go-to-match-select" class="btn btn-primary w-full text-3xl">경기 준비 완료</button>
+</div>
    
     <!-- 3. 경기 선택 화면 -->
     <div id="screen-match-select" class="hidden w-full max-w-4xl mx-auto text-center space-y-8">
@@ -998,7 +1009,13 @@ function renderSessionSummaryScreen() {
                 })();
                 break;
             case 're-allocate':
-                serverCall('performTeamAllocation', document.getElementById('assignment-strategy').value);
+                const sliderValue = document.getElementById('mix-ratio-slider').value;
+                // 슬라이더 값(0~4)을 비율(0.0, 0.25, 0.5, 0.75, 1.0)로 변환
+                const mixRatio = parseFloat(sliderValue) * 0.25; 
+                const algorithm = document.getElementById('assignment-strategy').value;
+                
+                // 서버에 알고리즘과 함께 혼합 비율(mixRatio) 객체를 전달
+                serverCall('performTeamAllocation', algorithm, { mixRatio: mixRatio });
                 break;
             case 'go-to-match-select':
                 serverCall('changeScreen', 'screen-match-select');
