@@ -429,10 +429,15 @@
 
 
 // --- 타이머 로직 ---
-function startTimer() {
+function startTimer(callServer = true) {
     if (timerInterval) clearInterval(timerInterval);
-    serverCall('toggleTimerState', true);
+
+    if (callServer) {
+        // 서버에 타이머 시작을 알림 (버튼 클릭 시)
+        serverCall('toggleTimerState', true, localState.match.seconds);
+    }
     
+    // 클라이언트 화면의 타이머를 동작시킴
     let seconds = localState.match.seconds;
     timerInterval = setInterval(() => {
         seconds--;
@@ -440,7 +445,6 @@ function startTimer() {
         localState.match.seconds = seconds;
         updateTimerDisplay(seconds);
 
-        // 수정된 부분: 타이머가 0이 되면 pauseTimer()를 호출하여 상태를 변경
         if (seconds <= 0) {
             pauseTimer();
         }
