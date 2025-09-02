@@ -118,6 +118,13 @@ function getAppState() {
       BLUE: { players: [], goalkeeper: null },
       YELLOW: { players: [], goalkeeper: null }
     },
+    // ▼▼▼ [신규 추가] 초기 상태에 initialRosters를 추가합니다. ▼▼▼
+    initialRosters: {
+      RED: { players: [], goalkeeper: null },
+      BLUE: { players: [], goalkeeper: null },
+      YELLOW: { players: [], goalkeeper: null }
+    },
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     match: {
       count: 1,
       playingTeams: [],
@@ -399,6 +406,14 @@ function performTeamAllocation(algorithm, options) {
       YELLOW: { players: teams.YELLOW.players.map(p => p.name), goalkeeper: teams.YELLOW.goalkeeper, captain: teams.YELLOW.captain, viceCaptain: teams.YELLOW.viceCaptain }
     };
 
+    // ▼▼▼ [핵심 추가] 배분된 팀 구성을 '원본'으로 저장합니다. ▼▼▼
+    // JSON.parse(JSON.stringify(...))는 객체의 깊은 복사를 통해
+    // initialRosters가 state.teams의 변경에 영향을 받지 않도록 보장합니다.
+    state.initialRosters = JSON.parse(JSON.stringify(state.teams));
+    Logger.log("최초 팀 배분 결과를 initialRosters에 원본으로 저장했습니다.");
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+// source: [412]
     state.currentScreen = 'screen-team-allocation';
     saveAppState(state);
     return state;
@@ -446,19 +461,11 @@ function startMatch(teamNames, selectedDuration, selectedField) {
   });
 }
 
-function recordEvent(eventData, seconds) {
-  const outerStart = new Date().getTime();
-  Logger.log('🔴 recordEvent 함수 시작');
-  
-  const result = safeExecute(() => {
-    const innerStart = new Date().getTime();
-    Logger.log('🟡 safeExecute 내부 시작');
-    
-    const s = getAppState();
-    const getStateTime = new Date().getTime();
-    Logger.log(`📖 getAppState 완료: ${getStateTime - innerStart}ms`);
 
-    // 기존 로직... (동일)
+function recordEvent(eventData, seconds) {
+  return safeExecute(() => {
+    const s = getAppState();
+
     if (!s.match.timerRunning && s.match.seconds > 0) {
       throw new Error("경기가 시작되지 않았거나 일시정지 상태에서는 기록할 수 없습니다. 타이머를 시작해주세요.");
     }
@@ -480,37 +487,26 @@ function recordEvent(eventData, seconds) {
     if (stat === 'goal' && assistPlayer && s.sessionStats.playerStats[assistPlayer]) {
       s.sessionStats.playerStats[assistPlayer].assist++;
     }
-   
+    
     if (stat === 'goal') {
-      const [teamToScore, teamToConcede] = teamName === s.match.teamA.name ? [s.match.teamA, s.match.teamB] : [s.match.teamB, s.match.teamA];
+      // ▼▼▼ [오타 수정] s.match.A를 s.match.teamA로 바로잡았습니다. ▼▼▼
+      const [teamToScore, teamToConcede] = teamName === s.match.teamA.name ?
+        [s.match.teamA, s.match.teamB] : [s.match.teamB, s.match.teamA];
+      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
       teamToScore.score++;
       s.sessionStats.teamStats[teamToScore.name].goalsFor++;
       s.sessionStats.teamStats[teamToConcede.name].goalsAgainst++;
     } else if (stat === 'ownGoal') {
-      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name ? [s.match.teamB, s.match.teamA] : [s.match.teamA, s.match.teamB];
+      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name ?
+        [s.match.teamB, s.match.teamA] : [s.match.teamA, s.match.teamB];
       scoringTeam.score++;
       s.sessionStats.teamStats[scoringTeam.name].goalsFor++;
       s.sessionStats.teamStats[concedingTeam.name].goalsAgainst++;
     }
 
-    const beforeSave = new Date().getTime();
-    Logger.log(`⚙️ 로직 처리 완료: ${beforeSave - getStateTime}ms`);
-
     saveAppState(s);
-    
-    const afterSave = new Date().getTime();
-    Logger.log(`💾 saveAppState 완료: ${afterSave - beforeSave}ms`);
-
-    const innerEnd = new Date().getTime();
-    Logger.log(`🟡 safeExecute 내부 완료: ${innerEnd - innerStart}ms`);
-    
     return s;
   });
-
-  const outerEnd = new Date().getTime();
-  Logger.log(`🔴 recordEvent 함수 완료: ${outerEnd - outerStart}ms`);
-  
-  return result;
 }
 
 // =================================================================
@@ -583,16 +579,22 @@ function endMatch() {
     });
     // --- (여기까지의 기존 로직은 모두 동일합니다) ---
 
+// source: [428]
+function endMatch() {
+  return safeExecute(() => {
+    const s = getAppState();
+    const { teamA, teamB, count } = s.match;
+    // ... (기존 승패 처리 로직은 모두 동일) ...
 
-    // ▼▼▼ [핵심 변경] 스프레드시트에 직접 기록하는 대신, 임시 저장 공간(matchHistory)에 데이터를 추가합니다. ▼▼▼
+
+    // ▼▼▼ [1단계: 경기 결과 기록] 이 부분은 그대로 유지합니다. ▼▼▼
     const date = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), "yyyy-MM-dd");
     [s.match.teamA.name, s.match.teamB.name].forEach(teamName => {
       const teamData = s.teams[teamName];
       if (teamData.players.length > 0 || teamData.goalkeeper) {
-        // matchHistory 배열에 경기 결과 객체를 추가
         s.sessionResults.matchHistory.push({
           date: date,
-          matchNumber: count, // 현재 경기 번호
+          matchNumber: count,
           teamName: teamName,
           goalkeeper: teamData.goalkeeper || '',
           players: teamData.players
@@ -600,11 +602,31 @@ function endMatch() {
         Logger.log(`메모리에 경기 기록 저장 완료: ${teamName} - 경기 #${count}`);
       }
     });
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // ▼▼▼ [2단계: 팀 구성 초기화] 바로 이어서 아래에 추가합니다. ▼▼▼
+    const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+    allTeamNames.forEach(teamName => {
+        if (s.teams[teamName] && s.initialRosters[teamName]) {
+            // '1경기만' 적용된 골키퍼 및 선수 교체를 'initialRosters' 기준으로 완벽하게 되돌립니다.
+            s.teams[teamName] = JSON.parse(JSON.stringify(s.initialRosters[teamName]));
+        }
+    });
+    Logger.log("모든 팀 구성을 최초 배분 상태로 초기화했습니다.");
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     s.match.count++; // 다음 경기를 위해 경기 수 증가
     s.match.timerRunning = false;
+    
+    // --- (다음 경기 자동 설정 로직은 그대로 유지) ---
+    // ... (이하 생략) ...
+// source: [457]
+    saveAppState(s);
+    return s;
+  });
+}
 
+    
     // --- (여기부터) 다음 경기 자동 설정 로직은 변경 없이 그대로 유지됩니다 ---
     const currentPlayingTeams = [teamA_name, teamB_name];
     const waitingTeam = allTeamNames.find(name => !currentPlayingTeams.includes(name));
