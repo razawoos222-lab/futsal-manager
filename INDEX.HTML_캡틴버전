@@ -197,27 +197,19 @@
  <div id="screen-team-allocation" class="hidden w-full max-w-5xl mx-auto text-center space-y-8">
     <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
 
-    <div class="card p-4 space-y-2">
-        <label for="mix-ratio-slider" class="text-3xl font-bold text-gray-100">스탯비중</label>
-        <p class="text-xl text-gray-400">임의스탯 ↔ 경기기록</p>
-        <input type="range" id="mix-ratio-slider" min="0" max="4" value="0" class="w-full h-4 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-        <div class="flex justify-between text-lg font-semibold text-gray-300 px-1">
-            <span>100% 임의스탯</span>
-            <span>75/25</span>
-            <span>50/50</span>
-            <span>25/75</span>
-            <span>100% 기록</span>
-        </div>
-    </div>
     <div class="flex flex-col sm:flex-row gap-4">
-        <select id="assignment-strategy" class="w-full p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-4xl">
-            <option value="balanced">밸런스</option>
-            <option value="snakeMethod">스네이크 방식</option>
-            <option value="mpBased">Match Points기반</option>
-            <option value="mpPerGameBased">Match Points/Game 기반</option>
-            <option value="winRateBased">승률 기반</option>
-            <option value="random">완전 랜덤</option>
-        </select>
+       <select id="assignment-strategy" class="w-full p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-4xl">
+    <option value="balanced">밸런스 (임의스탯)</option>
+    <option value="balanced_ccp">밸런스 (CCP 50:50)</option>
+    <option value="balanced_record">밸런스 (CCP 100%)</option>
+    <option value="snakeMethod">스네이크 (임의스탯)</option>
+    <option value="snake_ccp">스네이크 (CCP 50:50)</option>
+    <option value="snake_record">스네이크 (CCP 100%)</option>
+    <option value="mpBased">MP 순위기반</option>
+    <option value="mpPerGameBased">MP/G 순위기반</option>
+    <option value="winRateBased">승률 순위기반</option>
+    <option value="random">완전 랜덤</option>
+</select>
         <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
     </div>
     
@@ -232,6 +224,7 @@
         <div class="card p-4 flex flex-col items-center space-y-4">
             <label for="match-duration" class="text-3xl font-bold">경기 시간 설정:</label>
             <select id="match-duration" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
+                <option value="60">1분</option>
                 <option value="300">5분</option>
                 <option value="420">7분</option>
                 <option value="600" selected>10분</option>
@@ -367,77 +360,72 @@
 
 <script>
     let MASTER_PLAYERS_DB = [], localState = {}, timerInterval = null, currentEventData = {};
+    let pageLeaveTime = null, timerWasRunning = false;
     let currentGoalkeeperSelectTeam = null;
     let currentPlayerToSwapOut = null;
     const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
 
 
-    // --- 서버 호출 ---
-    function serverCall(funcName, ...args) {
-        if (typeof google === 'undefined' || typeof google.script === 'undefined' || typeof google.script.run === 'undefined') {
-            console.error("오류: google.script.run이 정의되지 않았습니다.");
-            alert("오류: 앱을 로드할 수 없습니다.");
-            document.getElementById('loading-overlay').style.display = 'none';
-            return Promise.reject(new Error("Google Apps Script 환경이 아닙니다."));
-        }
-
-
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-
-        document.getElementById('loading-overlay').style.display = 'flex';
-        console.log(`[Server Call] -> ${funcName}`, args);
-
-
-        return new Promise((resolve, reject) => {
-            google.script.run
-                .withSuccessHandler(response => {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    console.log(`[Server Response] <- ${funcName}`, response);
-
-
-                    if (response.success) {
-                        if (response.data && response.data.currentScreen) {
-                            localState = response.data;
-                            renderUI();
-                        }
-                        if (response.data && response.data.match && response.data.match.nextMatchSuggestion) {
-                            const suggestion = response.data.match.nextMatchSuggestion;
-                            if (suggestion.type === 'draw') {
-                                openSelectNextTeamModal(suggestion.drawingTeams, suggestion.waitingTeam);
-                            } else if (suggestion.type === 'consecutive') {
-                                openConfirmNextMatchModal(suggestion.team, suggestion.suggestedTeams);
-                            }
-                        }
-                        resolve(response.data);
-                    } else {
-                        alert(`서버 오류: ${response.message}`);
-                        reject(new Error(response.message));
-                    }
-                })
-                .withFailureHandler(error => {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    alert(`통신 오류: ${error.message}`);
-                    reject(error);
-                })
-                [funcName](...args);
-        });
+// --- 서버 호출 ---
+function serverCall(funcName, ...args) {
+    if (typeof google === 'undefined' || typeof google.script === 'undefined' || typeof google.script.run === 'undefined') {
+        console.error("오류: google.script.run이 정의되지 않았습니다.");
+        alert("오류: 앱을 로드할 수 없습니다.");
+        document.getElementById('loading-overlay').style.display = 'none';
+        return Promise.reject(new Error("Google Apps Script 환경이 아닙니다."));
     }
 
+    // 타이머 관련 서버 호출은 로딩 오버레이 표시하지 않음
+    const showLoading = !['toggleTimerState'].includes(funcName);
+    
+    if (showLoading) {
+        document.getElementById('loading-overlay').style.display = 'flex';
+    }
+    console.log(`[Server Call] -> ${funcName}`, args);
+
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(response => {
+                if (showLoading) {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+                console.log(`[Server Response] <- ${funcName}`, response);
+
+                if (response.success) {
+                    if (response.data && response.data.currentScreen) {
+                        localState = response.data;
+                        renderUI();
+                    }
+                    if (response.data && response.data.match && response.data.match.nextMatchSuggestion) {
+                        const suggestion = response.data.match.nextMatchSuggestion;
+                        if (suggestion.type === 'draw') {
+                            openSelectNextTeamModal(suggestion.drawingTeams, suggestion.waitingTeam);
+                        } else if (suggestion.type === 'consecutive') {
+                            openConfirmNextMatchModal(suggestion.team, suggestion.suggestedTeams);
+                        }
+                    }
+                    resolve(response.data);
+                } else {
+                    alert(`서버 오류: ${response.message}`);
+                    reject(new Error(response.message));
+                }
+            })
+            .withFailureHandler(error => {
+                if (showLoading) {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+                alert(`통신 오류: ${error.message}`);
+                reject(error);
+            })
+            [funcName](...args);
+    });
+}
 
 // --- 타이머 로직 ---
-function startTimer(callServer = true) {
+function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
-
-    if (callServer) {
-        // 서버에 타이머 시작을 알림 (버튼 클릭 시)
-        serverCall('toggleTimerState', true, localState.match.seconds);
-    }
+    serverCall('toggleTimerState', true);
     
-    // 클라이언트 화면의 타이머를 동작시킴
     let seconds = localState.match.seconds;
     timerInterval = setInterval(() => {
         seconds--;
@@ -445,6 +433,7 @@ function startTimer(callServer = true) {
         localState.match.seconds = seconds;
         updateTimerDisplay(seconds);
 
+        // 수정된 부분: 타이머가 0이 되면 pauseTimer()를 호출하여 상태를 변경
         if (seconds <= 0) {
             pauseTimer();
         }
@@ -474,6 +463,31 @@ function pauseTimer() {
         const secs = (seconds % 60).toString().padStart(2, '0');
         display.textContent = `${mins}:${secs}`;
     }
+
+    // ===== 3번: 새 함수 추가 (다른 함수들과 함께 아무데나) =====
+function saveTimerStateBeforeLeave() {
+    if (localState.currentScreen === 'screen-match-controller' && localState.match) {
+        pageLeaveTime = Date.now();
+        timerWasRunning = localState.match.timerRunning;
+    }
+}
+
+function recoverTimerIfNeeded() {
+    if (pageLeaveTime && timerWasRunning && localState.match && localState.match.seconds > 0) {
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - pageLeaveTime) / 1000);
+        localState.match.seconds = Math.max(0, localState.match.seconds - elapsedSeconds);
+        
+        if (localState.match.seconds > 0 && localState.match.timerRunning) {
+            startTimer();
+        } else if (localState.match.seconds <= 0) {
+            pauseTimer();
+        }
+    }
+    pageLeaveTime = null;
+    timerWasRunning = false;
+}
+
 
 
     // --- UI 렌더링 ---
@@ -548,26 +562,26 @@ function pauseTimer() {
         if (players.length === 0 && !goalkeeper) return '';
 
 
-        let teamTotalAttack = 0;
-        let teamTotalDefense = 0;
-        const allTeamPlayers = [...players, goalkeeper].filter(Boolean);
-        allTeamPlayers.forEach(pName => {
-            const pData = playerStats[pName];
-            if (pData) {
-                teamTotalAttack += (pData.att || 0);
-                teamTotalDefense += (pData.def || 0);
-            }
-        });
+        // 기존 코드를 이것으로 교체:
+let teamTotalCCP = 0;
+let teamTotalWinRate = 0;
+const allTeamPlayers = [...players, goalkeeper].filter(Boolean);
+allTeamPlayers.forEach(pName => {
+    const pData = playerStats[pName];
+    if (pData) {
+        teamTotalCCP += (pData.ccp || 0);
+        teamTotalWinRate += (pData.winRate || 0);
+    }
+});
 
-
-        const teamTotalPlayers = new Set(allTeamPlayers).size;
-        const teamAvgAttack = teamTotalPlayers > 0 ? (teamTotalAttack / teamTotalPlayers).toFixed(1) : 0;
-        const teamAvgDefense = teamTotalPlayers > 0 ? (teamTotalDefense / teamTotalPlayers).toFixed(1) : 0;
+const teamTotalPlayers = new Set(allTeamPlayers).size;
+const teamAvgCCP = teamTotalPlayers > 0 ? (teamTotalCCP / teamTotalPlayers).toFixed(1) : 0;
+const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlayers) * 100).toFixed(1) : 0;
 
 
         return `
             <div class="card space-y-4 w-full">
-                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원: ${teamTotalPlayers}명 | ATT: ${teamAvgAttack} | DEF: ${teamAvgDefense})</span></h3>
+                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
                 <div class="grid grid-cols-2 gap-2">
                     ${players.map(p => {
                         const isCaptain = p === teamData.captain;
@@ -632,6 +646,7 @@ function pauseTimer() {
 
 
     function renderMatchControllerScreen() {
+        recoverTimerIfNeeded(); 
         const { teamA, teamB, count, timeline, timerRunning, seconds, todayHeadToHead } = localState.match;
         const container = document.getElementById('screen-match-controller');
        
@@ -751,10 +766,10 @@ function pauseTimer() {
 
 
         const mvpRank = [...playersArray].sort((a, b) => {
-            const scoreA = (a.goal * 3) + (a.assist * 3) + (a.defense * 1) + (a.save * 1);
-            const scoreB = (b.goal * 3) + (b.assist * 3) + (b.defense * 1) + (b.save * 1);
+            const scoreA = (a.goal * 2) + (a.assist * 2) + (a.defense * 1) + (a.save * 1);
+            const scoreB = (b.goal * 2) + (b.assist * 2) + (b.defense * 1) + (b.save * 1);
             return scoreB - scoreA;
-        }).filter(p => ((p.goal || 0) * 3) + ((p.assist || 0) * 3) + ((p.defense || 0) * 1) + ((p.save || 0) * 1) > 0).slice(0, 3);
+        }).filter(p => ((p.goal || 0) * 2) + ((p.assist || 0) * 2) + ((p.defense || 0) * 1) + ((p.save || 0) * 1) > 0).slice(0, 3);
 
 
         const goalRank = [...playersArray].sort((a, b) => b.goal - a.goal).filter(p => p.goal > 0).slice(0, 5);
@@ -787,7 +802,7 @@ function pauseTimer() {
                     ${mvpRank.map((p, index) => `
                         <li class="flex justify-between items-center text-2xl border-b border-yellow-700 pb-3">
                             <span>${index + 1}. ${p.name}</span>
-                            <span>MP ${((p.goal || 0) * 3) + ((p.assist || 0) * 3) + ((p.defense || 0) * 1) + ((p.save || 0) * 1)}</span>
+                            <span>MP ${((p.goal || 0) * 2) + ((p.assist || 0) * 2) + ((p.defense || 0) * 1) + ((p.save || 0) * 1)}</span>
                         </li>
                     `).join('')}
                 </ul>
@@ -916,7 +931,7 @@ function renderSessionSummaryScreen() {
                             <tbody>
                                 ${playersInTeam.map(pName => {
                                     const stats = playerStats[pName] || {goal:0, assist:0, defense:0, save:0};
-                                    const mp = ((stats.goal || 0) * 3) + ((stats.assist || 0) * 3) + ((stats.defense || 0) * 1) + ((stats.save || 0) * 1);
+                                    const mp = ((stats.goal || 0) * 2) + ((stats.assist || 0) * 2) + ((stats.defense || 0) * 1) + ((stats.save || 0) * 1);
                                     return `
                                         <tr>
                                             <td class="font-bold text-gray-100">${pName}</td>
@@ -989,9 +1004,10 @@ function renderSessionSummaryScreen() {
 
 
         switch (action) {
-            case 'go-back':
-                serverCall('changeScreen', targetScreen);
-                break;
+             case 'go-back':
+        saveTimerStateBeforeLeave(); // 이 줄만 추가
+        serverCall('changeScreen', targetScreen);
+        break;
             case 'toggle-attendance':
                 const names = localState.attendingPlayerNames;
                 const index = names.indexOf(playerName);
@@ -1013,14 +1029,9 @@ function renderSessionSummaryScreen() {
                 })();
                 break;
             case 're-allocate':
-                const sliderValue = document.getElementById('mix-ratio-slider').value;
-                // 슬라이더 값(0~4)을 비율(0.0, 0.25, 0.5, 0.75, 1.0)로 변환
-                const mixRatio = parseFloat(sliderValue) * 0.25; 
-                const algorithm = document.getElementById('assignment-strategy').value;
-                
-                // 서버에 알고리즘과 함께 혼합 비율(mixRatio) 객체를 전달
-                serverCall('performTeamAllocation', algorithm, { mixRatio: mixRatio });
-                break;
+    const algorithm = document.getElementById('assignment-strategy').value;
+    serverCall('performTeamAllocation', algorithm);
+    break;
             case 'go-to-match-select':
                 serverCall('changeScreen', 'screen-match-select');
                 break;
@@ -1279,4 +1290,20 @@ function renderTeamRankingsTable() {
     document.getElementById('field-select').addEventListener('change', (e) => {
         localState.selectedField = e.target.value;
     });
+
+// 탭 전환 감지 (기존 beforeunload 위에 추가)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // 탭이 숨겨질 때
+        saveTimerStateBeforeLeave();
+    } else {
+        // 탭이 다시 보여질 때
+        recoverTimerIfNeeded();
+    }
+});
+
+    // ===== 5번: 스크립트 맨 끝에 추가 =====
+window.addEventListener('beforeunload', function() {
+    saveTimerStateBeforeLeave();
+});
 </script>
