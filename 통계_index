@@ -1,0 +1,546 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>풋살 통계 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background: #f8fafc; }
+        .stats-card { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .leaderboard-table { border-collapse: collapse; }
+        .leaderboard-table th, .leaderboard-table td { 
+            padding: 12px 16px; 
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .leaderboard-table th { 
+            background: #f1f5f9;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .leaderboard-table tr:hover { background: #f8fafc; }
+        .tab-button.active { 
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-700">데이터를 불러오는 중...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <h1 class="text-3xl font-bold text-gray-900">풋살 선수 통계 2025</h1>
+            <div class="mt-4 flex space-x-6">
+                <button class="tab-button active px-4 py-2 font-medium text-lg" data-tab="dashboard">대시보드</button>
+                <button class="tab-button px-4 py-2 font-medium text-lg" data-tab="leaderboards">순위표</button>
+                <button class="tab-button px-4 py-2 font-medium text-lg" data-tab="compare">선수 비교</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Dashboard Tab -->
+        <div id="dashboard-content" class="tab-content">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card rounded-xl p-6">
+                    <div class="text-sm opacity-90">총 경기수</div>
+                    <div class="text-3xl font-bold" id="total-matches">-</div>
+                </div>
+                <div class="stats-card rounded-xl p-6">
+                    <div class="text-sm opacity-90">참가 선수</div>
+                    <div class="text-3xl font-bold" id="total-players">-</div>
+                </div>
+                <div class="stats-card rounded-xl p-6">
+                    <div class="text-sm opacity-90">총 득점</div>
+                    <div class="text-3xl font-bold" id="total-goals">-</div>
+                </div>
+                <div class="stats-card rounded-xl p-6">
+                    <div class="text-sm opacity-90">시즌 MVP</div>
+                    <div class="text-xl font-bold" id="season-mvp">-</div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Preview -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-xl font-bold mb-4">득점 순위 Top 5</h3>
+                    <div id="goals-preview" class="space-y-3"></div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-xl font-bold mb-4">도움 순위 Top 5</h3>
+                    <div id="assists-preview" class="space-y-3"></div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-xl font-bold mb-4">수비 순위 Top 5</h3>
+                    <div id="defenses-preview" class="space-y-3"></div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-xl font-bold mb-4">MVP 순위 Top 5</h3>
+                    <div id="mvp-preview" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboards Tab -->
+        <div id="leaderboards-content" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm">
+                <!-- Sub Tabs -->
+                <div class="border-b px-6 py-4">
+                    <div class="flex space-x-6">
+                        <button class="sub-tab-button active font-medium py-2" data-subtab="goals">득점</button>
+                        <button class="sub-tab-button font-medium py-2" data-subtab="assists">도움</button>
+                        <button class="sub-tab-button font-medium py-2" data-subtab="defenses">수비</button>
+                        <button class="sub-tab-button font-medium py-2" data-subtab="saves">선방</button>
+                        <button class="sub-tab-button font-medium py-2" data-subtab="mvp">MVP</button>
+                        <button class="sub-tab-button font-medium py-2" data-subtab="winrate">승률</button>
+                    </div>
+                </div>
+                
+                <!-- Table Content -->
+                <div class="p-6">
+                    <div id="leaderboard-table-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Tab -->
+        <div id="compare-content" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-2xl font-bold mb-6">선수 비교 (최대 3명)</h2>
+                
+                <!-- Player Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">선수 1</label>
+                        <select id="player1-select" class="w-full p-3 border rounded-lg">
+                            <option value="">선수 선택</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">선수 2</label>
+                        <select id="player2-select" class="w-full p-3 border rounded-lg">
+                            <option value="">선수 선택</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">선수 3 (선택)</label>
+                        <select id="player3-select" class="w-full p-3 border rounded-lg">
+                            <option value="">선수 선택</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="compare-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700">
+                    비교하기
+                </button>
+                
+                <!-- Comparison Result -->
+                <div id="comparison-result" class="mt-8 hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Chart -->
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">능력치 비교</h3>
+                            <canvas id="comparison-chart" width="400" height="400"></canvas>
+                        </div>
+                        
+                        <!-- Stats Table -->
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">상세 통계</h3>
+                            <div id="comparison-table" class="overflow-x-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let allPlayersData = [];
+        let leaderboardsData = {};
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialData();
+            setupEventListeners();
+        });
+        
+        // Load initial data
+        async function loadInitialData() {
+            try {
+                showLoading(true);
+                
+                // Load all data
+                const [overallStats, leaderboards, playerNames] = await Promise.all([
+                    callServerFunction('getOverallStats'),
+                    callServerFunction('getLeaderboards'),
+                    callServerFunction('getAllPlayerNames')
+                ]);
+                
+                // Store data
+                leaderboardsData = leaderboards;
+                allPlayersData = playerNames;
+                
+                // Populate UI
+                updateOverallStats(overallStats);
+                updateDashboardPreviews(leaderboards);
+                populatePlayerSelects(playerNames);
+                updateLeaderboardTable('goals');
+                
+                showLoading(false);
+            } catch (error) {
+                console.error('데이터 로딩 실패:', error);
+                showLoading(false);
+                alert('데이터를 불러오는데 실패했습니다: ' + error.message);
+            }
+        }
+        
+        // Server function call wrapper
+        function callServerFunction(functionName, ...args) {
+            return new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(resolve)
+                    .withFailureHandler(reject)
+                    [functionName](...args);
+            });
+        }
+        
+        // Update overall stats cards
+        function updateOverallStats(stats) {
+            if (stats.error) {
+                console.error('통계 오류:', stats.error);
+                return;
+            }
+            
+            document.getElementById('total-matches').textContent = stats.totalMatches || 0;
+            document.getElementById('total-players').textContent = stats.totalPlayers || 0;
+            document.getElementById('total-goals').textContent = stats.totalGoals || 0;
+            document.getElementById('season-mvp').textContent = stats.mvp?.name || '-';
+        }
+        
+        // Update dashboard previews
+        function updateDashboardPreviews(leaderboards) {
+            if (leaderboards.error) return;
+            
+            updatePreviewList('goals-preview', leaderboards.goals?.slice(0, 5) || [], 'goals');
+            updatePreviewList('assists-preview', leaderboards.assists?.slice(0, 5) || [], 'assists');
+            updatePreviewList('defenses-preview', leaderboards.defenses?.slice(0, 5) || [], 'defenses');
+            updatePreviewList('mvp-preview', leaderboards.mvp?.slice(0, 5) || [], 'mp');
+        }
+        
+        // Update preview list
+        function updatePreviewList(containerId, data, statKey) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = data.map((player, index) => `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="font-medium">${index + 1}. ${player.name}</span>
+                        <span class="text-sm text-gray-500 ml-2">${player.position}</span>
+                    </div>
+                    <span class="font-bold text-blue-600">${player[statKey]}</span>
+                </div>
+            `).join('');
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Main tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    switchTab(e.target.dataset.tab);
+                });
+            });
+            
+            // Sub tabs for leaderboards
+            document.querySelectorAll('.sub-tab-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    switchSubTab(e.target.dataset.subtab);
+                });
+            });
+            
+            // Compare button
+            document.getElementById('compare-btn').addEventListener('click', comparePlayers);
+        }
+        
+        // Switch main tab
+        function switchTab(tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(`${tabName}-content`).classList.remove('hidden');
+        }
+        
+        // Switch sub tab
+        function switchSubTab(subtabName) {
+            // Update buttons
+            document.querySelectorAll('.sub-tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-subtab="${subtabName}"]`).classList.add('active');
+            
+            // Update table
+            updateLeaderboardTable(subtabName);
+        }
+        
+        // Update leaderboard table
+        function updateLeaderboardTable(category) {
+            const container = document.getElementById('leaderboard-table-container');
+            const data = leaderboardsData[category] || [];
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">데이터가 없습니다.</p>';
+                return;
+            }
+            
+            const headers = {
+                goals: ['순위', '선수명', 'POS', '경기수', '득점', '경기당 득점'],
+                assists: ['순위', '선수명', 'POS', '경기수', '도움', '경기당 도움'],
+                defenses: ['순위', '선수명', 'POS', '경기수', '수비', 'MP'],
+                saves: ['순위', '선수명', 'POS', '경기수', '선방', 'MP'],
+                mvp: ['순위', '선수명', 'POS', '경기수', 'MP', '승률'],
+                winrate: ['순위', '선수명', 'POS', '경기수', '승', '무', '패', '승률']
+            };
+            
+            let tableHTML = `
+                <table class="leaderboard-table w-full">
+                    <thead>
+                        <tr>
+                            ${headers[category].map(header => `<th class="text-left">${header}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach((player, index) => {
+                tableHTML += '<tr>';
+                tableHTML += `<td class="font-bold text-lg">${index + 1}</td>`;
+                tableHTML += `<td class="font-semibold">${player.name}</td>`;
+                tableHTML += `<td class="text-sm text-gray-600">${player.position}</td>`;
+                tableHTML += `<td>${player.matches}</td>`;
+                
+                switch (category) {
+                    case 'goals':
+                        tableHTML += `<td class="font-bold text-blue-600">${player.goals}</td>`;
+                        tableHTML += `<td>${player.goalsPerMatch}</td>`;
+                        break;
+                    case 'assists':
+                        tableHTML += `<td class="font-bold text-green-600">${player.assists}</td>`;
+                        tableHTML += `<td>${player.assistsPerMatch}</td>`;
+                        break;
+                    case 'defenses':
+                        tableHTML += `<td class="font-bold text-yellow-600">${player.defenses}</td>`;
+                        tableHTML += `<td>${player.mp}</td>`;
+                        break;
+                    case 'saves':
+                        tableHTML += `<td class="font-bold text-purple-600">${player.saves}</td>`;
+                        tableHTML += `<td>${player.mp}</td>`;
+                        break;
+                    case 'mvp':
+                        tableHTML += `<td class="font-bold text-red-600">${player.mp}</td>`;
+                        tableHTML += `<td>${player.winRate}%</td>`;
+                        break;
+                    case 'winrate':
+                        tableHTML += `<td>${player.wins}</td>`;
+                        tableHTML += `<td>${player.draws}</td>`;
+                        tableHTML += `<td>${player.losses}</td>`;
+                        tableHTML += `<td class="font-bold text-blue-600">${player.winRate}%</td>`;
+                        break;
+                }
+                
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+        
+        // Populate player select dropdowns
+        function populatePlayerSelects(players) {
+            const selects = ['player1-select', 'player2-select', 'player3-select'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">선수 선택</option>';
+                players.forEach(player => {
+                    select.innerHTML += `<option value="${player}">${player}</option>`;
+                });
+            });
+        }
+        
+        // Compare players
+        async function comparePlayers() {
+            const player1 = document.getElementById('player1-select').value;
+            const player2 = document.getElementById('player2-select').value;
+            const player3 = document.getElementById('player3-select').value;
+            
+            if (!player1 || !player2) {
+                alert('최소 2명의 선수를 선택해주세요.');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                const comparisonData = await callServerFunction('getPlayerComparison', player1, player2, player3);
+                showLoading(false);
+                
+                if (comparisonData.error) {
+                    throw new Error(comparisonData.error);
+                }
+                
+                displayComparison(comparisonData);
+                
+            } catch (error) {
+                showLoading(false);
+                alert('선수 비교 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // Display comparison results
+        function displayComparison(players) {
+            const resultDiv = document.getElementById('comparison-result');
+            resultDiv.classList.remove('hidden');
+            
+            // Update chart
+            updateComparisonChart(players);
+            
+            // Update table
+            updateComparisonTable(players);
+        }
+        
+        // Update comparison chart
+        function updateComparisonChart(players) {
+            const ctx = document.getElementById('comparison-chart').getContext('2d');
+            
+            // Destroy existing chart if exists
+            if (window.comparisonChart) {
+                window.comparisonChart.destroy();
+            }
+            
+            // Normalize data for radar chart (scale 0-100)
+            const maxValues = {
+                goals: Math.max(...players.map(p => p.goals)) || 1,
+                assists: Math.max(...players.map(p => p.assists)) || 1,
+                defenses: Math.max(...players.map(p => p.defenses)) || 1,
+                saves: Math.max(...players.map(p => p.saves)) || 1,
+                winRate: 100
+            };
+            
+            const datasets = players.map((player, index) => ({
+                label: player.name,
+                data: [
+                    (player.goals / maxValues.goals) * 100,
+                    (player.assists / maxValues.assists) * 100,
+                    (player.defenses / maxValues.defenses) * 100,
+                    (player.saves / maxValues.saves) * 100,
+                    parseFloat(player.winRate)
+                ],
+                backgroundColor: [`rgba(59, 130, 246, 0.2)`, `rgba(239, 68, 68, 0.2)`, `rgba(34, 197, 94, 0.2)`][index],
+                borderColor: [`rgb(59, 130, 246)`, `rgb(239, 68, 68)`, `rgb(34, 197, 94)`][index],
+                pointBackgroundColor: [`rgb(59, 130, 246)`, `rgb(239, 68, 68)`, `rgb(34, 197, 94)`][index],
+                borderWidth: 2
+            }));
+            
+            window.comparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['득점', '도움', '수비', '선방', '승률'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update comparison table
+        function updateComparisonTable(players) {
+            const container = document.getElementById('comparison-table');
+            
+            let tableHTML = `
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="border p-3 text-left font-semibold">구분</th>
+                            ${players.map(player => `<th class="border p-3 text-center font-semibold">${player.name}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const stats = [
+                { key: 'position', label: '포지션' },
+                { key: 'matches', label: '경기수' },
+                { key: 'goals', label: '득점' },
+                { key: 'assists', label: '도움' },
+                { key: 'defenses', label: '수비' },
+                { key: 'saves', label: '선방' },
+                { key: 'wins', label: '승' },
+                { key: 'draws', label: '무' },
+                { key: 'losses', label: '패' },
+                { key: 'winRate', label: '승률 (%)' },
+                { key: 'mp', label: 'MVP 포인트' }
+            ];
+            
+            stats.forEach(stat => {
+                tableHTML += '<tr>';
+                tableHTML += `<td class="border p-3 font-medium bg-gray-50">${stat.label}</td>`;
+                players.forEach(player => {
+                    let value = player[stat.key];
+                    if (stat.key === 'winRate') value += '%';
+                    tableHTML += `<td class="border p-3 text-center">${value}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+        
+        // Show/hide loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.remove('hidden');
+            } else {
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
