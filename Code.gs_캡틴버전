@@ -50,17 +50,33 @@ function getInitialData() {
 }
 
 
-// '선수별능력치' 시트에서 마스터 선수 목록을 가져오는 함수입니다.
+// 1. getMasterPlayersFromSheet 최적화
 function getMasterPlayersFromSheet() {
-  const sheet = getSheet(CONFIG.STATS_SHEET); // '선수별능력치' 시트를 가져옵니다.
-  // 시트에 데이터가 없거나 헤더만 있다면 빈 배열을 반환합니다.
+  const sheet = getSheet(CONFIG.STATS_SHEET);
   if (sheet.getLastRow() < 2) return [];
-  // 2행부터 마지막 행까지, 1열부터 4열까지의 데이터를 가져옵니다. (이름, 포지션, 공격, 수비)
-  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues();
-  // 가져온 데이터를 {name, position, att, def} 객체 배열로 변환합니다.
-  // att와 def는 숫자로 변환하며, 유효하지 않으면 기본값 5를 사용합니다.
-  // 이름이 비어있는 행은 필터링하여 제외합니다.
-  return data.map(row => ({ name: row[0], position: row[1], att: Number(row[2]) || 5, def: Number(row[3]) || 5 })).filter(p => p.name);
+  
+  // ★ 필요한 컬럼만 정확히 읽기 (20개 → 8개)
+  const ranges = [
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 4), // A-D (이름,포지션,공격,수비)
+    sheet.getRange(2, 14, sheet.getLastRow() - 1, 1), // N (승률)  
+    sheet.getRange(2, 15, sheet.getLastRow() - 1, 1), // O (CCP)
+    sheet.getRange(2, 19, sheet.getLastRow() - 1, 1), // S (MP)
+    sheet.getRange(2, 20, sheet.getLastRow() - 1, 1)  // T (MP/G)
+  ];
+  
+  // 한번에 읽기
+  const [basicData, winRateData, ccpData, mpData, mpPerGameData] = ranges.map(r => r.getValues());
+  
+  return basicData.map((row, i) => ({
+    name: row[0],
+    position: row[1], 
+    att: Number(row[2]) || 5,
+    def: Number(row[3]) || 5,
+    winRate: Number(winRateData[i][0]) || 0,
+    ccp: Number(ccpData[i][0]) || 0,
+    mp: Number(mpData[i][0]) || 0,
+    mpPerGame: Number(mpPerGameData[i][0]) || 0
+  })).filter(p => p.name);
 }
 
 
@@ -118,13 +134,6 @@ function getAppState() {
       BLUE: { players: [], goalkeeper: null },
       YELLOW: { players: [], goalkeeper: null }
     },
-    // ▼▼▼ [신규 추가] 초기 상태에 initialRosters를 추가합니다. ▼▼▼
-    initialRosters: {
-      RED: { players: [], goalkeeper: null },
-      BLUE: { players: [], goalkeeper: null },
-      YELLOW: { players: [], goalkeeper: null }
-    },
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     match: {
       count: 1,
       playingTeams: [],
@@ -177,7 +186,7 @@ function changeScreen(id) {
 
 // 스프레드시트에서 특정 시트를 가져오거나 없으면 새로 생성하는 함수입니다.
 function getSheet(sheetName) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet(); // 현재 활성화된 스프레드시트를 가져옵니다.
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   return ss.getSheetByName(sheetName) || ss.insertSheet(sheetName); // 시트를 찾거나 새로 만듭니다.
 }
 
@@ -270,71 +279,57 @@ function getPlayerStatsFromArchive() {
   return playerStats;
 }
 
-
-// =================================================================
-/**
- * 시트 능력치와 실제 기록을 기반으로 선수의 하이브리드 능력치를 계산합니다.
- * @param {object} player - 플레이어 객체 (att, def 포함)
- * @param {object} actualStats - 실제 기록 데이터 (mp, gamesPlayed, wins 등)
- * @param {number} mixRatio - 혼합 비율 (0.0 ~ 1.0)
- * @param {string} criteria - 능력치 계산 기준 ('mpBased', 'mpPerGameBased', 'winRateBased')
- * @return {number} 계산된 최종 능력치
- */
-function getHybridPlayerPower(player, actualStats, mixRatio, criteria) {
-  const sheetPower = player.att + player.def;
-
-  if (!actualStats || Object.keys(actualStats).length === 0 || mixRatio === 0 || criteria === 'sheet_only') {
-    return sheetPower;
-  }
-
-  let actualPower = 0;
-  switch (criteria) {
-    case 'mpBased':
-      actualPower = actualStats.mp || 0;
-      break;
-    case 'mpPerGameBased':
-      actualPower = (actualStats.gamesPlayed > 0) ? (actualStats.mp / actualStats.gamesPlayed) : 0;
-      break;
-    case 'winRateBased':
-      actualPower = (actualStats.gamesPlayed > 0) ? (actualStats.wins / actualStats.gamesPlayed) * 100 : 0;
-      break;
-    default:
-      actualPower = sheetPower;
-      break;
-  }
-  
-  // (실제 능력치 값의 스케일을 맞추기 위한 정규화는 추후 데이터가 쌓이면 더 정교하게 다듬을 수 있습니다.)
-  return sheetPower * (1 - mixRatio) + actualPower * mixRatio;
-}
-
-
-// =================================================================
-function performTeamAllocation(algorithm, options) {
+function performTeamAllocation(algorithm) {
   return safeExecute(() => {
     const state = getAppState();
-    const cache = CacheService.getScriptCache();
-
-    let masterPlayers = JSON.parse(cache.get('masterPlayers_cache'));
-    if (!masterPlayers) {
-        masterPlayers = getMasterPlayersFromSheet();
-        cache.put('masterPlayers_cache', JSON.stringify(masterPlayers), 300);
-    }
-    let playerArchiveStats = JSON.parse(cache.get('playerArchiveStats_cache'));
-    if (!playerArchiveStats) {
-        playerArchiveStats = getPlayerStatsFromArchive();
-        cache.put('playerArchiveStats_cache', JSON.stringify(playerArchiveStats), 300);
-    }
     
-    const mixRatio = options && options.mixRatio !== undefined ? options.mixRatio : 0;
+    // 시트에서 직접 계산된 데이터 가져오기 (빠르고 안정적)
+    const masterPlayers = getMasterPlayersFromSheet();
     const attendingPlayersData = masterPlayers.filter(p => state.attendingPlayerNames.includes(p.name));
     
+    // 알고리즘별 설정 (mixRatio 완전 제거)
+    let criteria = 'sheet_only';
+    let baseAlgorithm = algorithm;
+    
+    switch (algorithm) {
+      case 'balanced':
+      case 'snakeMethod':
+      case 'random':
+        criteria = 'sheet_only';
+        break;
+      case 'balanced_ccp':
+        criteria = 'mixed_ccp';
+        baseAlgorithm = 'balanced';
+        break;
+      case 'balanced_record':
+        criteria = 'ccpBased';
+        baseAlgorithm = 'balanced';
+        break;
+      case 'snake_ccp':
+        criteria = 'mixed_ccp';
+        baseAlgorithm = 'snakeMethod';
+        break;
+      case 'snake_record':
+        criteria = 'ccpBased';
+        baseAlgorithm = 'snakeMethod';
+        break;
+      case 'mpBased':
+        criteria = 'mpBased';
+        baseAlgorithm = 'balanced';
+        break;
+      case 'mpPerGameBased':
+        criteria = 'mpPerGameBased';
+        baseAlgorithm = 'balanced';
+        break;
+      case 'winRateBased':
+        criteria = 'winRateBased';
+        baseAlgorithm = 'balanced';
+        break;
+    }
+    
+    // 능력치 계산 (간단하고 명확하게)
     attendingPlayersData.forEach(p => {
-        const stats = playerArchiveStats[p.name] || {};
-        let criteria = algorithm;
-        if (['balanced', 'snakeMethod', 'random'].includes(algorithm)) {
-            criteria = 'sheet_only';
-        }
-        p.power = getHybridPlayerPower(p, stats, mixRatio, criteria);
+      p.power = getPlayerPower(p, criteria);
     });
 
     let teams = {
@@ -343,82 +338,65 @@ function performTeamAllocation(algorithm, options) {
       YELLOW: { players: [], goalkeeper: null }
     };
     const teamNames = Object.keys(teams);
-    attendingPlayersData.sort((a, b) => b.power - a.power);
 
-    switch (algorithm) {
+    // 기본 알고리즘으로 배분
+    switch (baseAlgorithm) {
       case 'snakeMethod':
-        let currentTeamIndex = 0;
-        let direction = 1;
-        attendingPlayersData.forEach(player => {
-            teams[teamNames[currentTeamIndex]].players.push(player);
-            currentTeamIndex += direction;
-            if (currentTeamIndex >= teamNames.length || currentTeamIndex < 0) {
-                direction *= -1;
-                currentTeamIndex += direction;
-            }
-        });
+        allocateSnakeMethod(attendingPlayersData, teams, teamNames);
         break;
-
       case 'balanced':
-      case 'mpBased':
-      case 'mpPerGameBased':
-      case 'winRateBased':
-        attendingPlayersData.forEach(player => {
-            // ▼▼▼ [버그 수정] 팀 능력치와 인원수를 함께 비교하여 팀을 결정하는 로직으로 변경 ▼▼▼
-            const teamTotals = teamNames.map(name => ({
-                name: name,
-                power: teams[name].players.reduce((sum, p) => sum + p.power, 0), // 초기값 0 추가
-                count: teams[name].players.length
-            })).sort((a, b) => {
-                if (a.power !== b.power) return a.power - b.power; // 1. 능력치 낮은 순
-                return a.count - b.count; // 2. 인원수 적은 순
-            });
-            
-            const targetTeamName = teamTotals[0].name;
-            teams[targetTeamName].players.push(player);
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        });
+        allocateBalanced(attendingPlayersData, teams, teamNames);
         break;
-
       default: // 'random'
-        const shuffledPlayers = attendingPlayersData.sort(() => 0.5 - Math.random());
-        shuffledPlayers.forEach((player, i) => {
-          teams[teamNames[i % teamNames.length]].players.push(player);
-        });
+        allocateRandom(attendingPlayersData, teams, teamNames);
         break;
     }
     
-    Object.keys(teams).forEach(teamName => {
-      const playersInTeam = teams[teamName].players;
-      if (playersInTeam.length > 0) {
-        const shuffled = [...playersInTeam].sort(() => 0.5 - Math.random());
-        teams[teamName].captain = shuffled[0].name;
-        teams[teamName].viceCaptain = shuffled.length > 1 ? shuffled[1].name : null;
-      } else {
-        teams[teamName].captain = null;
-        teams[teamName].viceCaptain = null;
-      }
-    });
+    // 주장/부주장 설정
+    assignCaptains(teams);
     
+    // 최종 팀 데이터 설정
     state.teams = {
       RED: { players: teams.RED.players.map(p => p.name), goalkeeper: teams.RED.goalkeeper, captain: teams.RED.captain, viceCaptain: teams.RED.viceCaptain },
       BLUE: { players: teams.BLUE.players.map(p => p.name), goalkeeper: teams.BLUE.goalkeeper, captain: teams.BLUE.captain, viceCaptain: teams.BLUE.viceCaptain },
       YELLOW: { players: teams.YELLOW.players.map(p => p.name), goalkeeper: teams.YELLOW.goalkeeper, captain: teams.YELLOW.captain, viceCaptain: teams.YELLOW.viceCaptain }
     };
 
-    // ▼▼▼ [핵심 추가] 배분된 팀 구성을 '원본'으로 저장합니다. ▼▼▼
-    // JSON.parse(JSON.stringify(...))는 객체의 깊은 복사를 통해
-    // initialRosters가 state.teams의 변경에 영향을 받지 않도록 보장합니다.
-    state.initialRosters = JSON.parse(JSON.stringify(state.teams));
-    Logger.log("최초 팀 배분 결과를 initialRosters에 원본으로 저장했습니다.");
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-// source: [412]
     state.currentScreen = 'screen-team-allocation';
     saveAppState(state);
     return state;
   });
 }
+
+function getHybridPlayerPower(player, actualStats, mixRatio, criteria) {
+  const sheetPower = player.att + player.def; // 임의스탯 (공격+수비)
+
+  if (mixRatio === 0 || criteria === 'sheet_only') {
+    return sheetPower;
+  }
+
+  let actualPower = 0;
+  switch (criteria) {
+    case 'ccpBased':
+      actualPower = player.ccp || 0;
+      break;
+    case 'mpBased':
+      actualPower = player.mp || 0;
+      break;
+    case 'mpPerGameBased':
+      actualPower = player.mpPerGame || 0;
+      break;
+    case 'winRateBased':
+      actualPower = player.winRate || 0;
+      break;
+    default:
+      actualPower = sheetPower;
+      break;
+  }
+  
+  return sheetPower * (1 - mixRatio) + actualPower * mixRatio;
+}
+
 
 // 경기 시작 함수 (경기 시간 설정 기능 및 구장명 추가)
 function startMatch(teamNames, selectedDuration, selectedField) {
@@ -461,11 +439,19 @@ function startMatch(teamNames, selectedDuration, selectedField) {
   });
 }
 
-
 function recordEvent(eventData, seconds) {
-  return safeExecute(() => {
+  const outerStart = new Date().getTime();
+  Logger.log('🔴 recordEvent 함수 시작');
+  
+  const result = safeExecute(() => {
+    const innerStart = new Date().getTime();
+    Logger.log('🟡 safeExecute 내부 시작');
+    
     const s = getAppState();
+    const getStateTime = new Date().getTime();
+    Logger.log(`📖 getAppState 완료: ${getStateTime - innerStart}ms`);
 
+    // 기존 로직... (동일)
     if (!s.match.timerRunning && s.match.seconds > 0) {
       throw new Error("경기가 시작되지 않았거나 일시정지 상태에서는 기록할 수 없습니다. 타이머를 시작해주세요.");
     }
@@ -487,24 +473,114 @@ function recordEvent(eventData, seconds) {
     if (stat === 'goal' && assistPlayer && s.sessionStats.playerStats[assistPlayer]) {
       s.sessionStats.playerStats[assistPlayer].assist++;
     }
-    
+   
     if (stat === 'goal') {
-      // ▼▼▼ [오타 수정] s.match.A를 s.match.teamA로 바로잡았습니다. ▼▼▼
-      const [teamToScore, teamToConcede] = teamName === s.match.teamA.name ?
-        [s.match.teamA, s.match.teamB] : [s.match.teamB, s.match.teamA];
-      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+      const [teamToScore, teamToConcede] = teamName === s.match.teamA.name ? [s.match.teamA, s.match.teamB] : [s.match.teamB, s.match.teamA];
       teamToScore.score++;
       s.sessionStats.teamStats[teamToScore.name].goalsFor++;
       s.sessionStats.teamStats[teamToConcede.name].goalsAgainst++;
     } else if (stat === 'ownGoal') {
-      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name ?
-        [s.match.teamB, s.match.teamA] : [s.match.teamA, s.match.teamB];
+      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name ? [s.match.teamB, s.match.teamA] : [s.match.teamA, s.match.teamB];
       scoringTeam.score++;
       s.sessionStats.teamStats[scoringTeam.name].goalsFor++;
       s.sessionStats.teamStats[concedingTeam.name].goalsAgainst++;
     }
 
+    const beforeSave = new Date().getTime();
+    Logger.log(`⚙️ 로직 처리 완료: ${beforeSave - getStateTime}ms`);
+
     saveAppState(s);
+    
+    const afterSave = new Date().getTime();
+    Logger.log(`💾 saveAppState 완료: ${afterSave - beforeSave}ms`);
+
+    const innerEnd = new Date().getTime();
+    Logger.log(`🟡 safeExecute 내부 완료: ${innerEnd - innerStart}ms`);
+    
+    return s;
+  });
+
+  const outerEnd = new Date().getTime();
+  Logger.log(`🔴 recordEvent 함수 완료: ${outerEnd - outerStart}ms`);
+  
+  return result;
+}
+
+// 가장 최근 기록된 이벤트를 취소하는 함수
+function undoLastEvent() {
+  return safeExecute(() => {
+    const s = getAppState();
+    
+    // 타임라인이 비어있으면 취소할 것이 없음
+    if (!s.match.timeline || s.match.timeline.length === 0) {
+      throw new Error("취소할 기록이 없습니다.");
+    }
+    
+    // 가장 최근 이벤트 가져오기 (배열의 첫 번째 요소)
+    const lastEvent = s.match.timeline[0];
+    const { player, stat, teamName, assistPlayer } = lastEvent;
+    
+    // 선수 통계에서 해당 스탯 되돌리기
+    if (s.sessionStats.playerStats[player] && stat !== 'ownGoal') {
+      if (s.sessionStats.playerStats[player][stat] > 0) {
+        s.sessionStats.playerStats[player][stat]--;
+      }
+    }
+    
+    // 도움이 있었던 득점의 경우 도움 선수의 assist 스탯도 되돌리기
+    if (stat === 'goal' && assistPlayer && s.sessionStats.playerStats[assistPlayer]) {
+      if (s.sessionStats.playerStats[assistPlayer].assist > 0) {
+        s.sessionStats.playerStats[assistPlayer].assist--;
+      }
+    }
+    
+    // 득점/자책골 관련 팀 스코어 및 통계 되돌리기
+    if (stat === 'goal') {
+      // 일반 득점인 경우
+      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name 
+        ? [s.match.teamA, s.match.teamB] 
+        : [s.match.teamB, s.match.teamA];
+      
+      // 팀 스코어 되돌리기
+      if (scoringTeam.score > 0) {
+        scoringTeam.score--;
+      }
+      
+      // 팀 통계 되돌리기
+      if (s.sessionStats.teamStats[scoringTeam.name].goalsFor > 0) {
+        s.sessionStats.teamStats[scoringTeam.name].goalsFor--;
+      }
+      if (s.sessionStats.teamStats[concedingTeam.name].goalsAgainst > 0) {
+        s.sessionStats.teamStats[concedingTeam.name].goalsAgainst--;
+      }
+      
+    } else if (stat === 'ownGoal') {
+      // 자책골인 경우 (자책골을 한 선수의 반대팀이 득점)
+      const [scoringTeam, concedingTeam] = teamName === s.match.teamA.name 
+        ? [s.match.teamB, s.match.teamA] 
+        : [s.match.teamA, s.match.teamB];
+      
+      // 팀 스코어 되돌리기
+      if (scoringTeam.score > 0) {
+        scoringTeam.score--;
+      }
+      
+      // 팀 통계 되돌리기
+      if (s.sessionStats.teamStats[scoringTeam.name].goalsFor > 0) {
+        s.sessionStats.teamStats[scoringTeam.name].goalsFor--;
+      }
+      if (s.sessionStats.teamStats[concedingTeam.name].goalsAgainst > 0) {
+        s.sessionStats.teamStats[concedingTeam.name].goalsAgainst--;
+      }
+    }
+    
+    // 타임라인에서 해당 이벤트 제거
+    s.match.timeline.shift();
+    
+    // 변경된 상태 저장
+    saveAppState(s);
+    
+    Logger.log(`이벤트 취소 완료: ${player}의 ${stat} 기록이 취소되었습니다.`);
     return s;
   });
 }
@@ -518,11 +594,11 @@ function endMatch() {
     const { teamA, teamB, count } = s.match;
     const teamStats = s.sessionStats.teamStats; // 세션 팀 통계
     const playerStats = s.sessionStats.playerStats; // 세션 선수 통계
-   
+
     if (!teamA || !teamA.name || !teamB || !teamB.name) {
       throw new Error("경기 종료 처리를 위한 팀 정보가 부족합니다.");
     }
-    
+
     // --- (여기부터) 승패 처리, 상대 전적 업데이트, 선수별 승무패 업데이트 등 ---
     // --- (이 부분의 기존 로직은 변경 없이 그대로 유지됩니다) ---
     if (teamA.score === teamB.score) {
@@ -579,22 +655,16 @@ function endMatch() {
     });
     // --- (여기까지의 기존 로직은 모두 동일합니다) ---
 
-// source: [428]
-function endMatch() {
-  return safeExecute(() => {
-    const s = getAppState();
-    const { teamA, teamB, count } = s.match;
-    // ... (기존 승패 처리 로직은 모두 동일) ...
 
-
-    // ▼▼▼ [1단계: 경기 결과 기록] 이 부분은 그대로 유지합니다. ▼▼▼
+    // ▼▼▼ [핵심 변경] 스프레드시트에 직접 기록하는 대신, 임시 저장 공간(matchHistory)에 데이터를 추가합니다. ▼▼▼
     const date = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), "yyyy-MM-dd");
     [s.match.teamA.name, s.match.teamB.name].forEach(teamName => {
       const teamData = s.teams[teamName];
       if (teamData.players.length > 0 || teamData.goalkeeper) {
+        // matchHistory 배열에 경기 결과 객체를 추가
         s.sessionResults.matchHistory.push({
           date: date,
-          matchNumber: count,
+          matchNumber: count, // 현재 경기 번호
           teamName: teamName,
           goalkeeper: teamData.goalkeeper || '',
           players: teamData.players
@@ -602,31 +672,11 @@ function endMatch() {
         Logger.log(`메모리에 경기 기록 저장 완료: ${teamName} - 경기 #${count}`);
       }
     });
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // ▼▼▼ [2단계: 팀 구성 초기화] 바로 이어서 아래에 추가합니다. ▼▼▼
-    const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
-    allTeamNames.forEach(teamName => {
-        if (s.teams[teamName] && s.initialRosters[teamName]) {
-            // '1경기만' 적용된 골키퍼 및 선수 교체를 'initialRosters' 기준으로 완벽하게 되돌립니다.
-            s.teams[teamName] = JSON.parse(JSON.stringify(s.initialRosters[teamName]));
-        }
-    });
-    Logger.log("모든 팀 구성을 최초 배분 상태로 초기화했습니다.");
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     s.match.count++; // 다음 경기를 위해 경기 수 증가
     s.match.timerRunning = false;
-    
-    // --- (다음 경기 자동 설정 로직은 그대로 유지) ---
-    // ... (이하 생략) ...
-// source: [457]
-    saveAppState(s);
-    return s;
-  });
-}
 
-    
     // --- (여기부터) 다음 경기 자동 설정 로직은 변경 없이 그대로 유지됩니다 ---
     const currentPlayingTeams = [teamA_name, teamB_name];
     const waitingTeam = allTeamNames.find(name => !currentPlayingTeams.includes(name));
@@ -900,7 +950,7 @@ function finishSessionToSummary() {
 
     Object.keys(playerStats).forEach(pName => {
       const stats = playerStats[pName];
-      const mvpScore = (stats.goal * 3) + (stats.assist * 3) + (stats.defense * 1) + (stats.save * 1);
+      const mvpScore = (stats.goal * 2) + (stats.assist * 2) + (stats.defense * 1) + (stats.save * 1);
      
       // MVP 선정
       if (mvpScore > maxMvPScore) {
@@ -1018,126 +1068,392 @@ function updateSessionPlayerStats(playerName, statType, newValue) {
 }
 
 
+// 선수 능력치를 계산하는 함수
+function getPlayerPower(player, criteria) {
+  switch (criteria) {
+    case 'sheet_only':
+      return player.att + player.def; // 임의스탯 (공격+수비)
+    case 'ccpBased':
+      return player.ccp || 0;
+    case 'mpBased':
+      return player.mp || 0;
+    case 'mpPerGameBased':
+      return player.mpPerGame || 0;
+    case 'winRateBased':
+      return player.winRate || 0;
+    case 'mixed_ccp':
+      return ((player.att + player.def) + (player.ccp || 0)) / 2; // 50:50 혼합
+    default:
+      return player.att + player.def;
+  }
+}
+
+// 1. 스네이크 방식 (기존)
+function allocateSnakeMethod(players, teams, teamNames) {
+    players.sort((a, b) => b.power - a.power);
+    let currentTeamIndex = 0;
+    let direction = 1;
+    
+    players.forEach(player => {
+        teams[teamNames[currentTeamIndex]].players.push(player);
+        currentTeamIndex += direction;
+        if (currentTeamIndex >= teamNames.length || currentTeamIndex < 0) {
+            direction *= -1;
+            currentTeamIndex += direction;
+        }
+    });
+}
+
+
+
+
 /**
- * '설정' 시트에서 MP 계산 가중치를 객체 형태로 가져옵니다.
- * CacheService를 사용하여 10분 동안 캐싱하여 시트 읽기 횟수를 최소화합니다.
- * @returns {Object} 각 항목을 key로, 가중치를 value로 갖는 객체. 예: {득점: 3, 도움: 3, ...}
+ * 3팀 고정 초간단 배분
+ * - 18명: 6명씩, 21명: 7명씩
+ * - 그 외: 팀 간 인원 차이 최대 1
+ * - 로직: 높은 파워 순으로 정렬 → 아직 덜 찬 팀 중 합계 파워가 낮은 팀에 배치
+ * - 필요 시 enableSwap=true로 1회만 빠른 스왑(개선되면 적용)
+ *
+ * 사용:
+ * const teamNames = ['Blue','Red','Yellow'];
+ * const result = allocateTeamsSimple(players, teamNames, true); // true=1회 스왑
  */
-function getMpWeights() {
-  const cache = CacheService.getScriptCache();
-  const cachedData = cache.get('mpWeights');
-
-
-  if (cachedData) {
-    return JSON.parse(cachedData);
+function allocateTeamsSimple(players, teamNames, enableSwap) {
+  if (!Array.isArray(teamNames) || teamNames.length !== 3) {
+    throw new Error('teamNames는 정확히 3개여야 합니다.');
+  }
+  if (!Array.isArray(players) || players.length === 0) {
+    throw new Error('players가 비어 있습니다.');
   }
 
+  // 1) 팀별 목표 인원(쿼터) 계산
+  const quotas = computeQuotasFor3(players.length); // 예: [6,6,6] 또는 [7,7,7] 등
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('설정');
+  // 2) 초기 상태
+  const sorted = players.map(p => ({ ...p, power: Number(p.power) || 0 }))
+                        .sort((a, b) => b.power - a.power); // 높은 파워 우선
+  const teamState = teamNames.map((name, i) => ({
+    name, players: [], sumPower: 0, target: quotas[i]
+  }));
 
+  // 3) 간단 그리디 배치
+  for (const pl of sorted) {
+    // 아직 인원 미달인 팀 중 합계 파워가 낮은 팀
+    const candidate = teamState
+      .filter(t => t.players.length < t.target)
+      .sort((a, b) => {
+        if (a.sumPower !== b.sumPower) return a.sumPower - b.sumPower;     // 파워 낮은 팀 우선
+        const ar = a.target - a.players.length, br = b.target - b.players.length;
+        if (ar !== br) return br - ar;                                      // 남은 슬롯 많은 팀
+        return String(a.name).localeCompare(String(b.name));                // 안정적 타이브레이커
+      })[0];
 
-  if (!sheet) {
-    Logger.log("'설정' 시트를 찾을 수 없습니다.");
-    return {};
+    if (!candidate) throw new Error('배치할 팀이 없습니다(쿼터 계산 확인).');
+    candidate.players.push(pl);
+    candidate.sumPower += pl.power;
   }
 
+  // 4) 선택: 1회만 아주 간단한 스왑으로 균형 개선 시도
+  if (enableSwap) {
+    quickOneSwap(teamState);
+  }
 
-  const range = sheet.getRange('A2:B' + sheet.getLastRow());
-  const values = range.getValues();
+  // 5) 결과 정리
+  const out = {};
+  for (const t of teamState) {
+    out[t.name] = { players: t.players, sumPower: t.sumPower, size: t.players.length };
+  }
+  return out;
+}
 
+/**
+ * 18명→[6,6,6], 21명→[7,7,7], 그 외는 차이 ≤ 1 되도록 분배
+ */
+function computeQuotasFor3(total) {
+  if (total === 18) return [6, 6, 6];
+  if (total === 21) return [7, 7, 7];
+  const base = Math.floor(total / 3);
+  const rem = total % 3; // 0,1,2
+  const q = [base, base, base];
+  for (let i = 0; i < rem; i++) q[i] += 1; // 앞 팀부터 +1
+  // 안전 확인: 차이 1 초과 금지
+  const maxQ = Math.max(...q), minQ = Math.min(...q);
+  if (maxQ - minQ > 1) throw new Error('쿼터 계산 오류: 팀 간 인원 차이가 1을 초과합니다.');
+  return q;
+}
 
-  const weights = {};
-  values.forEach(row => {
-    const key = row[0];
-    const value = row[1];
-    if (key && !isNaN(value)) {
-      weights[key] = Number(value);
+/**
+ * 아주 빠른 1회 스왑 시도(표준편차가 줄어드는 경우에만 교환)
+ * - 최강팀과 최약팀 사이에서만 1쌍 교환
+ */
+function quickOneSwap(teamState) {
+  const sums = () => teamState.map(t => t.sumPower);
+  const baseStd = std(sums());
+  // 최약/최강 팀
+  const ordered = [...teamState].sort((a, b) => a.sumPower - b.sumPower);
+  const weak = ordered[0];
+  const strong = ordered[ordered.length - 1];
+  if (!weak.players.length || !strong.players.length) return;
+
+  // 후보를 많이 돌지 않고, 강팀의 약한 쪽 vs 약팀의 강한 쪽 위주로만 간단 탐색
+  const strongSorted = [...strong.players].sort((a, b) => a.power - b.power); // 약한→강한
+  const weakSorted   = [...weak.players].sort((a, b) => b.power - a.power);   // 강한→약한
+  const topK = Math.min(3, strongSorted.length, weakSorted.length);
+
+  let best = null, bestStd = baseStd;
+  for (let i = 0; i < topK; i++) {
+    const a = strongSorted[i]; // 강팀의 상대적 약한 선수
+    const b = weakSorted[i];   // 약팀의 상대적 강한 선수
+    if (!a || !b) continue;
+
+    const strongNew = strong.sumPower - a.power + b.power;
+    const weakNew   = weak.sumPower   - b.power + a.power;
+
+    const newSums = teamState.map(t => {
+      if (t === strong) return strongNew;
+      if (t === weak)   return weakNew;
+      return t.sumPower;
+    });
+    const newStd = std(newSums);
+    if (newStd + 1e-9 < bestStd) {
+      bestStd = newStd;
+      best = { a, b };
     }
-  });
-
-
-  // ↓↓↓ 바로 여기에 붙여넣으세요 ↓↓↓
-  // ======== [디버깅을 위해 추가된 코드] ========
-  // 스크립트가 시트에서 읽어온 최종 데이터가 무엇인지 로그에 출력합니다.
-  Logger.log('↓↓↓ 스크립트가 시트에서 읽어온 최종 데이터 ↓↓↓');
-  Logger.log(weights);
-  // =============================================
-  // ↑↑↑ 여기까지입니다 ↑↑↑
-
-
-  cache.put('mpWeights', JSON.stringify(weights), 600);
- 
-  Logger.log('스프레드시트에서 MP 가중치를 읽어와 캐시에 저장했습니다.');
-  return weights;
-}
-
-function updateMPScores() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('통계');
-  if (!sheet) {
-    console.log("통계 시트를 찾을 수 없습니다.");
-    return;
   }
-  
-  const playersDataRange = sheet.getRange(3, 1, sheet.getLastRow() - 2, 8);
-  const players = playersDataRange.getValues();
-  
-  const updateData = players.map(player => {
-    const wins = player[2] || 0; // 승리
-    const draws = player[3] || 0; // 무승부
-    const losses = player[4] || 0; // 패배
-    const goals = player[5] || 0; // 득점
-    const assists = player[6] || 0; // 도움
-    const saves = player[7] || 0; // 선방
-    const defense = player[8] || 0; // 수비
-    
-    // 변경된 MP 계산 로직
-    // 1. 득점/도움 점수를 3점에서 2점으로 변경
-    // 2. 승점(승리*3 + 무승부*1)을 MP에 포함
-    const winPoints = wins * 3 + draws * 1;
-    const activityPoints = goals * 2 + assists * 2 + saves * 1 + defense * 1;
-    
-    // 총 MP = 승점 + 활동 점수
-    const totalMP = winPoints + activityPoints;
-    
-    return [totalMP];
-  });
-  
-  // MP 점수를 한 번에 업데이트
-  sheet.getRange(3, 9, updateData.length, 1).setValues(updateData);
+
+  if (best) {
+    const ai = strong.players.indexOf(best.a);
+    const bi = weak.players.indexOf(best.b);
+    if (ai >= 0 && bi >= 0) {
+      strong.players[ai] = best.b;
+      weak.players[bi]   = best.a;
+      strong.sumPower = strong.sumPower - best.a.power + best.b.power;
+      weak.sumPower   = weak.sumPower   - best.b.power + best.a.power;
+    }
+  }
 }
 
 /**
- * 선수 한 명의 기록 데이터를 받아 MP를 계산합니다.
- * @param {Object} playerRecord 선수의 기록. 예: {wins: 1, draws: 0, losses: 0, goals: 2, assists: 1, defenses: 5, saves: 0}
- * @returns {number} 계산된 총 MP 점수.
+ * 표준편차(간단 버전)
  */
-function calculateMP(playerRecord) {
-  // 1단계: '설정' 시트에서 최신 가중치 정보를 가져옵니다.
-  const weights = getMpWeights();
+function std(arr) {
+  if (!arr.length) return 0;
+  const m = arr.reduce((s, v) => s + v, 0) / arr.length;
+  const v = arr.reduce((s, v) => s + (v - m) * (v - m), 0) / arr.length;
+  return Math.sqrt(v);
+}
+
+/**
+ * 간단 테스트(Apps Script에서 실행)
+ */
+function testAllocateTeamsSimple() {
+  const teamNames = ['Blue', 'Red', 'Yellow'];
+  const players = [];
+  for (let i = 0; i < 18; i++) {
+    players.push({ name: 'P' + (i + 1), power: 50 + Math.floor(Math.random() * 51) });
+  }
+  const result = allocateTeamsSimple(players, teamNames, true); // 마지막 true=1회 스왑 시도
+  Logger.log(JSON.stringify(result, null, 2));
+}
 
 
-  // playerRecord 객체에 특정 값이 없는 경우를 대비하여 기본값 0으로 설정합니다.
-  const wins = playerRecord.wins || 0;
-  const draws = playerRecord.draws || 0;
-  const losses = playerRecord.losses || 0;
-  const goals = playerRecord.goals || 0;
-  const assists = playerRecord.assists || 0;
-  const defenses = playerRecord.defenses || 0;
-  const saves = playerRecord.saves || 0;
+// 2. CCP 순위기반용 새 함수 추가 (CCP 1점 이내)
+function allocateCcpBased(players, teams, teamNames) {
+   console.log("CCP 기반 배분 시작");
+    console.log("선수별 CCP:", players.map(p => `${p.name}:${p.power}`));
+    players.sort((a, b) => b.power - a.power);
+    
+    // 초기 균등 배분
+    players.forEach((player, i) => {
+        teams[teamNames[i % teamNames.length]].players.push(player);
+    });
+    
+    // CCP 균형 조정 (최대 50회)
+    for (let i = 0; i < 50; i++) {
+        const teamStats = teamNames.map(name => ({
+            name: name,
+            avgCcp: teams[name].players.reduce((sum, p) => sum + p.power, 0) / teams[name].players.length,
+            players: teams[name].players
+        })).sort((a, b) => a.avgCcp - b.avgCcp);
+        
+        const weakest = teamStats[0];
+        const strongest = teamStats[2];
+        const ccpGap = strongest.avgCcp - weakest.avgCcp;
+        
+        if (ccpGap <= 1) break; // CCP 1점 이내면 종료
+        
+        // 선수 교환
+        if (strongest.players.length > 0 && weakest.players.length > 0) {
+            const weakInStrong = strongest.players.reduce((prev, curr) => 
+                prev.power < curr.power ? prev : curr
+            );
+            const strongInWeak = weakest.players.reduce((prev, curr) => 
+                prev.power > curr.power ? prev : curr
+            );
+            
+            if (weakInStrong.power < strongInWeak.power) {
+                const strongIdx = strongest.players.indexOf(weakInStrong);
+                const weakIdx = weakest.players.indexOf(strongInWeak);
+                
+                strongest.players[strongIdx] = strongInWeak;
+                weakest.players[weakIdx] = weakInStrong;
+            } else {
+                break;
+            }
+        }
+    }
+}
 
 
-  // 2단계: 하드코딩된 숫자가 아닌, weights 객체의 값을 사용하여 MP를 계산합니다.
-  // weights['항목이름'] || 0 부분은 '설정' 시트에 항목이 없을 경우를 대비한 안전장치입니다.
-  const mp =
-    (wins * (weights['승리'] || 0)) +
-    (draws * (weights['무승부'] || 0)) +
-    (losses * (weights['패배'] || 0)) +
-    (goals * (weights['득점'] || 0)) +
-    (assists * (weights['도움'] || 0)) +
-    (defenses * (weights['수비'] || 0)) +
-    (saves * (weights['선방'] || 0));
+// 1. allocateMpBased 함수 교체 (현재 불균등 배분 문제)
+function allocateMpBased(players, teams, teamNames) {
+    players.sort((a, b) => b.power - a.power);
+    
+    players.forEach(player => {
+        const teamPowers = teamNames.map(name => ({
+            name: name,
+            power: teams[name].players.reduce((sum, p) => sum + p.power, 0),
+            count: teams[name].players.length
+        })).sort((a, b) => {
+            // ★ 인원수 우선 비교로 변경
+            if (a.count !== b.count) return a.count - b.count; // 인원 적은 팀 우선
+            return a.power - b.power; // 인원 같으면 약한 팀 우선
+        });
+        
+        teams[teamPowers[0].name].players.push(player);
+    });
+}
 
+// 2. allocateMpPerGameBased 함수 교체 (지그재그 방식 개선)
+function allocateMpPerGameBased(players, teams, teamNames) {
+    players.sort((a, b) => b.power - a.power);
+    
+    // 개선된 지그재그: 더 균형잡힌 패턴
+    let assignments = [];
+    let teamIndex = 0;
+    let direction = 1;
+    
+    players.forEach(player => {
+        assignments.push({ player, teamIndex });
+        
+        if (direction === 1) {
+            teamIndex++;
+            if (teamIndex >= teamNames.length) {
+                teamIndex = teamNames.length - 1;
+                direction = -1;
+            }
+        } else {
+            teamIndex--;
+            if (teamIndex < 0) {
+                teamIndex = 0;
+                direction = 1;
+            }
+        }
+    });
+    
+    // 배분 실행
+    assignments.forEach(assignment => {
+        teams[teamNames[assignment.teamIndex]].players.push(assignment.player);
+    });
+}
 
-  return mp;
+// 1. allocateWinRateBased 함수 수정 (승률 2% 이내, CCP 3점 이내)
+function allocateWinRateBased(players, teams, teamNames) {
+    players.sort((a, b) => b.power - a.power);
+    
+    // 초기 균등 배분
+    players.forEach((player, i) => {
+        teams[teamNames[i % teamNames.length]].players.push(player);
+    });
+    
+    // 승률 균형 조정 (최대 50회)
+    for (let i = 0; i < 50; i++) {
+        const teamStats = teamNames.map(name => ({
+            name: name,
+            avgWinRate: teams[name].players.reduce((sum, p) => sum + p.power, 0) / teams[name].players.length,
+            players: teams[name].players
+        })).sort((a, b) => a.avgWinRate - b.avgWinRate);
+        
+        const weakest = teamStats[0];
+        const strongest = teamStats[2];
+        const winRateGap = strongest.avgWinRate - weakest.avgWinRate;
+        
+        if (winRateGap <= 2) break; // 승률 2% 이내면 종료
+        
+        // 선수 교환
+        if (strongest.players.length > 0 && weakest.players.length > 0) {
+            const weakInStrong = strongest.players.reduce((prev, curr) => 
+                prev.power < curr.power ? prev : curr
+            );
+            const strongInWeak = weakest.players.reduce((prev, curr) => 
+                prev.power > curr.power ? prev : curr
+            );
+            
+            if (weakInStrong.power < strongInWeak.power) {
+                const strongIdx = strongest.players.indexOf(weakInStrong);
+                const weakIdx = weakest.players.indexOf(strongInWeak);
+                
+                strongest.players[strongIdx] = strongInWeak;
+                weakest.players[weakIdx] = weakInStrong;
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+// 4. 새로운 균형 체크 함수 (디버깅용)
+function checkTeamBalance(teams, teamNames) {
+    const teamPowers = teamNames.map(name => ({
+        name: name,
+        power: teams[name].players.reduce((sum, p) => sum + p.power, 0),
+        count: teams[name].players.length
+    }));
+    
+    console.log('팀 균형 체크:');
+    teamPowers.forEach(team => {
+        console.log(`${team.name}: ${team.power.toFixed(1)} (${team.count}명)`);
+    });
+    
+    const maxPower = Math.max(...teamPowers.map(t => t.power));
+    const minPower = Math.min(...teamPowers.map(t => t.power));
+    const gap = maxPower - minPower;
+    
+    console.log(`최대 능력치 차이: ${gap.toFixed(1)} ${gap <= 15 ? '(균형잡힌)' : '(불균형)'}`);
+    
+    return gap <= 15;
+}
+
+// 6. 완전 랜덤
+function allocateRandom(players, teams, teamNames) {
+    const shuffled = players.sort(() => 0.5 - Math.random());
+    shuffled.forEach((player, i) => {
+        teams[teamNames[i % teamNames.length]].players.push(player);
+    });
+}
+
+// 주장/부주장 설정
+function assignCaptains(teams) {
+    Object.keys(teams).forEach(teamName => {
+        const playersInTeam = teams[teamName].players;
+        if (playersInTeam.length > 0) {
+            const captain = playersInTeam.reduce((prev, current) => 
+                (prev.power > current.power) ? prev : current
+            );
+            teams[teamName].captain = captain.name;
+            
+            const others = playersInTeam.filter(p => p.name !== captain.name);
+            if (others.length > 0) {
+                const viceCaptain = others.reduce((prev, current) => 
+                    (prev.power > current.power) ? prev : current
+                );
+                teams[teamName].viceCaptain = viceCaptain.name;
+            } else {
+                teams[teamName].viceCaptain = null;
+            }
+        } else {
+            teams[teamName].captain = null;
+            teams[teamName].viceCaptain = null;
+        }
+    });
 }
