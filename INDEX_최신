@@ -646,8 +646,15 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
 
 
     function renderMatchControllerScreen() {
-        recoverTimerIfNeeded(); 
-        const { teamA, teamB, count, timeline, timerRunning, seconds, todayHeadToHead } = localState.match;
+   // [타이머 안전장치] 서버 상태와 맞지 않는 타이머만 정리
+    if (timerInterval && !localState.match.timerRunning) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        console.log('불필요한 타이머 정리됨');
+    }
+    
+    recoverTimerIfNeeded(); 
+    const { teamA, teamB, count, timeline, timerRunning, seconds, todayHeadToHead } = localState.match;
         const container = document.getElementById('screen-match-controller');
        
         const headToHeadKey = [teamA.name, teamB.name].sort().join('_');
@@ -1005,6 +1012,12 @@ function renderSessionSummaryScreen() {
 
         switch (action) {
              case 'go-back':
+            if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        console.log('화면 전환으로 타이머 정리됨');
+    }
+
         saveTimerStateBeforeLeave(); // 이 줄만 추가
         serverCall('changeScreen', targetScreen);
         break;
@@ -1176,8 +1189,16 @@ function renderSessionSummaryScreen() {
                 if (window.confirm('마지막 기록을 되돌리시겠습니까?')) serverCall('undoLastEvent');
                 break;
             case 'end-match':
-                if (window.confirm('현재 경기를 종료하시겠습니까?')) serverCall('endMatch');
-                break;
+                if (window.confirm('현재 경기를 종료하시겠습니까?')) {
+        // [타이머 안전장치] 경기 종료 시 클라이언트 타이머도 정리
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            console.log('경기 종료로 타이머 정리됨');
+        }
+        serverCall('endMatch');
+    }
+    break;
             case 'finish-session-to-summary':
                 document.getElementById('confirm-session-end-modal-text').textContent = '오늘의 모든 경기를 끝내고 기록을 저장하시겠습니까?';
                 document.getElementById('confirm-session-end-modal').classList.remove('hidden');
