@@ -15,7 +15,7 @@ let lastBatchSave = 0;
 function doGet(e) {
   // 'index' HTML 파일을 웹 페이지로 변환하여 반환합니다.
   // 페이지 제목을 '풋살 매니저 (업그레이드)'로 설정합니다.
-  return HtmlService.createHtmlOutputFromFile('index').setTitle('풋살 매니저 (업그레이드)');
+  return HtmlService.createHtmlOutputFromFile('index').setTitle('JMFC풋살 매니저');
 }
 
 
@@ -154,13 +154,13 @@ function getAppState() {
       matchHistory: [] 
     }
   };
-  CACHE.put(CACHE_KEY, JSON.stringify(initialState), 21600);
+  CACHE.put(CACHE_KEY, JSON.stringify(initialState), 86400);
   return initialState;
 }
 
 // 앱 상태를 캐시에 저장하는 함수입니다.
 function saveAppState(state) {
-  CACHE.put(CACHE_KEY, JSON.stringify(state), 21600); // 상태를 JSON 형태로 캐시에 저장
+  CACHE.put(CACHE_KEY, JSON.stringify(state), 86400); // 상태를 JSON 형태로 캐시에 저장
 }
 
 
@@ -1243,19 +1243,57 @@ function std(arr) {
   return Math.sqrt(v);
 }
 
-/**
- * 간단 테스트(Apps Script에서 실행)
- */
-function testAllocateTeamsSimple() {
-  const teamNames = ['Blue', 'Red', 'Yellow'];
-  const players = [];
-  for (let i = 0; i < 18; i++) {
-    players.push({ name: 'P' + (i + 1), power: 50 + Math.floor(Math.random() * 51) });
-  }
-  const result = allocateTeamsSimple(players, teamNames, true); // 마지막 true=1회 스왑 시도
-  Logger.log(JSON.stringify(result, null, 2));
-}
 
+function allocateBalanced(players, teams, teamNames) {
+    players.sort((a, b) => b.power - a.power);
+    
+    // 탐욕 알고리즘으로 초기 배분
+    players.forEach(player => {
+        const teamPowers = teamNames.map(name => ({
+            name: name,
+            power: teams[name].players.reduce((sum, p) => sum + p.power, 0),
+            count: teams[name].players.length
+        })).sort((a, b) => {
+            if (a.count !== b.count) return a.count - b.count; // 인원 우선
+            return a.power - b.power; // 능력치 차순
+        });
+        
+        teams[teamPowers[0].name].players.push(player);
+    });
+    
+    // 간단한 균형 조정 (5회)
+    for (let i = 0; i < 5; i++) {
+        const teamPowers = teamNames.map(name => ({
+            name: name,
+            power: teams[name].players.reduce((sum, p) => sum + p.power, 0),
+            players: teams[name].players
+        })).sort((a, b) => a.power - b.power);
+        
+        const weakest = teamPowers[0];
+        const strongest = teamPowers[2];
+        const gap = strongest.power - weakest.power;
+        
+        if (gap <= 20) break; // 충분히 균형잡힘
+        
+        // 간단한 교환
+        if (strongest.players.length > 0 && weakest.players.length > 0) {
+            const weakInStrong = strongest.players.reduce((prev, curr) => 
+                prev.power < curr.power ? prev : curr
+            );
+            const strongInWeak = weakest.players.reduce((prev, curr) => 
+                prev.power > curr.power ? prev : curr
+            );
+            
+            if (weakInStrong.power < strongInWeak.power) {
+                const strongIdx = strongest.players.indexOf(weakInStrong);
+                const weakIdx = weakest.players.indexOf(strongInWeak);
+                
+                strongest.players[strongIdx] = strongInWeak;
+                weakest.players[weakIdx] = weakInStrong;
+            }
+        }
+    }
+}
 
 // 2. CCP 순위기반용 새 함수 추가 (CCP 1점 이내)
 function allocateCcpBased(players, teams, teamNames) {
