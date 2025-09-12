@@ -1057,8 +1057,20 @@ function updateAndArchiveSession() {
         return [date, pName, stat.gamesPlayed, stat.wins, stat.draws, stat.losses, stat.goal, stat.assist, stat.defense, stat.save];
       });
     if(rowsToAdd.length > 0) {
-      archiveSheet.getRange(archiveSheet.getLastRow() + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
+    // K열(11번째 열)까지만 체크하여 실제 데이터가 있는 마지막 행 찾기
+    let lastDataRow = 1; // 헤더 행
+    const dataRange = archiveSheet.getRange(1, 1, archiveSheet.getLastRow(), 10).getValues();
+    
+    for(let i = dataRange.length - 1; i >= 1; i--) {
+        if(dataRange[i][1]) { // B열(선수명)에 값이 있으면
+            lastDataRow = i + 1;
+            break;
+        }
     }
+    
+    // 실제 데이터 다음 행부터 추가
+    archiveSheet.getRange(lastDataRow + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
+}
     
     const pastTeamsSheet = getSheet(CONFIG.PAST_TEAMS_SHEET);
     const teamRowsToAdd = state.sessionResults.matchHistory.map(match => {
