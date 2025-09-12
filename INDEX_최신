@@ -633,6 +633,16 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
             }).join('');
 
 
+            // 원팀 복구 버튼 추가 (경기 선택 화면에)
+    if (localState.originalTeams) {
+        container.innerHTML += `
+            <button data-action="restore-original-teams" class="btn btn-secondary w-full text-3xl mt-4">
+                🔄 원래 팀 구성으로 복구
+            </button>
+        `;
+    }
+
+
         const startMatchBtn = document.getElementById('btn-start-match');
         const selectedTeamsCount = localState.match.playingTeams.length;
         if (selectedTeamsCount === 2) {
@@ -1074,6 +1084,13 @@ function renderSessionSummaryScreen() {
                 const selectedField = document.getElementById('field-select').value;
                 serverCall('startMatch', selectedTeamsToStart, selectedDuration, selectedField);
                 break;
+
+             case 'restore-original-teams':
+            if (window.confirm('원래 팀 구성으로 복구하시겠습니까?')) {
+                serverCall('restoreOriginalTeams');
+            }
+            break;
+            
             case 'open-record-modal':
                 if (!localState.match.timerRunning && localState.match.seconds > 0) {
                     alert('경기가 시작되지 않았거나 일시정지 상태에서는 기록할 수 없습니다. 타이머를 시작해주세요.');
