@@ -339,7 +339,7 @@
             <p id="consecutive-match-suggestion" class="text-2xl text-gray-400 mb-4"></p>
             <div class="grid grid-cols-2 gap-4">
                 <button data-action="confirm-next-match" data-confirm="true" class="btn btn-primary text-3xl">예</button>
-                <button data-action="confirm-next-match" data-confirm="false" class="btn btn-secondary text-3xl">아니오 (경기 선택 화면으로)</button>
+                <button data-action="confirm-next-match" data-confirm="false" class="btn btn-secondary text-3xl">팀선택하기</button>
             </div>
         </div>
     </div>
@@ -633,16 +633,6 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
             }).join('');
 
 
-            // 원팀 복구 버튼 추가 (경기 선택 화면에)
-    if (localState.originalTeams) {
-        container.innerHTML += `
-            <button data-action="restore-original-teams" class="btn btn-secondary w-full text-3xl mt-4">
-                🔄 원래 팀 구성으로 복구
-            </button>
-        `;
-    }
-
-
         const startMatchBtn = document.getElementById('btn-start-match');
         const selectedTeamsCount = localState.match.playingTeams.length;
         if (selectedTeamsCount === 2) {
@@ -690,9 +680,10 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
                     </div>
                 </div>
                 <div class="flex justify-center items-center gap-8">
-                    <span id="timer-display" class="text-7xl font-mono card py-5 px-10 bg-gray-700 text-gray-100">${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}</span>
-                    <button data-action="toggle-timer" class="btn ${timerRunning ? 'btn-secondary' : 'btn-primary'} text-3xl px-10 w-48">${timerRunning ? '일시정지' : '시작'}</button>
-                </div>
+    ${localState.originalTeams ? `<button data-action="restore-original-teams" class="btn btn-secondary text-3xl px-8">🔄 원팀</button>` : ''}
+    <span id="timer-display" class="text-7xl font-mono card py-5 px-10 bg-gray-700 text-gray-100">${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}</span>
+    <button data-action="toggle-timer" class="btn ${timerRunning ? 'btn-secondary' : 'btn-primary'} text-3xl px-10 w-48">${timerRunning ? '일시정지' : '시작'}</button>
+</div>
                
                 <div class="flex justify-center border-b border-gray-600 mb-6 gap-x-12">
                     <button class="tab-button active" data-tab="players">라인업</button>
@@ -1093,7 +1084,12 @@ function renderSessionSummaryScreen() {
             
             case 'open-record-modal':
                 if (!localState.match.timerRunning && localState.match.seconds > 0) {
-                    alert('경기가 시작되지 않았거나 일시정지 상태에서는 기록할 수 없습니다. 타이머를 시작해주세요.');
+                    // alert 대신 커스텀 알림 사용
+                    const msg = document.createElement('div');
+                    msg.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-4 rounded-lg text-2xl font-bold z-50';
+                    msg.textContent = '타이머를 먼저 시작해주세요!';
+                    document.body.appendChild(msg);
+                    setTimeout(() => msg.remove(), 2000);
                     return;
                 }
                 currentEventData = { player: playerName, teamName: teamName };
