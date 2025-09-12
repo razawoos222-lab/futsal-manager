@@ -2,10 +2,10 @@
 const CONFIG = {
   STATS_SHEET: "선수별능력치", // 선수들의 기본 능력치 (공격, 수비, 포지션)가 기록된 시트 이름
   PLAYER_ARCHIVE_SHEET: "기록실_개인기록", // 개인별 경기 기록이 누적되는 시트 이름
-  PAST_TEAMS_SHEET: "지난_팀_구성" // 과거 경기에서 팀 구성이 기록될 시트 이름
+  PAST_TEAMS_SHEET: "지난_팀_구성", // 과거 경기에서 팀 구성이 기록될 시트 이름
+  APP_STATE_SHEET: "앱_상태_저장" 
 };
-const CACHE = CacheService.getScriptCache(); // Apps Script 캐시 서비스 사용 (데이터 임시 저장)
-const CACHE_KEY = 'FUTSAL_APP_STATE_FINAL_V12'; // 캐시 키 (앱 상태를 식별하기 위함)
+
 
 let batchSaveTimer = null;
 let lastBatchSave = 0;
@@ -83,17 +83,23 @@ function getMasterPlayersFromSheet() {
 // =================================================================
 // 파일: Code.gs | 1.1 | 함수 수정: getAppState
 // =================================================================
-// Apps Script 캐시에서 앱 상태를 가져오거나 초기 상태를 생성하는 함수입니다.
+// 앱 상태를 스프레드시트에서 가져오기
 function getAppState() {
-  const stateString = CACHE.get(CACHE_KEY);
-  if (stateString) { // 캐시에 상태가 있다면
+  const sheet = getSheet(CONFIG.APP_STATE_SHEET);
+  
+  // A1 셀에서 JSON 데이터 읽기
+  const stateString = sheet.getRange('A1').getValue();
+  
+  if (stateString) {
     try {
       const parsedState = JSON.parse(stateString);
-      // 캐시 데이터에 새로운 필드가 없을 경우를 대비하여 기본값 설정 및 초기화
+  
       parsedState.selectedDate = parsedState.selectedDate ||
       Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), "yyyy-MM-dd");
       parsedState.match.selectedDuration = parsedState.match.selectedDuration || 600; // 기본 10분 (600초)
       parsedState.selectedField = parsedState.selectedField || 'A 구장'; // 선택된 구장명 초기화
+       // 원팀 데이터 저장을 위한 필드 추가
+      parsedState.originalTeams = parsedState.originalTeams || null;
 
       if (!parsedState.sessionStats.playerStats) parsedState.sessionStats.playerStats = {};
       parsedState.attendingPlayerNames.forEach(pName => {
@@ -115,14 +121,14 @@ function getAppState() {
       
       parsedState.match.nextMatchSuggestion = parsedState.match.nextMatchSuggestion || null;
 
-      return parsedState;
+     return parsedState;
     } catch(e) {
-      CACHE.remove(CACHE_KEY);
-      Logger.log("손상된 캐시를 삭제하고 새 상태로 시작합니다.");
+      Logger.log("손상된 저장 데이터를 삭제하고 새 상태로 시작합니다.");
+      sheet.clear();
     }
   }
 
-  // 캐시가 없거나 손상된 경우, 여기서 새로운 초기 상태를 생성하여 반환합니다.
+ // 초기 상태 생성
   const teamStatTemplate = { wins: 0, draws: 0, losses: 0, consecutiveMatches: 0, goalsFor: 0, goalsAgainst: 0, matchesPlayed: 0, consecutivePlays: 0 };
   const initialState = {
     currentScreen: 'screen-attendance',
@@ -134,6 +140,7 @@ function getAppState() {
       BLUE: { players: [], goalkeeper: null },
       YELLOW: { players: [], goalkeeper: null }
     },
+    originalTeams: null, // 원팀 데이터 저장용
     match: {
       count: 1,
       playingTeams: [],
@@ -149,29 +156,67 @@ function getAppState() {
       playerStats: {},
       teamStats: { RED: {...teamStatTemplate}, BLUE: {...teamStatTemplate}, YELLOW: {...teamStatTemplate} }
     },
-    // ▼▼▼ [핵심 수정] 초기 상태에도 matchHistory 배열을 추가합니다. ▼▼▼
     sessionResults: { 
       matchHistory: [] 
     }
   };
-  CACHE.put(CACHE_KEY, JSON.stringify(initialState), 86400);
+  
+  saveAppState(initialState);
   return initialState;
 }
 
-// 앱 상태를 캐시에 저장하는 함수입니다.
+// 앱 상태를 스프레드시트에 저장
 function saveAppState(state) {
-  CACHE.put(CACHE_KEY, JSON.stringify(state), 86400); // 상태를 JSON 형태로 캐시에 저장
+  const sheet = getSheet(CONFIG.APP_STATE_SHEET);
+  const jsonString = JSON.stringify(state);
+  
+  // A1 셀에 JSON 저장
+  sheet.getRange('A1').setValue(jsonString);
+  
+  // B1 셀에 최종 저장 시간 기록 (디버깅용)
+  sheet.getRange('B1').setValue(new Date().toLocaleString('ko-KR'));
 }
 
 
-// 세션을 초기화 (캐시 삭제)하고 새로운 초기 상태를 반환하는 함수입니다.
+// 세션 초기화 (시트 데이터 삭제)
 function resetSession() {
   return safeExecute(() => {
-    CACHE.remove(CACHE_KEY); // 캐시에서 앱 상태를 삭제합니다.
-    return getAppState(); // 새로운 초기 상태를 가져와 반환합니다.
+    const sheet = getSheet(CONFIG.APP_STATE_SHEET);
+    sheet.clear(); // 시트 내용 삭제
+    return getAppState(); // 새로운 초기 상태 반환
   });
 }
 
+// 원팀 저장 함수 (새로 추가)
+function saveOriginalTeams() {
+  return safeExecute(() => {
+    const state = getAppState();
+    
+    // 원팀이 아직 저장되지 않았다면 현재 팀을 원팀으로 저장
+    if (!state.originalTeams) {
+      state.originalTeams = JSON.parse(JSON.stringify(state.teams));
+      Logger.log("원팀 구성이 저장되었습니다.");
+    }
+    
+    saveAppState(state);
+    return state;
+  });
+}
+
+// 원팀 복구 함수 (새로 추가)
+function restoreOriginalTeams() {
+  return safeExecute(() => {
+    const state = getAppState();
+    
+    if (state.originalTeams) {
+      state.teams = JSON.parse(JSON.stringify(state.originalTeams));
+      Logger.log("원팀 구성으로 복구되었습니다.");
+      saveAppState(state);
+    }
+    
+    return state;
+  });
+}
 
 // 현재 화면을 변경하고 앱 상태를 저장하는 함수입니다.
 function changeScreen(id) {
@@ -402,12 +447,17 @@ function getHybridPlayerPower(player, actualStats, mixRatio, criteria) {
 function startMatch(teamNames, selectedDuration, selectedField) {
   return safeExecute(() => {
     const s = getAppState(); // 현재 앱 상태를 가져옵니다.
+
+    // 첫 경기 시작 시 원팀 저장
+    if (s.match.count === 1 && !s.originalTeams) {
+      s.originalTeams = JSON.parse(JSON.stringify(s.teams));
+    }
+
     // [오류 수정] teamNames가 유효한 배열인지 확인
     if (!Array.isArray(teamNames) || teamNames.length < 2) {
       Logger.log("오류: startMatch에 유효하지 않은 teamNames가 전달되었습니다.");
       throw new Error("경기 시작을 위한 팀 선택이 올바르지 않습니다.");
     }
-
 
     s.currentScreen = 'screen-match-controller'; // 경기 컨트롤러 화면으로 전환합니다.
     // 경기 정보를 초기화하고 설정합니다. (선택된 경기 시간 및 구장명 반영)
@@ -999,7 +1049,6 @@ function updateAndArchiveSession() {
     const state = getAppState();
     const date = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), "yyyy-MM-dd");
    
-    // --- 1. 개인 기록 시트 업데이트 (이 부분은 기존과 동일합니다) ---
     const archiveSheet = getSheet(CONFIG.PLAYER_ARCHIVE_SHEET);
     const rowsToAdd = Object.keys(state.sessionStats.playerStats)
       .filter(pName => state.sessionStats.playerStats[pName].gamesPlayed > 0)
@@ -1010,32 +1059,29 @@ function updateAndArchiveSession() {
     if(rowsToAdd.length > 0) {
       archiveSheet.getRange(archiveSheet.getLastRow() + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
     }
-   
-    // ▼▼▼ [핵심 추가] 2. 임시 저장했던 모든 팀 구성 기록을 스프레드시트에 한 번에 기록합니다. ▼▼▼
+    
     const pastTeamsSheet = getSheet(CONFIG.PAST_TEAMS_SHEET);
     const teamRowsToAdd = state.sessionResults.matchHistory.map(match => {
-        // 시트 컬럼 순서: 경기일, 경기번호, 팀명, 키퍼, 선수1, 선수2, ...
-        const players = match.players.slice(0, 7); // 최대 7명 선수까지만 기록
+        const players = match.players.slice(0, 7);
         while(players.length < 7) {
-            players.push(''); // 빈 자리는 공백으로 채움
+            players.push('');
         }
         return [match.date, match.matchNumber, match.teamName, match.goalkeeper, ...players];
     });
 
     if (teamRowsToAdd.length > 0) {
-        // 시트에 헤더가 없으면 추가
         if(pastTeamsSheet.getRange(1,1).getValue() === "") {
             pastTeamsSheet.appendRow(["경기일", "경기번호", "팀명", "키퍼", "선수1", "선수2", "선수3", "선수4", "선수5", "선수6", "선수7"]);
         }
-        // 쌓아뒀던 모든 데이터를 한 번에 시트에 기록
         pastTeamsSheet.getRange(pastTeamsSheet.getLastRow() + 1, 1, teamRowsToAdd.length, teamRowsToAdd[0].length).setValues(teamRowsToAdd);
-        Logger.log(`${teamRowsToAdd.length}개의 팀 구성 기록을 시트에 추가했습니다.`);
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    SpreadsheetApp.flush(); // 모든 변경사항을 즉시 시트에 반영
-   
-    CACHE.remove(CACHE_KEY);
+    
+    SpreadsheetApp.flush();
+    
+    // 앱 상태 시트도 초기화
+    const stateSheet = getSheet(CONFIG.APP_STATE_SHEET);
+    stateSheet.clear();
+    
     return getAppState();
   });
 }
