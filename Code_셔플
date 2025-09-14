@@ -932,6 +932,52 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
 }
 
 
+// [신규] 대기 선수를 팀에 추가하는 함수
+// teamName: 선수를 추가할 팀 이름 (RED, BLUE, YELLOW)
+// playerName: 추가할 선수 이름
+function addPlayerToTeam(teamName, playerName) {
+  return safeExecute(() => {
+    const state = getAppState();
+    
+    // 팀이 존재하는지 확인
+    if (!state.teams[teamName]) {
+      throw new Error(`존재하지 않는 팀입니다: ${teamName}`);
+    }
+    
+    // 이미 7명인지 확인
+    if (state.teams[teamName].players.length >= 7) {
+      throw new Error(`${teamName} 팀은 이미 최대 인원(7명)입니다.`);
+    }
+    
+    // 선수가 이미 다른 팀에 있는지 확인
+    const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+    for (let tName of allTeamNames) {
+      if (state.teams[tName].players.includes(playerName)) {
+        throw new Error(`${playerName} 선수는 이미 ${tName} 팀에 있습니다.`);
+      }
+      if (state.teams[tName].goalkeeper === playerName) {
+        throw new Error(`${playerName} 선수는 ${tName} 팀의 골키퍼입니다.`);
+      }
+    }
+    
+    // 팀에 선수 추가
+    state.teams[teamName].players.push(playerName);
+    
+    // 선수 통계 초기화 (없으면)
+    if (!state.sessionStats.playerStats[playerName]) {
+      state.sessionStats.playerStats[playerName] = {
+        goal: 0, assist: 0, defense: 0, save: 0,
+        gamesPlayed: 0, wins: 0, draws: 0, losses: 0
+      };
+    }
+    
+    Logger.log(`${playerName} 선수가 ${teamName} 팀에 추가되었습니다.`);
+    saveAppState(state);
+    return state;
+  });
+}
+
+
 // [신규] 무승부 시 다음 경기를 진행할 팀을 선택하는 함수
 function selectNextPlayingTeam(selectedTeamName) {
   return safeExecute(() => {
