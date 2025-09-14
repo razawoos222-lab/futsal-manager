@@ -324,9 +324,12 @@ function getPlayerStatsFromArchive() {
   return playerStats;
 }
 
-function performTeamAllocation(algorithm) {
+function performTeamAllocation(algorithm, shuffleEnabled = false) {  // shuffleEnabled 파라미터 추가
   return safeExecute(() => {
     const state = getAppState();
+    
+    // 새로운 팀 배분 시 원팀 데이터 초기화
+    state.originalTeams = null;
     
     // 시트에서 직접 계산된 데이터 가져오기 (빠르고 안정적)
     const masterPlayers = getMasterPlayersFromSheet();
@@ -372,10 +375,37 @@ function performTeamAllocation(algorithm) {
         break;
     }
     
+   
     // 능력치 계산 (간단하고 명확하게)
     attendingPlayersData.forEach(p => {
       p.power = getPlayerPower(p, criteria);
     });
+
+    // 티어 셔플 적용
+    if (shuffleEnabled) {
+      // 먼저 파워 순으로 정렬
+      attendingPlayersData.sort((a, b) => b.power - a.power);
+      
+      // 3개 티어로 나누기
+      const tierSize = Math.ceil(attendingPlayersData.length / 3);
+      
+      // 각 티어 내부 셔플
+      for (let i = 0; i < attendingPlayersData.length; i += tierSize) {
+        const tierEnd = Math.min(i + tierSize, attendingPlayersData.length);
+        const tier = attendingPlayersData.slice(i, tierEnd);
+        
+        // Fisher-Yates 셔플 (더 균등한 랜덤)
+        for (let j = tier.length - 1; j > 0; j--) {
+          const randomIndex = Math.floor(Math.random() * (j + 1));
+          [tier[j], tier[randomIndex]] = [tier[randomIndex], tier[j]];
+        }
+        
+        // 셔플된 티어를 원래 위치에 다시 넣기
+        attendingPlayersData.splice(i, tier.length, ...tier);
+      }
+    }
+    
+    
 
     let teams = {
       RED: { players: [], goalkeeper: null },
@@ -1528,21 +1558,23 @@ function allocateRandom(players, teams, teamNames) {
     });
 }
 
-// 주장/부주장 설정
+
+// 주장/부주장 랜덤 설정
 function assignCaptains(teams) {
     Object.keys(teams).forEach(teamName => {
         const playersInTeam = teams[teamName].players;
         if (playersInTeam.length > 0) {
-            const captain = playersInTeam.reduce((prev, current) => 
-                (prev.power > current.power) ? prev : current
-            );
+            // 랜덤으로 주장 선정
+            const randomCaptainIndex = Math.floor(Math.random() * playersInTeam.length);
+            const captain = playersInTeam[randomCaptainIndex];
             teams[teamName].captain = captain.name;
             
-            const others = playersInTeam.filter(p => p.name !== captain.name);
+            // 주장을 제외한 나머지 선수들
+            const others = playersInTeam.filter((p, index) => index !== randomCaptainIndex);
             if (others.length > 0) {
-                const viceCaptain = others.reduce((prev, current) => 
-                    (prev.power > current.power) ? prev : current
-                );
+                // 랜덤으로 부주장 선정
+                const randomViceIndex = Math.floor(Math.random() * others.length);
+                const viceCaptain = others[randomViceIndex];
                 teams[teamName].viceCaptain = viceCaptain.name;
             } else {
                 teams[teamName].viceCaptain = null;
