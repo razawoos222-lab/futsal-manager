@@ -323,6 +323,21 @@
         </div>
     </div>
 
+    <!-- [신규] 선수 추가 모달 팝업 -->
+    <div id="player-add-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
+            <h3 class="text-5xl font-black mb-4"><span id="add-team-name"></span> 팀에 선수 추가</h3>
+            <p class="text-2xl text-gray-400 mb-4">추가할 선수를 선택하세요.</p>
+            <div id="add-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
+                <!-- 추가 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button data-action="close-add-modal" class="btn btn-secondary w-full text-3xl">취소</button>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- [신규] 다음 경기 팀 선택 모달 (무승부 시) -->
     <div id="select-next-team-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -705,14 +720,43 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
                                     <button data-action="open-gk-modal" data-team-name="${team.name}" class="btn bg-purple-700 w-full text-left text-2xl font-bold">
                                         골키퍼: ${localState.teams[team.name].goalkeeper || '미지정'}
                                     </button>
-                                    ${localState.teams[team.name].players.map(p => `
-                                        <div class="flex gap-2">
-                                            <button data-action="open-record-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn bg-gray-700 text-gray-100 flex-grow text-left text-4xl">
-                                                ${p}
-                                            </button>
-                                            <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn btn-secondary text-4xl px-4">🔄</button>
-                                        </div>
-                                    `).join('')}
+                                  ${localState.teams[team.name].players.map(p => `
+                            <div class="flex gap-2">
+                                <button data-action="open-record-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn bg-gray-700 text-gray-100 flex-grow text-left text-4xl">
+                                    ${p}
+                                </button>
+                                <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn btn-secondary text-4xl px-4">🔄</button>
+                            </div>
+                        `).join('')}
+                        ${(() => {
+                            const currentPlayerCount = localState.teams[team.name].players.length;
+                            const emptySlots = 7 - currentPlayerCount;
+                            if (emptySlots <= 0) return '';
+                            
+                            // 대기 선수가 있는지 확인
+                            const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+                            const waitingPlayers = localState.attendingPlayerNames.filter(pName => {
+                                return !allTeamNames.some(tName => 
+                                    localState.teams[tName].players.includes(pName) || 
+                                    localState.teams[tName].goalkeeper === pName
+                                );
+                            });
+    
+                            if (waitingPlayers.length === 0) return '';
+                            
+                            // 빈 슬롯만큼 + 버튼 생성
+                            let addButtons = '';
+                            for (let i = 0; i < emptySlots; i++) {
+                                addButtons += `
+                                    <div class="flex gap-2 mt-2">
+                                        <button data-action="open-add-modal" data-team-name="${team.name}" class="btn bg-green-600 hover:bg-green-700 text-white flex-grow text-4xl">
+                                            ➕ 선수 추가
+                                        </button>
+                                    </div>
+                                `;
+                            }
+                            return addButtons;
+                        })()}  
                                 </div>
                             </div>
                         `).join('')}
@@ -1201,7 +1245,43 @@ function renderSessionSummaryScreen() {
             case 'close-swap-modal':
                 document.getElementById('player-swap-modal').classList.add('hidden');
                 break;
-            case 'toggle-timer':
+            case 'open-add-modal':
+              const addTeamName = teamName;
+              document.getElementById('add-team-name').textContent = addTeamName;
+              
+              // 대기 선수 목록 가져오기
+              const allTeamsForAdd = ['RED', 'BLUE', 'YELLOW'];
+              const waitingPlayersForAdd = localState.attendingPlayerNames.filter(pName => {
+                  return !allTeamsForAdd.some(tName => 
+                      localState.teams[tName].players.includes(pName) || 
+                      localState.teams[tName].goalkeeper === pName
+                  );
+              });
+              
+              const addPlayerListEl = document.getElementById('add-player-list');
+              if (waitingPlayersForAdd.length === 0) {
+                  addPlayerListEl.innerHTML = '<p class="text-2xl text-gray-400 col-span-full">추가 가능한 선수가 없습니다.</p>';
+              } else {
+                  addPlayerListEl.innerHTML = waitingPlayersForAdd.map(p => `
+                      <button data-action="select-add-player" data-add-team-name="${addTeamName}" data-add-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>
+                  `).join('');
+              }
+              
+              document.getElementById('player-add-modal').classList.remove('hidden');
+              break;
+
+            case 'select-add-player':
+              const teamToAddTo = e.target.dataset.addTeamName;
+              const playerToAdd = e.target.dataset.addPlayerName;
+              await serverCall('addPlayerToTeam', teamToAddTo, playerToAdd);
+              document.getElementById('player-add-modal').classList.add('hidden');
+              break;
+
+            case 'close-add-modal':
+              document.getElementById('player-add-modal').classList.add('hidden');
+              break;
+
+             case 'toggle-timer':
                 if (localState.match.timerRunning) pauseTimer();
                 else startTimer();
                 break;
