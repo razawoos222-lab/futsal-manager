@@ -198,7 +198,7 @@
     <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
 
     <div class="flex flex-col sm:flex-row gap-4">
-       <select id="assignment-strategy" class="w-full p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-4xl">
+       <select id="assignment-strategy" class="flex-1 p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-3xl">
     <option value="balanced">밸런스 (임의스탯)</option>
     <option value="balanced_ccp">밸런스 (CCP 50:50)</option>
     <option value="balanced_record">밸런스 (CCP 100%)</option>
@@ -210,6 +210,10 @@
     <option value="winRateBased">승률 순위기반</option>
     <option value="random">완전 랜덤</option>
 </select>
+     <label class="flex items-center gap-3 p-4 bg-gray-700 rounded-xl cursor-pointer whitespace-nowrap">
+        <input type="checkbox" id="shuffle-enabled" class="w-8 h-8">
+        <span class="text-3xl font-bold text-gray-100">🎲셔플</span>
+    </label>
         <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
     </div>
     
@@ -1030,12 +1034,14 @@ function renderSessionSummaryScreen() {
                 renderAttendanceScreen();
                 break;
             case 'go-to-allocation':
-                if (localState.attendingPlayerNames.length < 2) return alert('최소 2명 이상 선택해주세요.');
-                (async () => {
-                    try {
-                        const selectedDate = document.getElementById('game-date').value;
-                        await serverCall('setAttendingPlayersAndDate', localState.attendingPlayerNames, selectedDate);
-                        await serverCall('performTeamAllocation', document.getElementById('assignment-strategy').value);
+              if (localState.attendingPlayerNames.length < 2) return alert('최소 2명 이상 선택해주세요.');
+              (async () => {
+                  try {
+                      const selectedDate = document.getElementById('game-date').value;
+                      await serverCall('setAttendingPlayersAndDate', localState.attendingPlayerNames, selectedDate);
+                      const algorithm = document.getElementById('assignment-strategy').value;
+                      const shuffleEnabled = document.getElementById('shuffle-enabled')?.checked || false;
+                      await serverCall('performTeamAllocation', algorithm, shuffleEnabled);
                     } catch (e) {
                         console.error('팀 배분 중 오류 발생:', e);
                         alert('팀 배분 중 오류가 발생했습니다.');
@@ -1043,9 +1049,10 @@ function renderSessionSummaryScreen() {
                 })();
                 break;
             case 're-allocate':
-    const algorithm = document.getElementById('assignment-strategy').value;
-    serverCall('performTeamAllocation', algorithm);
-    break;
+                const algorithm = document.getElementById('assignment-strategy').value;
+                const shuffleEnabled = document.getElementById('shuffle-enabled').checked;
+                serverCall('performTeamAllocation', algorithm, shuffleEnabled);
+                break;
             case 'go-to-match-select':
                 serverCall('changeScreen', 'screen-match-select');
                 break;
