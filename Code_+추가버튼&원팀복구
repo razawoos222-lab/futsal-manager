@@ -932,10 +932,8 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
 }
 
 
-// [신규] 대기 선수를 팀에 추가하는 함수
-// teamName: 선수를 추가할 팀 이름 (RED, BLUE, YELLOW)
-// playerName: 추가할 선수 이름
-function addPlayerToTeam(teamName, playerName) {
+// [신규] 대기 팀에서 선수를 빌려오는 함수
+function addPlayerToTeam(teamName, playerName, fromTeamName) {
   return safeExecute(() => {
     const state = getAppState();
     
@@ -949,18 +947,16 @@ function addPlayerToTeam(teamName, playerName) {
       throw new Error(`${teamName} 팀은 이미 최대 인원(7명)입니다.`);
     }
     
-    // 선수가 이미 다른 팀에 있는지 확인
-    const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
-    for (let tName of allTeamNames) {
-      if (state.teams[tName].players.includes(playerName)) {
-        throw new Error(`${playerName} 선수는 이미 ${tName} 팀에 있습니다.`);
-      }
-      if (state.teams[tName].goalkeeper === playerName) {
-        throw new Error(`${playerName} 선수는 ${tName} 팀의 골키퍼입니다.`);
+    // 대기 팀에서 선수 제거
+    if (fromTeamName && state.teams[fromTeamName]) {
+      const playerIndex = state.teams[fromTeamName].players.indexOf(playerName);
+      if (playerIndex !== -1) {
+        state.teams[fromTeamName].players.splice(playerIndex, 1);
+        Logger.log(`${playerName} 선수를 ${fromTeamName} 팀에서 제거`);
       }
     }
     
-    // 팀에 선수 추가
+    // 새 팀에 선수 추가
     state.teams[teamName].players.push(playerName);
     
     // 선수 통계 초기화 (없으면)
@@ -971,7 +967,7 @@ function addPlayerToTeam(teamName, playerName) {
       };
     }
     
-    Logger.log(`${playerName} 선수가 ${teamName} 팀에 추가되었습니다.`);
+    Logger.log(`${playerName} 선수가 ${fromTeamName} 팀에서 ${teamName} 팀으로 이동되었습니다.`);
     saveAppState(state);
     return state;
   });
@@ -1112,7 +1108,13 @@ function finishSessionToSummary() {
       bestDefender: bestDefender,
       bestGoalkeeper: bestGoalkeeper
     };
-    
+
+  // 원팀이 있으면 복구
+    if (s.originalTeams) {
+      s.teams = JSON.parse(JSON.stringify(s.originalTeams));
+      Logger.log("세션 종료 시 원팀으로 자동 복구되었습니다.");
+    }
+
     s.currentScreen = 'screen-session-summary';
     saveAppState(s);
     return s;
