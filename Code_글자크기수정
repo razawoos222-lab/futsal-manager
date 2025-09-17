@@ -28,8 +28,6 @@ function safeExecute(func, ...args) {
     const result = func(...args); // 전달된 함수를 실행합니다.
     return { success: true, data: result }; // 성공 시 성공 상태와 결과 데이터를 반환합니다.
   } catch (e) {
-    // 오류 발생 시 오류 메시지와 스택 트레이스를 기록합니다.
-    Logger.log(`오류 발생: ${e.message}\n${e.stack}`);
     // 실패 시 실패 상태와 오류 메시지를 반환합니다.
     return { success: false, message: e.message };
   } finally {
@@ -123,7 +121,6 @@ function getAppState() {
 
      return parsedState;
     } catch(e) {
-      Logger.log("손상된 저장 데이터를 삭제하고 새 상태로 시작합니다.");
       sheet.clear();
     }
   }
@@ -195,7 +192,7 @@ function saveOriginalTeams() {
     // 원팀이 아직 저장되지 않았다면 현재 팀을 원팀으로 저장
     if (!state.originalTeams) {
       state.originalTeams = JSON.parse(JSON.stringify(state.teams));
-      Logger.log("원팀 구성이 저장되었습니다.");
+      
     }
     
     saveAppState(state);
@@ -210,7 +207,7 @@ function restoreOriginalTeams() {
     
     if (state.originalTeams) {
       state.teams = JSON.parse(JSON.stringify(state.originalTeams));
-      Logger.log("원팀 구성으로 복구되었습니다.");
+      
       saveAppState(state);
     }
     
@@ -242,7 +239,7 @@ function setAttendingPlayersAndDate(playerNames, selectedDate) {
     const state = getAppState(); // 현재 앱 상태를 가져옵니다.
     // [오류 수정] playerNames가 유효한 배열인지 확인
     if (!Array.isArray(playerNames)) {
-      Logger.log("오류: setAttendingPlayersAndDate에 유효하지 않은 playerNames가 전달되었습니다.");
+      
       throw new Error("참석자 목록 데이터가 유효하지 않습니다.");
     }
 
@@ -376,31 +373,41 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
         break;
     }
     
-    // 능력치 계산 (간단하고 명확하게)
-    attendingPlayersData.forEach(p => {
-      p.power = getPlayerPower(p, criteria);
-    });
-    
-    // 매번 셔플 플래그 초기화 (이 줄 추가)
-    attendingPlayersData.isShuffled = false;
-
- // 수정된 셔플 코드:
-if (shuffleEnabled) {
-  Logger.log("셔플 시작 - 원본 순서: " + attendingPlayersData.slice(0, 5).map(p => p.name).join(", "));
   
-  // 단순하고 확실한 Fisher-Yates 셔플
-  for (let i = attendingPlayersData.length - 1; i > 0; i--) {
-    // 매번 다른 랜덤 인덱스 생성
-    const randomFactor = Date.now() + Math.random() * 10000 + i;
-    const j = Math.floor((randomFactor % (i + 1)));
-    
-    // 요소 교환
-    [attendingPlayersData[i], attendingPlayersData[j]] = [attendingPlayersData[j], attendingPlayersData[i]];
+// 티어 기반 셔플
+if (shuffleEnabled && baseAlgorithm !== 'random') {
+  // 능력치 순으로 정렬
+  attendingPlayersData.sort((a, b) => b.power - a.power);
+  
+  // 티어 그룹 생성 (3명씩)
+  const tierSize = 3;
+  const tiers = [];
+  for (let i = 0; i < attendingPlayersData.length; i += tierSize) {
+    tiers.push(attendingPlayersData.slice(i, Math.min(i + tierSize, attendingPlayersData.length)));
   }
   
-  Logger.log("셔플 완료 - 새 순서: " + attendingPlayersData.slice(0, 5).map(p => p.name).join(", "));
-   attendingPlayersData.isShuffled = true;
+  // 각 티어 내에서 셔플
+  tiers.forEach(tier => {
+    for (let i = tier.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tier[i], tier[j]] = [tier[j], tier[i]];
+    }
+  });
+  
+  // 팀별로 각 티어에서 1명씩 배분 (원본 배열 수정)
+  let idx = 0;
+  const teamCount = 3;
+  for (let teamIdx = 0; teamIdx < teamCount; teamIdx++) {
+    tiers.forEach(tier => {
+      if (tier[teamIdx]) {
+        attendingPlayersData[idx++] = tier[teamIdx];
+      }
+    });
+  }
+  
+  attendingPlayersData.isShuffled = true;
 }
+
 
     let teams = {
       RED: { players: [], goalkeeper: null },
@@ -487,7 +494,7 @@ function startMatch(teamNames, selectedDuration, selectedField) {
 
     // [오류 수정] teamNames가 유효한 배열인지 확인
     if (!Array.isArray(teamNames) || teamNames.length < 2) {
-      Logger.log("오류: startMatch에 유효하지 않은 teamNames가 전달되었습니다.");
+      
       throw new Error("경기 시작을 위한 팀 선택이 올바르지 않습니다.");
     }
 
@@ -523,15 +530,12 @@ function startMatch(teamNames, selectedDuration, selectedField) {
 
 function recordEvent(eventData, seconds) {
   const outerStart = new Date().getTime();
-  Logger.log('🔴 recordEvent 함수 시작');
   
   const result = safeExecute(() => {
     const innerStart = new Date().getTime();
-    Logger.log('🟡 safeExecute 내부 시작');
     
     const s = getAppState();
     const getStateTime = new Date().getTime();
-    Logger.log(`📖 getAppState 완료: ${getStateTime - innerStart}ms`);
 
     // 기존 로직... (동일)
     if (!s.match.timerRunning && s.match.seconds > 0) {
@@ -569,21 +573,17 @@ function recordEvent(eventData, seconds) {
     }
 
     const beforeSave = new Date().getTime();
-    Logger.log(`⚙️ 로직 처리 완료: ${beforeSave - getStateTime}ms`);
 
     saveAppState(s);
     
     const afterSave = new Date().getTime();
-    Logger.log(`💾 saveAppState 완료: ${afterSave - beforeSave}ms`);
 
     const innerEnd = new Date().getTime();
-    Logger.log(`🟡 safeExecute 내부 완료: ${innerEnd - innerStart}ms`);
     
     return s;
   });
 
   const outerEnd = new Date().getTime();
-  Logger.log(`🔴 recordEvent 함수 완료: ${outerEnd - outerStart}ms`);
   
   return result;
 }
@@ -662,7 +662,6 @@ function undoLastEvent() {
     // 변경된 상태 저장
     saveAppState(s);
     
-    Logger.log(`이벤트 취소 완료: ${player}의 ${stat} 기록이 취소되었습니다.`);
     return s;
   });
 }
@@ -751,7 +750,6 @@ function endMatch() {
           goalkeeper: teamData.goalkeeper || '',
           players: teamData.players
         });
-        Logger.log(`메모리에 경기 기록 저장 완료: ${teamName} - 경기 #${count}`);
       }
     });
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -831,14 +829,12 @@ function setGoalkeeper(teamName, goalkeeperName) {
    
     // [오류 수정] teamName이 유효한지 확인
     if (!state.teams[teamName]) {
-      Logger.log(`오류: 존재하지 않는 팀 이름입니다: ${teamName}`);
       throw new Error(`존재하지 않는 팀 이름입니다: ${teamName}`);
     }
 
 
     // 지정할 선수가 참석자 목록에 있는지 확인 (필수는 아니지만, 에러 방지)
     if (goalkeeperName && !state.attendingPlayerNames.includes(goalkeeperName)) {
-      Logger.log(`경고: ${goalkeeperName} 선수는 참석자 목록에 없습니다. 키퍼로 지정합니다.`);
       // 참석자 목록에 없어도 키퍼로 지정은 가능하게 하되, 경고 로그 남김
       // 필요시 throw new Error("참석자 목록에 없는 선수는 키퍼로 지정할 수 없습니다.") 로 변경 가능
     }
@@ -846,7 +842,6 @@ function setGoalkeeper(teamName, goalkeeperName) {
 
     // 해당 팀의 골키퍼를 지정합니다.
     state.teams[teamName].goalkeeper = goalkeeperName;
-    Logger.log(`${teamName} 팀의 키퍼가 ${goalkeeperName || '미지정'} (으)로 지정되었습니다.`);
 
 
     saveAppState(state); // 변경된 상태를 저장합니다.
@@ -862,7 +857,6 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
         const teamPlayers = state.teams[teamName].players;
         const playerOutIndex = teamPlayers.indexOf(playerOutName);
         if (playerOutIndex === -1) {
-            Logger.log(`오류: ${playerOutName} 선수는 ${teamName} 팀의 필드 플레이어에 없습니다.`);
             throw new Error(`${playerOutName} 선수는 ${teamName} 팀의 필드 플레이어에 없습니다.`);
         }
 
@@ -902,7 +896,6 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
                     // 교체 투입 선수가 필드 플레이어일 경우
                     state.teams[otherTeamName].players[otherTeamPlayerIndex] = playerOutName;
                 }
-                Logger.log(`${otherTeamName} 팀의 ${playerInName} 선수가 ${playerOutName} 선수로 교체되었습니다.`);
             } else {
                 // 교체 투입 선수가 대기 중인 선수일 경우
                 const waitingPlayerIndex = state.attendingPlayerNames.indexOf(playerInName);
@@ -910,7 +903,6 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
                     state.attendingPlayerNames.splice(waitingPlayerIndex, 1);
                 }
                 state.attendingPlayerNames.push(playerOutName);
-                Logger.log(`${playerInName} 선수가 대기 선수에서 ${teamName} 팀으로 이동했습니다.`);
             }
 
 
@@ -918,11 +910,9 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
             teamPlayers[playerOutIndex] = playerInName;
 
 
-            Logger.log(`${teamName} 팀에서 ${playerOutName} 선수가 ${playerInName} 선수로 교체되었습니다.`);
         } else {
             // 들어올 선수가 null인 경우 (단순히 선수 제거)
             teamPlayers.splice(playerOutIndex, 1);
-            Logger.log(`${teamName} 팀에서 ${playerOutName} 선수가 제거되었습니다.`);
         }
 
 
@@ -952,7 +942,6 @@ function addPlayerToTeam(teamName, playerName, fromTeamName) {
       const playerIndex = state.teams[fromTeamName].players.indexOf(playerName);
       if (playerIndex !== -1) {
         state.teams[fromTeamName].players.splice(playerIndex, 1);
-        Logger.log(`${playerName} 선수를 ${fromTeamName} 팀에서 제거`);
       }
     }
     
@@ -967,7 +956,6 @@ function addPlayerToTeam(teamName, playerName, fromTeamName) {
       };
     }
     
-    Logger.log(`${playerName} 선수가 ${fromTeamName} 팀에서 ${teamName} 팀으로 이동되었습니다.`);
     saveAppState(state);
     return state;
   });
@@ -985,7 +973,6 @@ function selectNextPlayingTeam(selectedTeamName) {
 
     // [오류 수정] selectedTeamName이 유효한지 확인
     if (!allTeamNames.includes(selectedTeamName)) {
-      Logger.log(`오류: 유효하지 않은 팀 이름입니다: ${selectedTeamName}`);
       throw new Error("유효하지 않은 팀 이름입니다.");
     }
    
@@ -994,7 +981,6 @@ function selectNextPlayingTeam(selectedTeamName) {
 
     if (nextPlayingTeams.length < 2) {
       s.currentScreen = 'screen-match-select'; // 팀이 부족하면 경기 선택 화면으로
-      Logger.log("다음 경기 진행할 팀이 부족하여 경기 선택 화면으로 이동.");
     } else {
       s.match.playingTeams = nextPlayingTeams;
       s.match.teamA = { name: nextPlayingTeams[0], score: 0 };
@@ -1003,7 +989,6 @@ function selectNextPlayingTeam(selectedTeamName) {
       s.match.seconds = s.match.selectedDuration; // 시간 초기화
       s.match.timerRunning = false; // 타이머 정지
       s.currentScreen = 'screen-match-controller';
-      Logger.log(`무승부 후 다음 경기 설정: ${nextPlayingTeams[0]} vs ${nextPlayingTeams[1]}`);
     }
     s.match.nextMatchSuggestion = null; // 제안 초기화
     saveAppState(s);
@@ -1018,7 +1003,6 @@ function confirmNextMatch(confirmProceed) {
     const s = getAppState();
     // [오류 수정] s.match.nextMatchSuggestion이 유효한지 확인
     if (!s.match.nextMatchSuggestion || !s.match.nextMatchSuggestion.team) {
-      Logger.log("오류: confirmNextMatch 함수 호출 시 다음 경기 제안 정보가 유효하지 않습니다.");
       throw new Error("다음 경기 제안 정보를 찾을 수 없습니다.");
     }
 
@@ -1033,7 +1017,6 @@ function confirmNextMatch(confirmProceed) {
     if (confirmProceed) { // '예'를 선택한 경우 (나머지 두 팀이 경기)
       if (suggestedNextTeams.length < 2) { // 혹시 모를 경우 (팀이 2개 이하일 때)
         s.currentScreen = 'screen-match-select';
-        Logger.log("3연속 경기 후 강제 설정할 팀이 부족하여 경기 선택 화면으로 이동.");
       } else {
         s.match.playingTeams = suggestedNextTeams;
         s.match.teamA = { name: suggestedNextTeams[0], score: 0 };
@@ -1042,11 +1025,9 @@ function confirmNextMatch(confirmProceed) {
         s.match.seconds = s.match.selectedDuration; // 시간 초기화
         s.match.timerRunning = false; // 타이머 정지
         s.currentScreen = 'screen-match-controller';
-        Logger.log(`3연속 경기 후 다음 경기 강제 설정: ${suggestedNextTeams[0]} vs ${suggestedNextTeams[1]}`);
       }
     } else { // '아니오'를 선택한 경우 (경기 선택 화면으로 이동)
       s.currentScreen = 'screen-match-select';
-      Logger.log("3연속 경기 후 사용자 선택에 따라 경기 선택 화면으로 이동.");
     }
     s.match.nextMatchSuggestion = null; // 제안 초기화
     saveAppState(s);
@@ -1112,7 +1093,6 @@ function finishSessionToSummary() {
   // 원팀이 있으면 복구
     if (s.originalTeams) {
       s.teams = JSON.parse(JSON.stringify(s.originalTeams));
-      Logger.log("세션 종료 시 원팀으로 자동 복구되었습니다.");
     }
 
     s.currentScreen = 'screen-session-summary';
