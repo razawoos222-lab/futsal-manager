@@ -100,7 +100,7 @@
         .edit-table th, .edit-table td {
             padding: 0.75rem;
             text-align: center;
-            font-size: 1.25rem; /* 폰트 키움 */
+            font-size: 1.50rem; /* 폰트 키움 */
             border-bottom: 1px solid #4B5563; /* 다크 테마에 맞게 변경 */
         }
         .edit-table th {
@@ -182,14 +182,14 @@
         <h1 class="text-6xl font-black mb-4">참석 조사</h1>
         <!-- 경기 날짜 선택기 추가 -->
         <div class="card p-4 flex flex-col items-center space-y-4">
-            <label for="game-date" class="text-3xl font-bold">경기 날짜 선택:</label>
+            <label for="game-date" class="text-4xl font-bold">경기 날짜 선택:</label>
             <input type="date" id="game-date" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
         </div>
         <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
         <!-- 선수 목록을 표시하는 그리드입니다. (ATT/DEF 제거) -->
         <div id="master-player-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-left max-h-[60vh] overflow-y-auto p-2"></div>
         <!-- '팀 배분하기' 버튼 텍스트를 '참석 완료'로 변경했습니다. -->
-        <button data-action="go-to-allocation" class="btn btn-primary w-full text-3xl">참석 완료</button>
+        <button data-action="go-to-allocation" class="btn btn-primary w-full text-4xl">참석 완료</button>
     </div>
 
 
@@ -218,7 +218,7 @@
     </div>
     
     <div id="team-allocation-container" class="flex flex-col gap-6"></div>
-    <button data-action="go-to-match-select" class="btn btn-primary w-full text-3xl">경기 준비 완료</button>
+    <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 준비 완료</button>
 </div>
    
     <!-- 3. 경기 선택 화면 -->
@@ -245,10 +245,10 @@
                 <option value="C 구장">C 구장</option>
             </select>
         </div>
-        <p class="text-2xl text-gray-400">경기를 진행할 2팀을 선택하세요.</p>
+        <p class="text-3xl text-gray-400">경기를 진행할 2팀을 선택하세요.</p>
         <div id="team-select-container" class="flex flex-col gap-6"></div> <!-- 세로로 배치 -->
         <!-- 경기 시작 버튼 추가 -->
-        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-3xl opacity-50 cursor-not-allowed" disabled>경기 시작</button>
+        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 시작</button>
     </div>
 
 
@@ -297,7 +297,7 @@
     <div id="goalkeeper-select-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
             <h3 class="text-5xl font-black mb-4"><span id="gk-team-name"></span> 팀 키퍼 지정</h3>
-            <p class="text-2xl text-gray-400 mb-4">키퍼로 지정할 선수를 선택하세요.</p>
+            <p class="text-3xl text-gray-400 mb-4">키퍼로 지정할 선수를 선택하세요.</p>
             <div id="gk-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
                 <!-- 키퍼 선택 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
             </div>
@@ -699,9 +699,9 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
                     </div>
                 </div>
                 <div class="flex justify-center items-center gap-8">
-    ${localState.originalTeams ? `<button data-action="restore-original-teams" class="btn btn-secondary text-3xl px-8">🔄 원팀</button>` : ''}
+    ${localState.originalTeams ? `<button data-action="restore-original-teams" class="btn btn-secondary text-4xl px-10">🔄 원팀</button>` : ''}
     <span id="timer-display" class="text-7xl font-mono card py-5 px-10 bg-gray-700 text-gray-100">${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}</span>
-    <button data-action="toggle-timer" class="btn ${timerRunning ? 'btn-secondary' : 'btn-primary'} text-3xl px-10 w-48">${timerRunning ? '일시정지' : '시작'}</button>
+    <button data-action="toggle-timer" class="btn ${timerRunning ? 'btn-secondary' : 'btn-primary'} text-4xl px-10 w-48">${timerRunning ? '일시정지' : '시작'}</button>
 </div>
                
                 <div class="flex justify-center border-b border-gray-600 mb-6 gap-x-12">
@@ -717,7 +717,7 @@ const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlay
                             <div class="card space-y-4">
                                 <h3 class="text-5xl font-black ${teamColorClasses[team.name]}">${team.name} 라인업</h3>
                                 <div class="flex flex-col gap-2">
-                                    <button data-action="open-gk-modal" data-team-name="${team.name}" class="btn bg-purple-700 w-full text-left text-2xl font-bold">
+                                    <button data-action="open-gk-modal" data-team-name="${team.name}" class="btn bg-purple-700 w-full text-left text-3xl font-bold">
                                         골키퍼: ${localState.teams[team.name].goalkeeper || '미지정'}
                                     </button>
                                   ${localState.teams[team.name].players.map(p => `
@@ -1004,13 +1004,13 @@ function renderSessionSummaryScreen() {
 
     // 최종 화면 구성 (순서 변경)
     container.innerHTML = `
-        <h1 class="text-6xl font-black mb-8 text-gray-100">오늘의 경기 결과</h1>
+        <h1 class="text-5xl font-black mb-8 text-gray-100">오늘의 경기 결과</h1>
         ${awardsHtml}
         ${teamRankingsHtml}
         ${teamStatsHtml}
         <div class="flex flex-col sm:flex-row gap-4 mt-8">
-            <button data-action="save-and-start-new-session" class="btn btn-primary w-full text-2xl">기록 저장 및 새 세션 시작</button>
-            <button data-action="discard-and-start-new-session" class="btn btn-secondary w-full text-2xl">기록 버리고 새 세션 시작</button>
+            <button data-action="save-and-start-new-session" class="btn btn-primary w-full text-3xl">기록 저장 & NEW 세션시작</button>
+            <button data-action="discard-and-start-new-session" class="btn btn-secondary w-full text-3xl">기록 리셋 & NEW 세션시작</button>
         </div>
     `;
 }
@@ -1202,13 +1202,13 @@ function renderSessionSummaryScreen() {
                 let gkOptionsHtml = '';
                 if (currentTeamFieldPlayers.length > 0) {
                     gkOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">우리 팀 선수:</p>`;
-                    gkOptionsHtml += currentTeamFieldPlayers.map(p => `<button data-action="select-goalkeeper" data-gk-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-2xl w-full">${p}</button>`).join('');
+                    gkOptionsHtml += currentTeamFieldPlayers.map(p => `<button data-action="select-goalkeeper" data-gk-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>`).join('');
                 }
                 if (availablePlayers.length > 0) {
                     gkOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">대기 선수:</p>`;
-                    gkOptionsHtml += availablePlayers.map(p => `<button data-action="select-goalkeeper" data-gk-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-2xl w-full">${p}</button>`).join('');
+                    gkOptionsHtml += availablePlayers.map(p => `<button data-action="select-goalkeeper" data-gk-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>`).join('');
                 }
-                gkOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">기타:</p><button data-action="select-goalkeeper" data-gk-player-name="null" class="btn bg-red-700 text-2xl w-full">키퍼 해제</button>`;
+                gkOptionsHtml += `<p class="text-3xl font-bold text-gray-400 col-span-full mt-4">기타:</p><button data-action="select-goalkeeper" data-gk-player-name="null" class="btn bg-red-700 text-3xl w-full">키퍼해제</button>`;
                 gkPlayerListEl.innerHTML = gkOptionsHtml;
                 document.getElementById('goalkeeper-select-modal').classList.remove('hidden');
                 break;
@@ -1360,7 +1360,7 @@ function renderTeamRankingsTable() {
     const tableHtml = `
         <div class="card mb-8 overflow-x-auto">
             <h2 class="text-4xl font-bold mb-4 text-gray-100">오늘의 팀 순위</h2>
-            <table class="w-full text-5xl edit-table">
+            <table class="w-full text-6xl edit-table">
                 <thead>
                     <tr>
                         <th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th>
