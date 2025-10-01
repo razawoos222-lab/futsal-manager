@@ -326,7 +326,7 @@
     <!-- [신규] 선수 추가 모달 팝업 -->
     <div id="player-add-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
-            <h3 class="text-5xl font-black mb-4"><span id="add-team-name"></span> 선수 추가</h3>
+            <h3 id="add-player-modal-title" class="text-5xl font-black mb-4"></h3>
             <p class="text-2xl text-gray-400 mb-4">추가할 선수를 선택하세요.</p>
             <div id="add-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
                 <!-- 추가 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
@@ -1257,22 +1257,21 @@ function renderSessionSummaryScreen() {
                 document.getElementById('player-swap-modal').classList.add('hidden');
                 break;
             case 'open-add-modal':
-                const addTeamName = teamName;
-                const waitingTeamName = e.target.dataset.waitingTeam;
-                
-                // 모달 제목 업데이트
-                document.getElementById('add-team-name').textContent = `${waitingTeamName} 팀에서`;
-                
-                // 대기 팀 선수 목록
-                const waitingTeamPlayers = localState.teams[waitingTeamName].players;
-                
-                const addPlayerListEl = document.getElementById('add-player-list');
-                addPlayerListEl.innerHTML = waitingTeamPlayers.map(p => `
-                    <button data-action="select-add-player" data-add-team-name="${addTeamName}" data-add-player-name="${p}" data-from-team="${waitingTeamName}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>
-                `).join('');
-                
-                document.getElementById('player-add-modal').classList.remove('hidden');
-                break;
+              const teamNameToAddTo = teamName;
+              const waitingTeamName = e.target.dataset.waitingTeam;
+
+              // 모달 제목 업데이트 (전체 제목을 innerHTML로 설정)
+              const modalTitleEl = document.getElementById('add-player-modal-title');
+              modalTitleEl.innerHTML = `<span class="${teamColorClasses[waitingTeamName]}">${waitingTeamName}</span> 팀에서 선수추가`;
+              
+              // 대기 팀 선수 목록
+              const waitingTeamPlayers = localState.teams[waitingTeamName].players;
+              const addPlayerListEl = document.getElementById('add-player-list');
+              addPlayerListEl.innerHTML = waitingTeamPlayers.map(p => `
+                  <button data-action="select-add-player" data-add-team-name="${teamNameToAddTo}" data-add-player-name="${p}" data-from-team="${waitingTeamName}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>
+              `).join('');
+              document.getElementById('player-add-modal').classList.remove('hidden');
+              break;
             case 'select-add-player':
               const teamToAddTo = e.target.dataset.addTeamName;
               const playerToAdd = e.target.dataset.addPlayerName;
