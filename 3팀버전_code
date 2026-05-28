@@ -1188,7 +1188,7 @@ function selectNextPlayingTeam(selectedTeamName) {
   return safeExecute(() => {
     const s = getAppState();
     const { teamA, teamB } = s.match;
-    const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+    const allTeamNames = Object.keys(s.teams || {});
     const waitingTeam = allTeamNames.find(name => name !== teamA.name && name !== teamB.name);
 
 
@@ -1228,7 +1228,7 @@ function confirmNextMatch(confirmProceed) {
     }
 
 
-    const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+    const allTeamNames = Object.keys(s.teams || {});
     const consecutivePlayedTeam = s.match.nextMatchSuggestion.team; // 3연속 뛴 팀
    
     // 3연속 뛴 팀을 제외한 나머지 두 팀을 찾음
@@ -1368,7 +1368,6 @@ if (teamRowsToAdd.length > 0) {
 }
     
     SpreadsheetApp.flush();
-    copyDataToDashboard_();
     
     // 앱 상태 시트도 초기화
     const stateSheet = getSheet(CONFIG.APP_STATE_SHEET);
