@@ -1368,6 +1368,7 @@ if (teamRowsToAdd.length > 0) {
 }
     
     SpreadsheetApp.flush();
+    copyDataToDashboard_();
     
     // 앱 상태 시트도 초기화
     const stateSheet = getSheet(CONFIG.APP_STATE_SHEET);

@@ -191,6 +191,7 @@
         <select id="team-mode" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
             <option value="3">3팀 대결 (순환)</option>
             <option value="2">2팀 대결</option>
+            <option value="4">4팀 대결</option>
         </select>
     </div>
     <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
