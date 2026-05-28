@@ -1762,4 +1762,3 @@ function allocateRandom(players, teams, teamNames) {
     console.warn(`⚠️ 팀 인원 불균형 발생: ${sizes.join(', ')}`);
   }
 }
-
