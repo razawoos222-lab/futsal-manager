@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <title>풋살 매니저 2.0</title>
+    <!-- 뷰포트 설정 최적화: 아이폰 등 모바일 기기 화면에 꽉 차게 표시 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <!-- Tailwind CSS CDN을 사용하여 스타일을 적용합니다. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 가독성을 높이기 위해 'Noto Sans KR' 폰트를 사용합니다. -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom colors for dark theme */
+        :root {
+            --color-primary-bg: #1A202C; /* Dark blue-gray */
+            --color-card-bg: #2D3748;    /* Slightly lighter dark blue-gray */
+            --color-text-main: #E2E8F0; /* Light gray */
+            --color-text-secondary: #94A3B8; /* Medium gray */
+            --color-accent-blue: rgb(133,173,197); /* User requested color */
+        }
+        /* 전체적인 디자인: 다크 테마로 변경 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--color-primary-bg);
+            color: var(--color-text-main);
+            -webkit-tap-highlight-color: transparent; /* 모바일 터치 시 하이라이트 제거 */
+        }
+        /* 카드형 UI의 기본 스타일을 정의합니다. */
+        .card {
+            background-color: var(--color-card-bg);
+            border-radius: 1rem; /* 둥근 모서리 */
+            padding: 1.5rem; /* 내부 여백 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        /* 버튼의 기본 스타일을 정의합니다. */
+        .btn {
+            padding: 1.25rem 2rem; /* 버튼 크기를 크게 만듭니다. */
+            border-radius: 0.75rem; /* 모서리를 둥글게 처리합니다. */
+            font-weight: 900; /* 폰트를 더 굵게 만듭니다. */
+            transition: background-color 0.2s;
+            text-align: center;
+            white-space: nowrap; /* 버튼 텍스트 줄바꿈 방지 */
+            color: #FFFFFF; /* 버튼 텍스트 색상 */
+        }
+        .btn-primary { background-color: #3B82F6; }
+        .btn-primary:hover { background-color: #2563EB; }
+        .btn-secondary { background-color: #6B7280; } /* 어두운 회색으로 변경 */
+        .btn-secondary:hover { background-color: #4B5563; }
+        .btn-danger { background-color: #EF4444; }
+        .btn-danger:hover { background-color: #DC2626; }
+        /* 플레이어 카드 (참석 조사) */
+        .player-card {
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: var(--color-card-bg); /* 다크 테마에 맞게 변경 */
+            color: var(--color-text-main); /* 다크 테마에 맞게 변경 */
+        }
+        .player-card.selected {
+            background-color: #3B82F6;
+            color: #FFFFFF;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+        }
+        /* 팀 카드 (경기 선택) */
+        .team-card {
+            background-color: var(--color-card-bg); /* 다크 테마에 맞게 변경 */
+            color: var(--color-text-main); /* 다크 테마에 맞게 변경 */
+            border-color: #4B5563; /* 다크 테마에 맞게 변경 */
+        }
+        .team-card.selected {
+            transform: scale(1.02);
+            border-color: var(--color-accent-blue); /* Accent 색상 적용 */
+            box-shadow: 0 0 15px rgba(133,173,197, 0.5); /* Accent 색상 적용 */
+        }
+        /* 탭 메뉴 스타일 */
+        .tab-button {
+            padding: 1.25rem 1.75rem; /* 탭 버튼 크기 키움 */
+            border-bottom: 3px solid transparent;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.875rem; /* 탭 글씨 크기 키움 */
+            color: var(--color-text-secondary); /* 기본 탭 글씨색 */
+        }
+        .tab-button.active {
+            color: var(--color-accent-blue); /* Accent 색상 적용 */
+            border-color: var(--color-accent-blue); /* Accent 색상 적용 */
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* 기록 수정 테이블 스타일 (오늘의 경기 결과 화면) */
+        .edit-table {
+            border-collapse: collapse; /* 테이블 셀 경계선 합치기 */
+            width: 100%;
+        }
+        .edit-table th, .edit-table td {
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 1.50rem; /* 폰트 키움 */
+            border-bottom: 1px solid #4B5563; /* 다크 테마에 맞게 변경 */
+        }
+        .edit-table th {
+            background-color: var(--color-card-bg); /* 다크 테마에 맞게 변경 */
+            font-weight: bold;
+            color: var(--color-text-main); /* 다크 테마에 맞게 변경 */
+        }
+        .edit-table tbody tr:nth-child(odd) {
+            background-color: var(--color-primary-bg); /* 다크 테마에 맞게 변경 */
+        }
+        .edit-table tbody tr:nth-child(even) {
+            background-color: var(--color-card-bg); /* 다크 테마에 맞게 변경 */
+        }
+        .edit-table input[type="number"] {
+            width: 80px; /* 입력 칸 넓힘 */
+            padding: 0.5rem; /* 패딩 키움 */
+            background-color: var(--color-primary-bg); /* 다크 테마에 맞게 변경 */
+            border: 1px solid #4B5563; /* 다크 테마에 맞게 변경 */
+            border-radius: 0.25rem;
+            color: var(--color-text-main); /* 다크 테마에 맞게 변경 */
+            text-align: center;
+            font-size: 1.25rem; /* 폰트 키움 */
+        }
+        /* 특정 텍스트 색상 조정 (다크 테마에 맞춰) */
+        .text-gray-700 { color: var(--color-text-secondary); }
+        .text-gray-800 { color: var(--color-text-main); }
+        .text-gray-900 { color: var(--color-text-main); }
+        .text-zinc-300 { color: var(--color-text-secondary); }
+        .text-zinc-400 { color: var(--color-text-secondary); }
+        .text-zinc-500 { color: var(--color-text-secondary); }
+        .bg-gray-200 { background-color: #4B5563; } /* Player button bg, dark theme */
+        .text-gray-900 { color: var(--color-text-main); } /* Player button text, dark theme */
+
+
+        /* MVP 카드 및 텍스트 색상 조정 (다크 테마에 맞춰) */
+        .bg-yellow-100 { background-color: #4A4030; } /* Darker yellow background */
+        .text-yellow-900 { color: #FCD34D; } /* Brighter yellow text */
+        .text-yellow-600 { color: #FCD34D; } /* Brighter yellow text */
+        .text-red-600 { color: #EF4444; } /* Red for team/stats */
+        .text-blue-600 { color: #3B82F6; } /* Blue for team/stats */
+        .text-green-600 { color: #22C55E; } /* Green for stats */
+        .text-purple-600 { color: #A855F7; } /* Purple for stats */
+        .text-orange-600 { color: #F97316; } /* Orange for stats */
+        .text-teal-600 { color: #14B8A6; } /* Teal for stats */
+
+
+      /* 커스텀 주장 완장 스타일 */
+      .armband {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        font-weight: 900;
+        font-size: 16px;
+        color: black;
+      }
+      .captain-armband {
+        background-color: #FBBF24; /* 노란색 */
+      }
+      .vice-captain-armband {
+        background-color: #D1D5DB; /* 은색 */
+      }
+     
+    </style>
+</head>
+<body class="p-5 md:p-8 antialiased">
+    <!-- 로딩 오버레이: 서버 통신 중 사용자에게 로딩 중임을 알립니다. -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-blue-500"></div>
+    </div>
+    <!-- 뒤로 가기 버튼: 각 화면에서 이전 화면으로 이동할 수 있게 합니다. -->
+    <button id="btn-back" data-action="go-back" class="hidden fixed top-4 left-4 bg-gray-700 text-white w-14 h-14 rounded-full text-3xl z-40 shadow-lg flex items-center justify-center hover:bg-gray-600 transition-colors">←</button>
+
+
+<!-- 1. 참석 조사 화면 -->
+<div id="screen-attendance" class="hidden w-full max-w-2xl mx-auto text-center space-y-8">
+    <h1 class="text-6xl font-black mb-4">참석 조사</h1>
+    <!-- 경기 날짜 선택 -->
+    <div class="card p-4 flex flex-col items-center space-y-4">
+        <label for="game-date" class="text-4xl font-bold">경기 날짜 선택:</label>
+        <input type="date" id="game-date" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
+    </div>
+    <!-- 팀 구성 방식 선택 -->
+    <div class="card p-4 flex flex-col items-center space-y-4">
+        <label for="team-mode" class="text-4xl font-bold">팀 구성 방식:</label>
+        <select id="team-mode" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
+            <option value="3">3팀 대결 (순환)</option>
+            <option value="2">2팀 대결</option>
+        </select>
+    </div>
+    <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
+    <!-- 선수 목록 -->
+    <div id="master-player-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-left max-h-[60vh] overflow-y-auto p-2"></div>
+    <!-- 참석 완료 버튼 -->
+    <button data-action="go-to-allocation" class="btn btn-primary w-full text-4xl">참석 완료</button>
+</div>
+
+<!-- 2. 팀 배분 & 라인업 화면 (별도!) -->
+<div id="screen-team-allocation" class="hidden w-full max-w-5xl mx-auto text-center space-y-8">
+    <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
+    <!-- 알고리즘 선택 -->
+    <div class="flex flex-col sm:flex-row gap-4">
+        <select id="assignment-strategy" class="flex-1 p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-3xl">
+            <option value="balanced">밸런스 (기본)</option>
+            <option value="balanced_record">밸런스 (데이터기반)</option>
+            <option value="snakeMethod">스네이크 (기본)</option>
+            <option value="snake_record">스네이크 (데이터기반)</option>
+        </select>
+        <label class="flex items-center gap-3 p-4 bg-gray-700 rounded-xl cursor-pointer whitespace-nowrap">
+            <input type="checkbox" id="shuffle-enabled" class="w-8 h-8">
+            <span class="text-3xl font-bold text-gray-100">🎲셔플</span>
+        </label>
+        <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
+    </div>
+    <div id="team-allocation-container" class="flex flex-col gap-6"></div>
+    <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 준비 완료</button>
+</div>
+   
+    <!-- 3. 경기 선택 화면 -->
+    <div id="screen-match-select" class="hidden w-full max-w-4xl mx-auto text-center space-y-8">
+        <h1 class="text-7xl font-black mb-4">경기 선택</h1>
+        <!-- 경기 시간 설정 드롭다운 추가 -->
+        <div class="card p-4 flex flex-col items-center space-y-4">
+            <label for="match-duration" class="text-3xl font-bold">경기 시간 설정:</label>
+            <select id="match-duration" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
+                <option value="60">1분</option>
+                <option value="360">6분</option>
+                <option value="420">7분</option>
+                <option value="480" selected>8분</option>
+                <option value="540">9분</option>
+                <option value="600">10분</option>
+            </select>
+        </div>
+        <!-- 구장명 선택 드롭다운 추가 -->
+        <div class="card p-4 flex flex-col items-center space-y-4">
+            <label for="field-select" class="text-3xl font-bold">구장명 선택:</label>
+            <select id="field-select" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
+                <option value="A 구장">A 구장</option>
+                <option value="B 구장">B 구장</option>
+                <option value="C 구장">C 구장</option>
+            </select>
+        </div>
+        <p class="text-3xl text-gray-400">경기를 진행할 2팀을 선택하세요.</p>
+        <div id="team-select-container" class="flex flex-col gap-6"></div> <!-- 세로로 배치 -->
+        <!-- 경기 시작 버튼 추가 -->
+        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 시작</button>
+    </div>
+
+
+    <!-- 4. 스코어 대시보드 화면 -->
+    <div id="screen-match-controller" class="hidden w-full max-w-5xl mx-auto text-center"></div>
+   
+    <!-- 5. 세션 요약 및 기록 수정 화면 (신규) -->
+    <div id="screen-session-summary" class="hidden w-full max-w-5xl mx-auto text-center space-y-8"></div>
+
+
+    <!-- 6. 최종 결과 화면 (단순화) -->
+    <div id="screen-final-results" class="hidden w-full max-w-5xl mx-auto text-center"></div>
+
+
+    <!-- 7. 기록 모달 팝업 -->
+    <div id="record-event-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-lg text-center space-y-6">
+            <h3 id="record-event-title" class="text-6xl font-black"></h3>
+            <div class="grid grid-cols-2 gap-4">
+                <button data-action="record-event" data-stat="goal" class="btn bg-green-600 text-3xl">득점</button>
+                <button data-action="record-event" data-stat="ownGoal" class="btn bg-red-600 text-3xl">자책골</button> <!-- 자책골 버튼 추가 -->
+                <button data-action="record-event" data-stat="defense" class="btn bg-yellow-500 text-3xl text-gray-900">수비</button>
+                <button data-action="record-event" data-stat="save" class="btn bg-purple-600 text-3xl">선방</button>
+            </div>
+            <button data-action="close-modal" class="btn btn-secondary w-full text-3xl">취소</button>
+        </div>
+    </div>
+
+
+    <!-- [신규] 도움 선택 모달 팝업 -->
+    <div id="assist-select-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
+            <h3 class="text-6xl font-black mb-4"><span id="assist-scorer-name"></span> 선수의 득점!</h3>
+            <p class="text-4xl text-gray-400 mb-4">도움을 준 선수를 선택하세요.</p>
+            <div id="assist-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
+                <!-- 도움 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button data-action="close-assist-modal" class="btn btn-secondary w-full text-3xl">취소</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- [신규] 키퍼 지정 모달 팝업 -->
+    <div id="goalkeeper-select-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
+            <h3 class="text-5xl font-black mb-4"><span id="gk-team-name"></span> 팀 키퍼 지정</h3>
+            <p class="text-3xl text-gray-400 mb-4">키퍼로 지정할 선수를 선택하세요.</p>
+            <div id="gk-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
+                <!-- 키퍼 선택 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button data-action="close-gk-modal" class="btn btn-secondary w-full text-3xl">취소</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- [신규] 선수 교체 모달 팝업 -->
+    <div id="player-swap-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
+            <h3 class="text-5xl font-black mb-4">선수 교체</h3>
+            <div id="swap-out-player-info" class="mb-4 text-5xl font-bold text-gray-100"></div>
+            <p class="text-2xl text-gray-400 mb-4">교체 투입할 선수를 선택하세요.</p>
+            <div id="swap-in-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
+                <!-- 교체 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button data-action="close-swap-modal" class="btn btn-secondary w-full text-3xl">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- [신규] 선수 추가 모달 팝업 -->
+    <div id="player-add-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-xl text-center space-y-6">
+            <h3 id="add-player-modal-title" class="text-5xl font-black mb-4"></h3>
+            <p class="text-2xl text-gray-400 mb-4">추가할 선수를 선택하세요.</p>
+            <div id="add-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-2">
+                <!-- 추가 가능한 선수 목록이 여기에 동적으로 로드됩니다. -->
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button data-action="close-add-modal" class="btn btn-secondary w-full text-3xl">취소</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- [신규] 다음 경기 팀 선택 모달 (무승부 시) -->
+    <div id="select-next-team-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-lg text-center space-y-6">
+            <h3 class="text-5xl font-black mb-4">무승부! 다음 경기는?</h3>
+            <p class="text-2xl text-gray-400 mb-4">다음 경기를 진행할 팀을 선택하세요.</p>
+            <div id="next-team-options" class="grid grid-cols-2 gap-4">
+                <!-- 팀 선택 버튼이 여기에 동적으로 로드됩니다. -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- [신규] 3경기 연속 경기 확인 모달 -->
+    <div id="confirm-next-match-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-lg text-center space-y-6">
+            <h3 class="text-5xl font-black mb-4"><span id="consecutive-team-name"></span> 팀 3경기 연속 경기!</h3>
+            <p id="consecutive-match-suggestion" class="text-2xl text-gray-400 mb-4"></p>
+            <div class="grid grid-cols-2 gap-4">
+                <button data-action="confirm-next-match" data-confirm="true" class="btn btn-primary text-3xl">예</button>
+                <button data-action="confirm-next-match" data-confirm="false" class="btn btn-secondary text-3xl">팀선택하기</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- [신규] 전체 세션 종료 확인 모달 -->
+    <div id="confirm-session-end-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="card rounded-2xl w-full max-w-lg text-center space-y-6">
+            <h3 class="text-5xl font-black mb-4">세션 종료 확인</h3>
+            <p id="confirm-session-end-modal-text" class="text-2xl text-gray-400 mb-4"></p>
+            <div class="grid grid-cols-2 gap-4">
+                <button data-action="confirm-session-end" data-confirm="true" class="btn btn-primary text-3xl">예</button>
+                <button data-action="confirm-session-end" data-confirm="false" class="btn btn-secondary text-3xl">아니오</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+    let MASTER_PLAYERS_DB = [], localState = {}, timerInterval = null, currentEventData = {};
+    let pageLeaveTime = null, timerWasRunning = false;
+    let currentGoalkeeperSelectTeam = null;
+    let currentPlayerToSwapOut = null;
+    let isProcessingEvent = false; 
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
+
+
+// --- 서버 호출 ---
+function serverCall(funcName, ...args) {
+    if (typeof google === 'undefined' || typeof google.script === 'undefined' || typeof google.script.run === 'undefined') {
+        console.error("오류: google.script.run이 정의되지 않았습니다.");
+        alert("오류: 앱을 로드할 수 없습니다.");
+        document.getElementById('loading-overlay').style.display = 'none';
+        return Promise.reject(new Error("Google Apps Script 환경이 아닙니다."));
+    }
+
+    // 타이머 관련 서버 호출은 로딩 오버레이 표시하지 않음
+    const showLoading = !['toggleTimerState'].includes(funcName);
+    
+    if (showLoading) {
+        document.getElementById('loading-overlay').style.display = 'flex';
+    }
+    console.log(`[Server Call] -> ${funcName}`, args);
+
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(response => {
+                if (showLoading) {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+                console.log(`[Server Response] <- ${funcName}`, response);
+
+                if (response.success) {
+                    if (response.data && response.data.currentScreen) {
+                        localState = response.data;
+                        renderUI();
+                    }
+                    
+                    resolve(response.data);
+                } else {
+                    alert(`서버 오류: ${response.message}`);
+                    reject(new Error(response.message));
+                }
+            })
+            .withFailureHandler(error => {
+                if (showLoading) {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+                alert(`통신 오류: ${error.message}`);
+                reject(error);
+            })
+            [funcName](...args);
+    });
+}
+
+// --- 타이머 로직 ---
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    serverCall('toggleTimerState', true);
+    
+    let seconds = localState.match.seconds;
+    timerInterval = setInterval(() => {
+        seconds--;
+        if (seconds < 0) seconds = 0;
+        localState.match.seconds = seconds;
+        updateTimerDisplay(seconds);
+
+        // 수정된 부분: 타이머가 0이 되면 pauseTimer()를 호출하여 상태를 변경
+        if (seconds <= 0) {
+            pauseTimer();
+        }
+    }, 1000);
+}
+
+    // index.html의 pauseTimer() 함수
+function pauseTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    serverCall('toggleTimerState', false, localState.match.seconds).then(() => {
+        // 서버 상태 업데이트 성공 후, UI를 변경
+        const toggleTimerBtn = document.querySelector('#screen-match-controller [data-action="toggle-timer"]');
+        if (toggleTimerBtn) {
+            toggleTimerBtn.textContent = '시작';
+            toggleTimerBtn.classList.remove('btn-secondary');
+            toggleTimerBtn.classList.add('btn-primary');
+        }
+    });
+}
+
+
+    function updateTimerDisplay(seconds) {
+        const display = document.getElementById('timer-display');
+        if (!display) return;
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        display.textContent = `${mins}:${secs}`;
+    }
+
+    // ===== 3번: 새 함수 추가 (다른 함수들과 함께 아무데나) =====
+function saveTimerStateBeforeLeave() {
+    if (localState.currentScreen === 'screen-match-controller' && localState.match) {
+        pageLeaveTime = Date.now();
+        timerWasRunning = localState.match.timerRunning;
+    }
+}
+
+function recoverTimerIfNeeded() {
+    if (pageLeaveTime && timerWasRunning && localState.match && localState.match.seconds > 0) {
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - pageLeaveTime) / 1000);
+        localState.match.seconds = Math.max(0, localState.match.seconds - elapsedSeconds);
+        
+        if (localState.match.seconds > 0 && localState.match.timerRunning) {
+            startTimer();
+        } else if (localState.match.seconds <= 0) {
+            pauseTimer();
+        }
+    }
+    pageLeaveTime = null;
+    timerWasRunning = false;
+}
+
+
+
+    // --- UI 렌더링 ---
+    function renderUI() {
+        const { currentScreen } = localState;
+        document.querySelectorAll('body > div[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+        document.getElementById(currentScreen).classList.remove('hidden');
+
+
+        const backBtn = document.getElementById('btn-back');
+        const showBackBtn = currentScreen !== 'screen-attendance' && currentScreen !== 'screen-final-results';
+        backBtn.classList.toggle('hidden', !showBackBtn);
+        if(showBackBtn) {
+            const screenFlow = {
+                'screen-team-allocation': 'screen-attendance',
+                'screen-match-select': localState.match.count > 1 ? 'screen-match-controller' : 'screen-team-allocation',
+                'screen-match-controller': 'screen-match-select',
+                'screen-session-summary': 'screen-match-controller'
+            };
+            backBtn.dataset.targetScreen = screenFlow[currentScreen];
+        }
+       
+        const renderMap = {
+            'screen-attendance': renderAttendanceScreen,
+            'screen-team-allocation': renderAllocationScreen,
+            'screen-match-select': renderMatchSelectScreen,
+            'screen-match-controller': renderMatchControllerScreen,
+            'screen-session-summary': renderSessionSummaryScreen,
+            'screen-final-results': renderFinalResultsScreen
+        };
+        if (renderMap[currentScreen]) renderMap[currentScreen]();
+    }
+
+
+    function renderAttendanceScreen() {
+    const gameDateInput = document.getElementById('game-date');
+    if (gameDateInput) {
+        gameDateInput.value = localState.selectedDate;
+    }
+    
+    // 팀 모드 설정
+    const teamModeSelect = document.getElementById('team-mode');
+    if (teamModeSelect) {
+        teamModeSelect.value = localState.teamMode || 3;
+    }
+    
+    const listEl = document.getElementById('master-player-list');
+    listEl.innerHTML = MASTER_PLAYERS_DB.map(p => `
+        <div data-action="toggle-attendance" data-player-name="${p.name}" class="player-card card flex flex-col justify-center items-center p-4 text-center cursor-pointer ${localState.attendingPlayerNames.includes(p.name) ? 'selected' : ''}">
+            <span class="font-black text-4xl">${p.name}</span>
+            <span class="text-xl mt-1 text-gray-400">${p.position}</span>
+        </div>
+    `).join('');
+    document.getElementById('attendance-count').textContent = localState.attendingPlayerNames.length;
+}
+
+
+    function renderAllocationScreen() {
+    const container = document.getElementById('team-allocation-container');
+    if (!container) return;
+    const playerStats = MASTER_PLAYERS_DB.reduce((acc, p) => { acc[p.name] = p; return acc; }, {});
+    container.innerHTML = Object.keys(localState.teams).map(teamName => {
+        const teamData = localState.teams[teamName];
+        let players = teamData.players;
+        const goalkeeper = teamData.goalkeeper;
+
+
+        if (teamData.viceCaptain && !players.includes(teamData.viceCaptain)) {
+            teamData.viceCaptain = null;
+        }
+        if (!teamData.viceCaptain && players.length >= 2 && teamData.captain) {
+            const candidates = players.filter(p => p !== teamData.captain);
+            if (candidates.length > 0) {
+                teamData.viceCaptain = candidates[Math.floor(Math.random() * candidates.length)];
+            }
+        }
+
+
+        if (players.length === 0 && !goalkeeper) return '';
+
+
+        // 기존 코드를 이것으로 교체:
+let teamTotalCCP = 0;
+let teamTotalWinRate = 0;
+const allTeamPlayers = [...players, goalkeeper].filter(Boolean);
+allTeamPlayers.forEach(pName => {
+    const pData = playerStats[pName];
+    if (pData) {
+        teamTotalCCP += (pData.ccp || 0);
+        teamTotalWinRate += (pData.winRate || 0);
+    }
+});
+
+const teamTotalPlayers = new Set(allTeamPlayers).size;
+const teamAvgCCP = teamTotalPlayers > 0 ? (teamTotalCCP / teamTotalPlayers).toFixed(1) : 0;
+const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlayers) * 100).toFixed(1) : 0;
+
+
+        return `
+            <div class="card space-y-4 w-full">
+                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
+                <div class="grid grid-cols-2 gap-2">
+                    ${players.map(p => {
+                        const isCaptain = p === teamData.captain;
+                        const isViceCaptain = p === teamData.viceCaptain;
+                        let armbandHTML = '';
+                        if (isCaptain) {
+                            armbandHTML = '<span class="armband captain-armband">C</span>';
+                        } else if (isViceCaptain) {
+                            armbandHTML = '<span class="armband vice-captain-armband">VC</span>';
+                        }
+                       
+                        return `
+                            <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${teamName}" class="btn bg-gray-700 text-gray-100 w-full text-3xl p-4">
+                                <div class="flex justify-between items-center w-full">
+                                    <span>${p}</span>
+                                    ${armbandHTML}
+                                </div>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+
+function renderMatchSelectScreen() {
+    const matchDurationSelect = document.getElementById('match-duration');
+    if (matchDurationSelect) {
+        matchDurationSelect.value = localState.match.selectedDuration;
+    }
+
+    const fieldSelect = document.getElementById('field-select');
+    if (fieldSelect) {
+        fieldSelect.value = localState.selectedField;
+    }
+    
+    // ★ 활성 팀만 필터링 (선수가 1명 이상)
+    const activeTeams = Object.keys(localState.teams)
+        .filter(t => localState.teams[t].players.length > 0 || localState.teams[t].goalkeeper);
+    
+    const container = document.getElementById('team-select-container');
+    container.innerHTML = activeTeams.map(teamName => {
+        const isSelected = localState.match.playingTeams.includes(teamName) ? 'selected' : '';
+        const teamStat = localState.sessionStats.teamStats[teamName] || { wins: 0, draws: 0, losses: 0 };
+        return `
+            <div data-action="toggle-team-select" data-team-name="${teamName}" 
+                 class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ${isSelected}">
+                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">${teamName}</h2>
+                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)</p>
+            </div>
+        `;
+    }).join('');
+
+    const startMatchBtn = document.getElementById('btn-start-match');
+    const selectedTeamsCount = localState.match.playingTeams.length;
+    
+    // ★ 2팀 선택해야 시작 가능
+    if (selectedTeamsCount === 2) {
+        startMatchBtn.disabled = false;
+        startMatchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+        startMatchBtn.disabled = true;
+        startMatchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    // ✅ [추가] 경기 시작 버튼 아래에 "전체 세션 종료" 버튼 동적으로 삽입
+    // - HTML을 JS 밖에 두면 앱이 터지므로, DOM으로 안전하게 넣는다.
+    const existingEndBtn = document.getElementById('btn-end-session-from-select');
+    if (existingEndBtn) existingEndBtn.remove();
+
+    const endSessionBtn = document.createElement('button');
+    endSessionBtn.id = 'btn-end-session-from-select';
+    endSessionBtn.dataset.action = 'finish-session-to-summary';
+    endSessionBtn.className = 'btn btn-danger w-full text-3xl mt-4';
+    endSessionBtn.textContent = '🚨 전체 세션 종료';
+
+    // 경기 시작 버튼 바로 아래에 넣기
+    startMatchBtn.insertAdjacentElement('afterend', endSessionBtn);
+}
+
+
+
+
+    function renderMatchControllerScreen() {
+   // [타이머 안전장치] 서버 상태와 맞지 않는 타이머만 정리
+    if (timerInterval && !localState.match.timerRunning) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        console.log('불필요한 타이머 정리됨');
+    }
+    
+    recoverTimerIfNeeded(); 
+    const { teamA, teamB, count, timeline, timerRunning, seconds, todayHeadToHead } = localState.match;
+        const container = document.getElementById('screen-match-controller');
+       
+        const headToHeadKey = [teamA.name, teamB.name].sort().join('_');
+        const h2hStats = todayHeadToHead[headToHeadKey] || { [teamA.name]: { wins: 0, draws: 0, losses: 0 }, [teamB.name]: { wins: 0, draws: 0, losses: 0 } };
+        const teamA_h2h = h2hStats[teamA.name];
+        const teamB_h2h = h2hStats[teamB.name];
+        const h2hDisplay = `<span class="${teamColorClasses[teamA.name]}">${teamA.name}</span> ${teamA_h2h.wins}승 ${teamA_h2h.draws}무 ${teamA_h2h.losses}패 <span class="mx-2 text-gray-400">vs</span> <span class="${teamColorClasses[teamB.name]}">${teamB.name}</span> ${teamB_h2h.wins}승 ${teamB_h2h.draws}무 ${teamB_h2h.losses}패`;
+        const teamA_matchesPlayed = localState.sessionStats.teamStats[teamA.name].matchesPlayed || 0;
+        const teamB_matchesPlayed = localState.sessionStats.teamStats[teamB.name].matchesPlayed || 0;
+        const matchesPlayedDisplay = `<span class="${teamColorClasses[teamA.name]}">${teamA.name}</span> ${teamA_matchesPlayed}번째 경기 <span class="mx-2 text-gray-400">vs</span> <span class="${teamColorClasses[teamB.name]}">${teamB.name}</span> ${teamB_matchesPlayed}번째 경기`;
+
+
+        container.innerHTML = `
+            <div class="space-y-8">
+                <div class="text-center">
+                    <p class="text-3xl text-gray-400 font-bold">Match #${count}</p>
+                    <p class="text-2xl text-gray-300 font-semibold mt-2">${h2hDisplay}</p>
+                   
+                    <div class="flex justify-center items-center text-7xl font-black my-4">
+                        <span class="${teamColorClasses[teamA.name]}">${teamA.name}</span>
+                        <span class="mx-8 text-gray-100">${teamA.score} : ${teamB.score}</span>
+                        <span class="${teamColorClasses[teamB.name]}">${teamB.name}</span>
+                    </div>
+                </div>
+                <div class="flex justify-center items-center gap-8">
+    ${localState.originalTeams ? `<button data-action="restore-original-teams" class="btn btn-secondary text-4xl px-10">🔄 원팀</button>` : ''}
+    <span id="timer-display" class="text-7xl font-mono card py-5 px-10 bg-gray-700 text-gray-100">${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}</span>
+    <button data-action="toggle-timer" class="btn ${timerRunning ? 'btn-secondary' : 'btn-primary'} text-4xl px-10 w-48">${timerRunning ? '일시정지' : '시작'}</button>
+</div>
+               
+                <div class="flex justify-center border-b border-gray-600 mb-6 gap-x-12">
+                    <button class="tab-button active" data-tab="players">라인업</button>
+                    <button class="tab-button" data-tab="team-stats">팀 순위</button>
+                    <button class="tab-button" data-tab="player-stats">개인기록 순위</button>
+                </div>
+
+
+                <div id="tab-content-players" class="tab-content active">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${[teamA, teamB].map(team => `
+                            <div class="card space-y-4">
+                                <h3 class="text-5xl font-black ${teamColorClasses[team.name]}">${team.name} 라인업</h3>
+                                <div class="flex flex-col gap-2">
+                                    <button data-action="open-gk-modal" data-team-name="${team.name}" class="btn bg-purple-700 w-full text-left text-3xl font-bold">
+                                        골키퍼: ${localState.teams[team.name].goalkeeper || '미지정'}
+                                    </button>
+                                  ${localState.teams[team.name].players.map(p => `
+                            <div class="flex gap-2">
+                                <button data-action="open-record-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn bg-gray-700 text-gray-100 flex-grow text-left text-4xl">
+                                    ${p}
+                                </button>
+                                <button data-action="open-swap-modal" data-player-name="${p}" data-team-name="${team.name}" class="btn btn-secondary text-4xl px-4">🔄</button>
+                            </div>
+                        `).join('')}
+                        ${(() => {
+                            const currentPlayerCount = localState.teams[team.name].players.length;
+                            const emptySlots = 7 - currentPlayerCount;
+                            if (emptySlots <= 0) return '';
+                            
+                            // 대기 팀 찾기 (경기 안 하는 팀)
+                            const waitingTeam = ['RED', 'BLUE', 'YELLOW'].find(t => 
+                                t !== localState.match.teamA.name && t !== localState.match.teamB.name
+                            );
+                            
+                            // 빈 슬롯만큼 + 버튼 생성
+                            let addButtons = '';
+                            for (let i = 0; i < emptySlots; i++) {
+                                addButtons += `
+                                    <div class="flex gap-2 mt-2">
+                                        <button data-action="open-add-modal" data-team-name="${team.name}" data-waiting-team="${waitingTeam}" class="btn bg-green-600 hover:bg-green-700 text-white flex-grow text-4xl">
+                                            ➕ 선수 추가
+                                        </button>
+                                    </div>
+                                `;
+                            }
+                            return addButtons;
+                        })()}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div id="tab-content-team-stats" class="tab-content">
+    ${renderTeamRankingsTable()}
+</div>
+                </div>
+
+
+                <div id="tab-content-player-stats" class="tab-content">
+                    ${renderPlayerStatsRankings()}
+                </div>
+
+
+                <div class="grid grid-cols-2 gap-4">
+                    <button data-action="undo" class="btn btn-secondary text-4xl">스탯 취소</button>
+                    <button data-action="end-match" class="btn btn-primary text-4xl">현재 경기 종료</button>
+                </div>
+               
+                <button data-action="finish-session-to-summary" class="btn btn-danger w-full bg-red-800 text-4xl">🚨 전체 세션 종료</button>
+               
+                <div class="card max-h-60 overflow-y-auto">
+                    <h3 class="text-3xl font-bold mb-4">타임라인</h3>
+                    <ul class="text-xl space-y-2 text-left">${timeline.map(e => `<li class="border-b border-gray-700 pb-2 text-gray-300">[${e.time}] <span class="${teamColorClasses[e.teamName]} font-bold">${e.player}</span>: ${e.stat === 'goal' ? '득점' + (e.assistPlayer ? ` (도움: ${e.assistPlayer})` : '') : e.stat === 'assist' ? '도움' : e.stat === 'defense' ? '수비' : e.stat === 'save' ? '선방' : '자책골'}</li>`).join('') || '<li class="text-gray-500">기록이 없습니다.</li>'}</ul>
+                </div>
+            </div>
+        `;
+        updateTimerDisplay(seconds);
+        const toggleTimerBtn = document.querySelector('#screen-match-controller [data-action="toggle-timer"]');
+        if (toggleTimerBtn) {
+            if (timerRunning) {
+                toggleTimerBtn.textContent = '일시정지';
+                toggleTimerBtn.classList.remove('btn-primary');
+                toggleTimerBtn.classList.add('btn-secondary');
+            } else {
+                toggleTimerBtn.textContent = '시작';
+                toggleTimerBtn.classList.remove('btn-secondary');
+                toggleTimerBtn.classList.add('btn-primary');
+            }
+        }
+
+
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.removeEventListener('click', handleTabClick);
+            button.addEventListener('click', handleTabClick);
+        });
+    }
+
+
+    function handleTabClick(event) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(`tab-content-${event.target.dataset.tab}`).classList.add('active');
+    }
+
+
+    function renderPlayerStatsRankings() {
+        const playerStats = localState.sessionStats.playerStats;
+        const playersArray = Object.keys(playerStats).map(name => ({ name, ...playerStats[name] }));
+
+
+        const mvpRank = [...playersArray].sort((a, b) => {
+            const scoreA = (a.goal * 2) + (a.assist * 2) + (a.defense * 1) + (a.save * 1);
+            const scoreB = (b.goal * 2) + (b.assist * 2) + (b.defense * 1) + (b.save * 1);
+            return scoreB - scoreA;
+        }).filter(p => ((p.goal || 0) * 2) + ((p.assist || 0) * 2) + ((p.defense || 0) * 1) + ((p.save || 0) * 1) > 0).slice(0, 5);
+
+
+        const goalRank = [...playersArray].sort((a, b) => b.goal - a.goal).filter(p => p.goal > 0).slice(0, 10);
+        const assistRank = [...playersArray].sort((a, b) => b.assist - a.assist).filter(p => p.assist > 0).slice(0, 10);
+        const defenseRank = [...playersArray].sort((a,b)=> b.defense - a.defense).filter(p=>p.defense>0).slice(0,10);
+        const saveRank = [...playersArray].sort((a, b) => b.save - a.save).filter(p => p.save > 0).slice(0, 10);
+
+        const renderRankingList = (title, rankList, statKey, secondaryStatKey = null) => {
+            if (rankList.length === 0) return '';
+            return `
+                <div class="card mb-6">
+                    <h4 class="text-3xl font-bold mb-3 text-gray-100">${title}</h4>
+                    <ul class="space-y-3">
+                        ${rankList.map((p, index) => `
+                            <li class="flex justify-between items-center text-2xl border-b border-gray-700 pb-3 text-gray-300">
+                                <span>${index + 1}. ${p.name}</span>
+                                <span>${p[statKey]}${secondaryStatKey ? ` (${p[secondaryStatKey]})` : ''}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+        };
+       
+        const mvpRankHtml = mvpRank.length > 0 ? `
+            <div class="card mb-6 bg-yellow-900 text-yellow-100">
+                <h4 class="text-3xl font-bold mb-3">🏆 MVP 순위</h4>
+                <ul class="space-y-3">
+                    ${mvpRank.map((p, index) => `
+                        <li class="flex justify-between items-center text-2xl border-b border-yellow-700 pb-3">
+                            <span>${index + 1}. ${p.name}</span>
+                            <span>MP ${((p.goal || 0) * 2) + ((p.assist || 0) * 2) + ((p.defense || 0) * 1) + ((p.save || 0) * 1)}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        ` : '';
+
+
+        return `
+            <div class="space-y-6">
+                ${mvpRankHtml}
+                ${renderRankingList('득점 순위', goalRank, 'goal')}
+                ${renderRankingList('도움 순위', assistRank, 'assist')}
+                ${renderRankingList('수비 순위', defenseRank, 'defense')}
+                ${renderRankingList('선방 순위', saveRank, 'save')}
+            </div>
+        `;
+    }
+
+
+
+// [교체본] 오늘의 경기 결과 화면 렌더링 함수
+function renderSessionSummaryScreen() {
+  const container = document.getElementById('screen-session-summary');
+  const { sessionStats } = localState;
+  const playerStats = sessionStats.playerStats;
+  const teamStats = sessionStats.teamStats;
+
+  // --- 유틸: Match Points 계산 ---
+  const calcMP = (s) => ((s.goal || 0) * 2) + ((s.assist || 0) * 2) + ((s.defense || 0) * 1) + ((s.save || 0) * 1);
+
+  // --- 유틸: 동률 상위자 리스트 (최대 8명) ---
+  function getTopTies(statKey, maxCount = 8) {
+    let maxVal = -1;
+    Object.keys(playerStats).forEach(name => {
+      const v = (playerStats[name]?.[statKey] || 0);
+      if (v > maxVal) maxVal = v;
+    });
+    if (maxVal <= 0) return { maxVal: 0, names: [] };
+
+    const names = Object.keys(playerStats)
+      .filter(name => (playerStats[name]?.[statKey] || 0) === maxVal)
+      .slice(0, maxCount);
+
+    return { maxVal, names };
+  }
+
+  // --- 유틸: MVP 동률자 (MP 기준, 최대 8명) ---
+  function getTopMvpTies(maxCount = 8) {
+    let maxMp = -1;
+    Object.keys(playerStats).forEach(name => {
+      const mp = calcMP(playerStats[name] || {});
+      if (mp > maxMp) maxMp = mp;
+    });
+    if (maxMp <= 0) return { maxMp: 0, names: [] };
+
+    const names = Object.keys(playerStats)
+      .filter(name => calcMP(playerStats[name] || {}) === maxMp)
+      .slice(0, maxCount);
+
+    return { maxMp, names };
+  }
+
+  const mvp = getTopMvpTies(8);
+  const topGoal = getTopTies('goal', 8);
+  const topAssist = getTopTies('assist', 8);
+  const topDefense = getTopTies('defense', 8);
+  const topSave = getTopTies('save', 8);
+
+  // ✅ 시상 박스 공통 스타일(경계가 확실히 보이도록 톤 차 + 보더)
+  const awardBoxStyle = `
+  background: #1e293b; /* 진한 네이비 */
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1rem;
+  padding: 1.25rem;
+`;
+
+
+  // --- 1) 오늘의 수상자(시상식 카드) ---
+  // 요구사항 반영:
+  // - 박스 배경/경계 다시 보이게
+  // - 이름: 1사이즈 작게(text-3xl), 전부 가운데 정렬
+  // - MVP 선수 이름: 흰색
+  // - Match Points(MP) 6점: 흰색
+  // - 타이틀(노란글씨) & 우측 숫자(득점/도움/수비/선방): 1사이즈 작게
+  const awardsHtml = `
+    <div class="card mb-8">
+      <h2 class="text-5xl font-black mb-6 text-gray-100">오늘의 수상자</h2>
+
+      <!-- MVP -->
+      ${mvp.names.length > 0 ? `
+        <div style="${awardBoxStyle}" class="mb-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-5xl">🏆</span>
+              <span class="text-3xl font-black text-yellow-500">MVP</span>
+            </div>
+            <div class="text-3xl font-black text-gray-100">Match Points(MP) ${mvp.maxMp}점</div>
+          </div>
+
+          <!-- 이름: 가운데 정렬 + 1사이즈 감소 -->
+          <div class="mt-4 grid grid-cols-4 md:grid-cols-8 gap-y-3 gap-x-4 justify-items-center">
+            ${mvp.names.map(n => `
+              <div class="text-3xl font-black text-gray-100 text-center w-full whitespace-nowrap">${n}</div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 2x2 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- 최다득점 -->
+        <div style="${awardBoxStyle}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-5xl">⚽</span>
+              <span class="text-3xl font-black text-yellow-500">최다득점</span>
+            </div>
+            <div class="text-3xl font-black text-gray-100">${topGoal.maxVal}득점</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-3 gap-y-3 gap-x-4 justify-items-center">
+            ${topGoal.names.map(n => `
+              <div class="text-3xl font-black text-gray-100 text-center w-full whitespace-nowrap">${n}</div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 최다도움 -->
+        <div style="${awardBoxStyle}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-5xl">👟</span>
+              <span class="text-3xl font-black text-yellow-500">최다도움</span>
+            </div>
+            <div class="text-3xl font-black text-gray-100">${topAssist.maxVal}도움</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-3 gap-y-3 gap-x-4 justify-items-center">
+            ${topAssist.names.map(n => `
+              <div class="text-3xl font-black text-gray-100 text-center w-full whitespace-nowrap">${n}</div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 최다수비 -->
+        <div style="${awardBoxStyle}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-5xl">🛡️</span>
+              <span class="text-3xl font-black text-yellow-500">최다수비</span>
+            </div>
+            <div class="text-3xl font-black text-gray-100">${topDefense.maxVal}수비</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-3 gap-y-3 gap-x-4 justify-items-center">
+            ${topDefense.names.map(n => `
+              <div class="text-3xl font-black text-gray-100 text-center w-full whitespace-nowrap">${n}</div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 최다선방 -->
+        <div style="${awardBoxStyle}">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-5xl">🧤</span>
+              <span class="text-3xl font-black text-yellow-500">최다선방</span>
+            </div>
+            <div class="text-3xl font-black text-gray-100">${topSave.maxVal}선방</div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-3 gap-y-3 gap-x-4 justify-items-center">
+            ${topSave.names.map(n => `
+              <div class="text-3xl font-black text-gray-100 text-center w-full whitespace-nowrap">${n}</div>
+            `).join('')}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  // --- 2) 팀 순위 표 ---
+  const teamsArray = Object.keys(teamStats)
+    .filter(teamName => teamStats[teamName].matchesPlayed > 0)
+    .map(teamName => {
+      const stats = teamStats[teamName];
+      const points = (stats.wins * 3) + (stats.draws * 1);
+      const goalDifference = stats.goalsFor - stats.goalsAgainst;
+      const winRate = (stats.wins + stats.losses) > 0
+        ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1) + '%'
+        : '-';
+      return {
+        name: teamName,
+        played: stats.matchesPlayed,
+        wins: stats.wins,
+        draws: stats.draws,
+        losses: stats.losses,
+        gf: stats.goalsFor,
+        ga: stats.goalsAgainst,
+        gd: goalDifference,
+        points,
+        winRate
+      };
+    })
+    .sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.gd !== a.gd) return b.gd - a.gd;
+      return b.gf - a.gf;
+    });
+
+  const teamRankingsHtml = `
+    <div class="card mb-8 overflow-x-auto">
+      <h2 class="text-5xl font-black mb-6 text-gray-100">오늘의 팀 순위</h2>
+      <table class="w-full text-5xl edit-table">
+        <thead>
+          <tr>
+            <th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${teamsArray.map((t, index) => `
+            <tr>
+              <td class="font-bold">${index + 1}</td>
+              <td class="font-bold ${teamColorClasses[t.name]}">${t.name} ${index === 0 ? '<span>🏆</span>' : ''}</td>
+              <td>${t.played}</td>
+              <td>${t.wins}</td>
+              <td>${t.draws}</td>
+              <td>${t.losses}</td>
+              <td>${t.gf}</td>
+              <td>${t.ga}</td>
+              <td>${t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+              <td>${t.winRate}</td>
+              <td class="font-bold text-blue-400">${t.points}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // --- 3) 팀별 개인 스탯 ---
+  const teamStatsHtml = `
+    <div class="card mb-8 overflow-x-auto">
+      <h2 class="text-5xl font-black mb-6 text-gray-100">팀별 개인 스탯</h2>
+      ${Object.keys(localState.teams).map(teamName => {
+        const teamData = localState.teams[teamName];
+        const playersInTeam = [...new Set([...teamData.players, teamData.goalkeeper].filter(Boolean))];
+        if (playersInTeam.length === 0) return '';
+        return `
+          <div class="mb-6">
+            <h3 class="text-5xl font-black ${teamColorClasses[teamName]} text-left mb-3">${teamName} 팀</h3>
+            <table class="w-full text-5xl edit-table">
+              <thead>
+                <tr>
+                  <th>선수명</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${playersInTeam.map(pName => {
+                  const stats = playerStats[pName] || { goal: 0, assist: 0, defense: 0, save: 0 };
+                  const mp = calcMP(stats);
+                  return `
+                    <tr>
+                      <td class="font-bold text-gray-100">${pName}</td>
+                      <td>${stats.goal}</td>
+                      <td>${stats.assist}</td>
+                      <td>${stats.defense}</td>
+                      <td>${stats.save}</td>
+                      <td class="font-bold text-blue-400">${mp}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // --- 최종 렌더 ---
+  container.innerHTML = `
+    <h1 class="text-7xl font-black mb-8 text-gray-100">오늘의 경기 결과</h1>
+    ${awardsHtml}
+    ${teamRankingsHtml}
+    ${teamStatsHtml}
+    <div class="flex flex-col sm:flex-row gap-4 mt-8">
+      <button data-action="save-and-start-new-session" class="btn btn-primary w-full text-3xl">기록 저장 & NEW 세션시작</button>
+      <button data-action="discard-and-start-new-session" class="btn btn-secondary w-full text-3xl">기록 리셋 & NEW 세션시작</button>
+    </div>
+  `;
+}
+
+
+
+
+
+    function renderFinalResultsScreen() {
+        document.getElementById('screen-final-results').innerHTML = `
+            <div class="space-y-8">
+                <h1 class="text-6xl font-black text-gray-100">세션 종료</h1>
+                <p class="mt-4 text-2xl text-gray-400">오늘의 모든 기록이 저장되었습니다. 수고하셨습니다!</p>
+                <button data-action="reset" class="btn btn-primary mt-8 text-2xl">새 세션 시작</button>
+            </div>
+        `;
+    }
+
+
+    // --- 이벤트 핸들러 ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const data = await serverCall('getInitialData');
+            MASTER_PLAYERS_DB = data.masterPlayers;
+            localState = data.appState;
+            renderUI();
+        } catch (e) {
+            console.error('초기화 실패:', e);
+            alert('앱을 초기화하는 데 실패했습니다. 새로고침해주세요.');
+        }
+    });
+
+
+    document.body.addEventListener('click', async (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+
+
+        // ★★★★★ 문제의 원인 수정 ★★★★★
+        // 'confirm'은 window.confirm() 함수 이름과 겹치므로 변수명을 isConfirmed로 변경
+        const { action, playerName, teamName, stat, targetScreen, assistPlayerName, gkPlayerName, swapOutPlayerName, swapInPlayerName, confirm: isConfirmed } = target.dataset;
+
+
+        switch (action) {
+             case 'go-back':
+            if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        console.log('화면 전환으로 타이머 정리됨');
+    }
+
+        saveTimerStateBeforeLeave(); // 이 줄만 추가
+        serverCall('changeScreen', targetScreen);
+        break;
+            case 'toggle-attendance':
+              const names = localState.attendingPlayerNames;
+              const index = names.indexOf(playerName);
+              if (index > -1) names.splice(index, 1);
+              else names.push(playerName);
+              renderAttendanceScreen();
+              break;
+            case 'go-to-allocation':
+            if (localState.attendingPlayerNames.length < 2) return alert('최소 2명 이상 선택해주세요.');
+            (async () => {
+                try {
+                    const selectedDate = document.getElementById('game-date').value;
+                    const teamMode = parseInt(document.getElementById('team-mode').value);
+                    await serverCall('setAttendingPlayersAndDate', localState.attendingPlayerNames, selectedDate, teamMode);
+                    const algorithm = document.getElementById('assignment-strategy').value;
+                    const shuffleEnabled = document.getElementById('shuffle-enabled')?.checked || false;
+                    await serverCall('performTeamAllocation', algorithm, shuffleEnabled);
+                } catch (e) {
+                    console.error('팀 배분 중 오류 발생:', e);
+                    alert('팀 배분 중 오류가 발생했습니다.');
+                }
+            })();
+            break;
+            case 're-allocate':
+                const algorithm = document.getElementById('assignment-strategy').value;
+                const shuffleEnabled = document.getElementById('shuffle-enabled').checked;
+                serverCall('performTeamAllocation', algorithm, shuffleEnabled);
+                break;
+            case 'go-to-match-select':
+                serverCall('changeScreen', 'screen-match-select');
+                break;
+            case 'toggle-team-select':
+                const teamToToggle = teamName;
+                const isCurrentlySelected = localState.match.playingTeams.includes(teamToToggle);
+                let tempUpdatedPlayingTeams = [];
+                if (isCurrentlySelected) {
+                    tempUpdatedPlayingTeams = localState.match.playingTeams.filter(t => t !== teamToToggle);
+                } else {
+                    tempUpdatedPlayingTeams = [...localState.match.playingTeams, teamToToggle];
+                }
+                if (tempUpdatedPlayingTeams.length > 2) {
+                    alert('경기를 시작하려면 정확히 두 팀만 선택해야 합니다.');
+                    return;
+                }
+                localState.match.playingTeams = tempUpdatedPlayingTeams;
+                renderUI();
+                break;
+            case 'start-selected-match':
+                const selectedTeamsToStart = localState.match.playingTeams;
+                if (selectedTeamsToStart.length !== 2) {
+                    alert('경기를 시작하려면 정확히 두 팀을 선택해야 합니다.');
+                    return;
+                }
+                const selectedDuration = parseInt(document.getElementById('match-duration').value);
+                const selectedField = document.getElementById('field-select').value;
+                serverCall('startMatch', selectedTeamsToStart, selectedDuration, selectedField);
+                break;
+
+             case 'restore-original-teams':
+            if (window.confirm('원래 팀 구성으로 복구하시겠습니까?')) {
+                serverCall('restoreOriginalTeams');
+            }
+            break;
+            
+            case 'open-record-modal':
+                if (!localState.match.timerRunning && localState.match.seconds > 0) {
+                    // alert 대신 커스텀 알림 사용
+                    const msg = document.createElement('div');
+                    msg.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-4 rounded-lg text-2xl font-bold z-50';
+                    msg.textContent = '타이머를 먼저 시작해주세요!';
+                    document.body.appendChild(msg);
+                    setTimeout(() => msg.remove(), 2000);
+                    return;
+                }
+                currentEventData = { player: playerName, teamName: teamName };
+                document.getElementById('record-event-title').textContent = `${playerName} (${teamName})`;
+                document.getElementById('record-event-modal').classList.remove('hidden');
+                break;
+            case 'close-modal':
+                target.closest('.fixed').classList.add('hidden');
+                break;
+            case 'record-event':
+                if (isProcessingEvent) return; // 중복 방지
+                isProcessingEvent = true;
+                
+                const recordStat = stat;
+                if (recordStat === 'goal') {
+                    document.getElementById('record-event-modal').classList.add('hidden');
+                    document.getElementById('assist-scorer-name').textContent = currentEventData.player;
+                    const assistPlayerListEl = document.getElementById('assist-player-list');
+                    const currentTeamPlayers = localState.teams[currentEventData.teamName].players;
+                    const scorer = currentEventData.player;
+                    const assistOptions = currentTeamPlayers.filter(p => p !== scorer);
+                    assistOptions.push("없음");
+                    assistPlayerListEl.innerHTML = assistOptions.map(p => `
+                        <button data-action="select-assist-player" data-assist-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>
+                    `).join('');
+                    document.getElementById('assist-select-modal').classList.remove('hidden');
+                    isProcessingEvent = false;
+                } else {
+                    serverCall('recordEvent', { ...currentEventData, stat: recordStat }, localState.match.seconds)
+                        .then(() => {
+                            isProcessingEvent = false;
+                        })
+                        .catch(() => {
+                            isProcessingEvent = false;
+                        });
+                    target.closest('.fixed').classList.add('hidden');
+                }
+                break;
+            case 'select-assist-player':
+                if (isProcessingEvent) return; // 중복 방지
+                isProcessingEvent = true;
+                
+                const finalAssistPlayer = assistPlayerName === "없음" ? null : assistPlayerName;
+                serverCall('recordEvent', { ...currentEventData, stat: 'goal', assistPlayer: finalAssistPlayer }, localState.match.seconds)
+                    .then(() => {
+                        isProcessingEvent = false;
+                    })
+                    .catch(() => {
+                        isProcessingEvent = false;
+                    });
+                document.getElementById('assist-select-modal').classList.add('hidden');
+                break;  
+            case 'close-assist-modal':
+                document.getElementById('assist-select-modal').classList.add('hidden');
+                break;
+            case 'open-gk-modal':
+                currentGoalkeeperSelectTeam = teamName;
+                document.getElementById('gk-team-name').textContent = teamName;
+                const gkPlayerListEl = document.getElementById('gk-player-list');
+                const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+                const availablePlayers = localState.attendingPlayerNames.filter(pName => {
+                    return !allTeamNames.some(tName => localState.teams[tName].players.includes(pName) || localState.teams[tName].goalkeeper === pName);
+                });
+                const currentTeamFieldPlayers = localState.teams[teamName].players;
+                let gkOptionsHtml = '';
+                if (currentTeamFieldPlayers.length > 0) {
+                    gkOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">우리 팀 선수:</p>`;
+                    gkOptionsHtml += currentTeamFieldPlayers.map(p => `<button data-action="select-goalkeeper" data-gk-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>`).join('');
+                }
+                if (availablePlayers.length > 0) {
+                    gkOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">대기 선수:</p>`;
+                    gkOptionsHtml += availablePlayers.map(p => `<button data-action="select-goalkeeper" data-gk-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>`).join('');
+                }
+                gkOptionsHtml += `<p class="text-3xl font-bold text-gray-400 col-span-full mt-4">기타:</p><button data-action="select-goalkeeper" data-gk-player-name="null" class="btn bg-red-700 text-3xl w-full">키퍼해제</button>`;
+                gkPlayerListEl.innerHTML = gkOptionsHtml;
+                document.getElementById('goalkeeper-select-modal').classList.remove('hidden');
+                break;
+            case 'select-goalkeeper':
+                const finalGkPlayer = gkPlayerName === "null" ? null : gkPlayerName;
+                await serverCall('setGoalkeeper', currentGoalkeeperSelectTeam, finalGkPlayer);
+                document.getElementById('goalkeeper-select-modal').classList.add('hidden');
+                break;
+            case 'close-gk-modal':
+                document.getElementById('goalkeeper-select-modal').classList.add('hidden');
+                break;
+            case 'open-swap-modal':
+                currentPlayerToSwapOut = { player: playerName, team: teamName, isGoalkeeper: localState.teams[teamName].goalkeeper === playerName };
+                document.getElementById('swap-out-player-info').textContent = `${playerName} (${teamName}) ${currentPlayerToSwapOut.isGoalkeeper ? 'GK' : ''} ➡️`;
+                const swapInPlayerListEl = document.getElementById('swap-in-player-list');
+                let swapOptionsHtml = '';
+                const allTeamNamesForSwap = ['RED', 'BLUE', 'YELLOW'];
+                allTeamNamesForSwap.forEach(otherTeamName => {
+                    if (otherTeamName !== teamName) {
+                        const playersAndGk = [...localState.teams[otherTeamName].players, localState.teams[otherTeamName].goalkeeper].filter(Boolean);
+                        if (playersAndGk.length > 0) {
+                            swapOptionsHtml += `<p class="text-2xl font-bold ${teamColorClasses[otherTeamName]} col-span-full mt-4">${otherTeamName} 팀 선수:</p>`;
+                            swapOptionsHtml += playersAndGk.map(p => `<button data-action="select-swap-player" data-swap-in-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-4xl w-full">${p}</button>`).join('');
+                        }
+                    }
+                });
+                const waitingPlayersForSwap = localState.attendingPlayerNames.filter(pName => !allTeamNamesForSwap.some(tName => localState.teams[tName].players.includes(pName) || localState.teams[tName].goalkeeper === pName));
+                if (waitingPlayersForSwap.length > 0) {
+                    swapOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">대기 선수:</p>`;
+                    swapOptionsHtml += waitingPlayersForSwap.map(p => `<button data-action="select-swap-player" data-swap-in-player-name="${p}" class="btn bg-gray-700 text-gray-100 text-4xl w-full">${p}</button>`).join('');
+                }
+                if (!currentPlayerToSwapOut.isGoalkeeper) {
+                    swapOptionsHtml += `<p class="text-2xl font-bold text-gray-400 col-span-full mt-4">기타:</p><button data-action="select-swap-player" data-swap-in-player-name="null" class="btn bg-red-700 text-2xl w-full">선수 제거</button>`;
+                }
+                swapInPlayerListEl.innerHTML = swapOptionsHtml;
+                document.getElementById('player-swap-modal').classList.remove('hidden');
+                break;
+            case 'select-swap-player':
+                const finalSwapInPlayer = swapInPlayerName === "null" ? null : swapInPlayerName;
+                if (currentPlayerToSwapOut) {
+                    await serverCall('substitutePlayer', currentPlayerToSwapOut.team, currentPlayerToSwapOut.player, finalSwapInPlayer);
+                }
+                document.getElementById('player-swap-modal').classList.add('hidden');
+                break;
+            case 'close-swap-modal':
+                document.getElementById('player-swap-modal').classList.add('hidden');
+                break;
+            case 'open-add-modal':
+              const teamNameToAddTo = teamName;
+              const waitingTeamName = e.target.dataset.waitingTeam;
+
+              // 모달 제목 업데이트 (전체 제목을 innerHTML로 설정)
+              const modalTitleEl = document.getElementById('add-player-modal-title');
+              modalTitleEl.innerHTML = `<span class="${teamColorClasses[waitingTeamName]}">${waitingTeamName}</span> 팀에서 선수추가`;
+              
+              // 대기 팀 선수 목록
+              const waitingTeamPlayers = localState.teams[waitingTeamName].players;
+              const addPlayerListEl = document.getElementById('add-player-list');
+              addPlayerListEl.innerHTML = waitingTeamPlayers.map(p => `
+                  <button data-action="select-add-player" data-add-team-name="${teamNameToAddTo}" data-add-player-name="${p}" data-from-team="${waitingTeamName}" class="btn bg-gray-700 text-gray-100 text-3xl w-full">${p}</button>
+              `).join('');
+              document.getElementById('player-add-modal').classList.remove('hidden');
+              break;
+            case 'select-add-player':
+              const teamToAddTo = e.target.dataset.addTeamName;
+              const playerToAdd = e.target.dataset.addPlayerName;
+              const fromTeam = e.target.dataset.fromTeam;
+              await serverCall('addPlayerToTeam', teamToAddTo, playerToAdd, fromTeam);
+              document.getElementById('player-add-modal').classList.add('hidden');
+              break;
+            case 'close-add-modal':
+              document.getElementById('player-add-modal').classList.add('hidden');
+              break;
+
+             case 'toggle-timer':
+                if (localState.match.timerRunning) pauseTimer();
+                else startTimer();
+                break;
+            case 'undo':
+                if (window.confirm('마지막 기록을 되돌리시겠습니까?')) serverCall('undoLastEvent');
+                break;
+            case 'end-match':
+                if (window.confirm('현재 경기를 종료하시겠습니까?')) {
+        // [타이머 안전장치] 경기 종료 시 클라이언트 타이머도 정리
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            console.log('경기 종료로 타이머 정리됨');
+        }
+        serverCall('endMatch');
+    }
+    break;
+            case 'finish-session-to-summary':
+                document.getElementById('confirm-session-end-modal-text').textContent = '오늘의 모든 경기를 끝내고 기록을 저장하시겠습니까?';
+                document.getElementById('confirm-session-end-modal').classList.remove('hidden');
+                break;
+            case 'confirm-session-end':
+                document.getElementById('confirm-session-end-modal').classList.add('hidden');
+                if (isConfirmed === 'true') {
+                    serverCall('finishSessionToSummary');
+                }
+                break;
+            case 'save-and-start-new-session':
+    if (window.confirm('수정된 기록을 저장하고 새 세션을 시작하시겠습니까?')) {
+        serverCall('updateAndArchiveSession');
+    }
+    break;
+            case 'discard-and-start-new-session':
+                if (window.confirm('현재 세션 기록을 저장하지 않고 새 세션을 시작하시겠습니까?')) serverCall('resetSession');
+                break;
+            case 'reset':
+                if (window.confirm('모든 기록을 초기화하고 새 세션을 시작하시겠습니까?')) serverCall('resetSession');
+                break;
+            case 'select-next-team':
+                document.getElementById('select-next-team-modal').classList.add('hidden');
+                await serverCall('selectNextPlayingTeam', teamName);
+                break;
+            case 'confirm-next-match':
+                document.getElementById('confirm-next-match-modal').classList.add('hidden');
+                await serverCall('confirmNextMatch', isConfirmed === 'true');
+                break;
+        }
+    });
+
+
+    // [신규] 팀 순위 표를 렌더링하는 함수 (세션 요약 화면에서 분리)
+function renderTeamRankingsTable() {
+    const { teamStats } = localState.sessionStats;
+    const teamsArray = Object.keys(teamStats)
+        .filter(teamName => teamStats[teamName].matchesPlayed > 0)
+        .map(teamName => {
+            const stats = teamStats[teamName];
+            const points = (stats.wins * 3) + (stats.draws * 1);
+            const goalDifference = stats.goalsFor - stats.goalsAgainst;
+            const winRate = (stats.wins + stats.losses) > 0 ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1) + '%' : '-';
+            return { name: teamName, played: stats.matchesPlayed, wins: stats.wins, draws: stats.draws, losses: stats.losses, gf: stats.goalsFor, ga: stats.goalsAgainst, gd: goalDifference, points: points, winRate: winRate };
+        })
+        .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.gd !== a.gd) return b.gd - a.gd;
+            return b.gf - a.gf;
+        });
+
+
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
+
+
+    const tableHtml = `
+        <div class="card mb-8 overflow-x-auto">
+            <h2 class="text-4xl font-bold mb-4 text-gray-100">오늘의 팀 순위</h2>
+            <table class="w-full text-5xl edit-table">
+                <thead>
+                    <tr>
+                        <th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${teamsArray.map((t, index) => `
+                        <tr>
+                            <td class="font-bold">${index + 1}</td>
+                            <td class="font-bold ${teamColorClasses[t.name]}">${t.name} ${index === 0 ? '<span>🏆</span>' : ''}</td>
+                            <td>${t.played}</td>
+                            <td>${t.wins}</td>
+                            <td>${t.draws}</td>
+                            <td>${t.losses}</td>
+                            <td>${t.gf}</td>
+                            <td>${t.ga}</td>
+                            <td>${t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+                            <td>${t.winRate}</td>
+                            <td class="font-bold text-blue-400">${t.points}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+
+    return tableHtml;
+}
+
+
+    // --- 기타 유틸리티 함수 (모달 열기 등) ---
+    function openSelectNextTeamModal(drawingTeams, waitingTeam) {
+        const container = document.getElementById('next-team-options');
+        container.innerHTML = drawingTeams.map(tName => `<button data-action="select-next-team" data-team-name="${tName}" class="btn btn-primary text-3xl">${tName} 팀</button>`).join('');
+        document.getElementById('select-next-team-modal').classList.remove('hidden');
+    }
+
+
+    function openConfirmNextMatchModal(team, suggestedTeams) {
+        document.getElementById('consecutive-team-name').textContent = team;
+        document.getElementById('consecutive-match-suggestion').textContent = `${suggestedTeams.join(' 팀과 ')} 팀이 경기를 진행하시겠습니까?`;
+        document.getElementById('confirm-next-match-modal').classList.remove('hidden');
+    }
+
+
+    // 날짜 및 구장명 변경 이벤트 리스너
+    document.getElementById('game-date').addEventListener('change', (e) => {
+        localState.selectedDate = e.target.value;
+    });
+    document.getElementById('field-select').addEventListener('change', (e) => {
+        localState.selectedField = e.target.value;
+    });
+
+// 탭 전환 감지 (기존 beforeunload 위에 추가)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // 탭이 숨겨질 때
+        saveTimerStateBeforeLeave();
+    } else {
+        // 탭이 다시 보여질 때
+        recoverTimerIfNeeded();
+    }
+});
+
+    // ===== 5번: 스크립트 맨 끝에 추가 =====
+window.addEventListener('beforeunload', function() {
+    saveTimerStateBeforeLeave();
+});
+</script>
