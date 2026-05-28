@@ -203,41 +203,17 @@
 <!-- 2. 팀 배분 & 라인업 화면 (별도!) -->
 <div id="screen-team-allocation" class="hidden w-full max-w-5xl mx-auto text-center space-y-8">
     <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
-    <!-- 알고리즘 선택 -->
-    <div class="flex flex-col sm:flex-row gap-4">
-        <select id="assignment-strategy" class="flex-1 p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-3xl">
-            <option value="balanced">밸런스 (기본)</option>
-            <option value="balanced_record">밸런스 (데이터기반)</option>
-            <option value="snakeMethod">스네이크 (기본)</option>
-            <option value="snake_record">스네이크 (데이터기반)</option>
-        </select>
-        <label class="flex items-center gap-3 p-4 bg-gray-700 rounded-xl cursor-pointer whitespace-nowrap">
-            <input type="checkbox" id="shuffle-enabled" class="w-8 h-8">
-            <span class="text-3xl font-bold text-gray-100">🎲셔플</span>
-        </label>
-        <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="card text-left">
-            <h2 class="text-5xl font-black mb-4">선수</h2>
-            <p class="text-2xl text-gray-400 mb-4">카드를 드래그해서 팀으로 옮기세요.</p>
-            <div id="unassigned-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-        </div>
-        <div class="space-y-6">
-            <div id="team-columns" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
-        </div>
-    </div>
-    <button id="lineup-confirm" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>라인업 확정</button>
-    <button data-action="go-to-match-select" id="btn-go-to-match-select" class="btn btn-secondary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 선택으로</button>
+    <div id="team-allocation-container" class="flex flex-col gap-6"></div>
+    <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 준비 완료</button>
 </div>
    
     <!-- 3. 경기 선택 화면 -->
     <div id="screen-match-select" class="hidden w-full max-w-4xl mx-auto text-center space-y-8">
         <h1 class="text-7xl font-black mb-4">경기 선택</h1>
         <!-- 경기 시간 설정 드롭다운 추가 -->
-        <div class="card p-4 flex items-center justify-between gap-4">
-            <label for="match-duration" class="text-5xl font-bold">경기 시간 설정:</label>
-            <select id="match-duration" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-5xl font-semibold border border-gray-500">
+        <div class="card p-4 flex flex-col items-center space-y-4">
+            <label for="match-duration" class="text-3xl font-bold">경기 시간 설정:</label>
+            <select id="match-duration" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
                 <option value="60">1분</option>
                 <option value="360">6분</option>
                 <option value="420">7분</option>
@@ -246,10 +222,19 @@
                 <option value="600">10분</option>
             </select>
         </div>
+        <!-- 구장명 선택 드롭다운 추가 -->
+        <div class="card p-4 flex flex-col items-center space-y-4">
+            <label for="field-select" class="text-3xl font-bold">구장명 선택:</label>
+            <select id="field-select" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
+                <option value="A 구장">A 구장</option>
+                <option value="B 구장">B 구장</option>
+                <option value="C 구장">C 구장</option>
+            </select>
+        </div>
         <p class="text-3xl text-gray-400">경기를 진행할 2팀을 선택하세요.</p>
         <div id="team-select-container" class="flex flex-col gap-6"></div> <!-- 세로로 배치 -->
         <!-- 경기 시작 버튼 추가 -->
-        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-6xl py-6 opacity-50 cursor-not-allowed" disabled>경기 시작</button>
+        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 시작</button>
     </div>
 
 
@@ -634,25 +619,27 @@ function renderMatchSelectScreen() {
     if (matchDurationSelect) {
         matchDurationSelect.value = localState.match.selectedDuration;
     }
+
+    const fieldSelect = document.getElementById('field-select');
+    if (fieldSelect) {
+        fieldSelect.value = localState.selectedField;
+    }
     
-    // ★ 고정 4팀 카드 표시 (선수 0명인 팀은 비활성)
-    const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
-
+    // ★ 활성 팀만 필터링 (선수가 1명 이상)
+    const activeTeams = Object.keys(localState.teams)
+        .filter(t => localState.teams[t].players.length > 0 || localState.teams[t].goalkeeper);
+    
     const container = document.getElementById('team-select-container');
-    container.innerHTML = TEAM_ORDER.map(teamName => {
-        const team = localState.teams && localState.teams[teamName];
-        const hasPlayers = team && ((team.players && team.players.length > 0) || team.goalkeeper);
+    container.innerHTML = activeTeams.map(teamName => {
         const isSelected = localState.match.playingTeams.includes(teamName) ? 'selected' : '';
-        const disabledClass = hasPlayers ? '' : 'opacity-40 cursor-not-allowed';
-        const teamStat = (localState.sessionStats.teamStats && localState.sessionStats.teamStats[teamName]) || { wins: 0, draws: 0, losses: 0 };
-
-        return (
-            '<div data-action="toggle-team-select" data-team-name="' + teamName + '" ' +
-            'class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ' + isSelected + ' ' + disabledClass + '">' +
-                '<h2 class="text-6xl font-black ' + (teamColorClasses[teamName] || '') + '">' + teamName + '</h2>' +
-                '<p class="text-2xl text-gray-400 mt-2">(' + teamStat.wins + '승 ' + teamStat.draws + '무 ' + teamStat.losses + '패)</p>' +
-            '</div>'
-        );
+        const teamStat = localState.sessionStats.teamStats[teamName] || { wins: 0, draws: 0, losses: 0 };
+        return `
+            <div data-action="toggle-team-select" data-team-name="${teamName}" 
+                 class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ${isSelected}">
+                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">${teamName}</h2>
+                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)</p>
+            </div>
+        `;
     }).join('');
 
     const startMatchBtn = document.getElementById('btn-start-match');
@@ -1232,20 +1219,13 @@ function renderSessionSummaryScreen() {
                     const selectedDate = document.getElementById('game-date').value;
                     const teamMode = parseInt(document.getElementById('team-mode').value);
                     await serverCall('setAttendingPlayersAndDate', localState.attendingPlayerNames, selectedDate, teamMode);
-                    const algorithm = document.getElementById('assignment-strategy').value;
-                    const shuffleEnabled = document.getElementById('shuffle-enabled')?.checked || false;
-                    await serverCall('performTeamAllocation', algorithm, shuffleEnabled);
+                    await serverCall('performTeamAllocation', 'balanced', false);
                 } catch (e) {
                     console.error('팀 배분 중 오류 발생:', e);
                     alert('팀 배분 중 오류가 발생했습니다.');
                 }
             })();
             break;
-            case 're-allocate':
-                const algorithm = document.getElementById('assignment-strategy').value;
-                const shuffleEnabled = document.getElementById('shuffle-enabled').checked;
-                serverCall('performTeamAllocation', algorithm, shuffleEnabled);
-                break;
             case 'go-to-match-select':
                 serverCall('changeScreen', 'screen-match-select');
                 break;
@@ -1272,6 +1252,7 @@ function renderSessionSummaryScreen() {
                     return;
                 }
                 const selectedDuration = parseInt(document.getElementById('match-duration').value);
+                const selectedField = document.getElementById('field-select').value;
                 serverCall('startMatch', selectedTeamsToStart, selectedDuration, selectedField);
                 break;
 
@@ -1563,6 +1544,9 @@ function renderTeamRankingsTable() {
     // 날짜 및 구장명 변경 이벤트 리스너
     document.getElementById('game-date').addEventListener('change', (e) => {
         localState.selectedDate = e.target.value;
+    });
+    document.getElementById('field-select').addEventListener('change', (e) => {
+        localState.selectedField = e.target.value;
     });
 
 // 탭 전환 감지 (기존 beforeunload 위에 추가)
