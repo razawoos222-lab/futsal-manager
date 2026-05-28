@@ -71,7 +71,7 @@ function getMasterPlayersFromSheet() {
 
 
 // =================================================================
-// ✅ Code.gs | 방탄 getAppState (로딩 시 절대 죽지 않게)
+// ✅ Code.gs | 방탄 getAppState v2 (로딩 시 절대 죽지 않게)
 // - 저장된 JSON이 일부 깨져도 최소 구조를 강제로 복원
 // - match/sessionStats/sessionResults/teams/attendingPlayerNames 모두 기본값 보장
 // =================================================================
@@ -88,6 +88,8 @@ function getAppState() {
     consecutivePlays: 0
   };
 
+  const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+
   // ✅ 기본 상태(최소 구조) 생성기
   const buildInitialState_ = () => ({
     currentScreen: 'screen-attendance',
@@ -98,7 +100,8 @@ function getAppState() {
     teams: {
       RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
       BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
+      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
+      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
     },
     originalTeams: null,
     match: {
@@ -119,7 +122,8 @@ function getAppState() {
       teamStats: {
         RED: { ...teamStatTemplate },
         BLUE: { ...teamStatTemplate },
-        YELLOW: { ...teamStatTemplate }
+        YELLOW: { ...teamStatTemplate },
+        BLACK: { ...teamStatTemplate }
       }
     },
     sessionResults: {
@@ -165,7 +169,7 @@ function getAppState() {
 
   // teams
   if (!s.teams || typeof s.teams !== 'object') s.teams = {};
-  ['RED','BLUE','YELLOW'].forEach(t => {
+  TEAM_ORDER.forEach(t => {
     if (!s.teams[t] || typeof s.teams[t] !== 'object') s.teams[t] = {};
     if (!Array.isArray(s.teams[t].players)) {
       // 예전 버전에서 teams[t]가 배열로 저장된 경우 복구
@@ -200,8 +204,8 @@ function getAppState() {
   if (!s.sessionStats.playerStats || typeof s.sessionStats.playerStats !== 'object') s.sessionStats.playerStats = {};
   if (!s.sessionStats.teamStats || typeof s.sessionStats.teamStats !== 'object') s.sessionStats.teamStats = {};
 
-  // teamStats: RED/BLUE/YELLOW 최소 보장 + goalsFor/goalsAgainst 포함
-  ['RED','BLUE','YELLOW'].forEach(t => {
+  // teamStats: RED/BLUE/YELLOW/BLACK 최소 보장 + goalsFor/goalsAgainst 포함
+  TEAM_ORDER.forEach(t => {
     if (!s.sessionStats.teamStats[t] || typeof s.sessionStats.teamStats[t] !== 'object') {
       s.sessionStats.teamStats[t] = { ...teamStatTemplate };
     } else {
@@ -437,21 +441,20 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
       state.attendingPlayerNames.includes(p.name)
     );
     
-    // ★ 인원수 기반 팀 수 결정
-    const totalPlayers = attendingPlayersData.length;
-    const teamCount = totalPlayers <= 14 ? 2 : 3;
-    const teamNames = teamCount === 2 
-      ? ['RED', 'BLUE'] 
-      : ['RED', 'BLUE', 'YELLOW'];
+    // ★ 팀 수 결정: 사용자가 선택한 teamMode(2/3/4) 우선
+    const teamCount = [2, 3, 4].includes(Number(state.teamMode)) ? Number(state.teamMode) : 3;
+    const teamNames =
+      teamCount === 2 ? ['RED', 'BLUE'] :
+      teamCount === 3 ? ['RED', 'BLUE', 'YELLOW'] :
+      ['RED', 'BLUE', 'YELLOW', 'BLACK'];
     
-    // 팀 초기화 (2팀 또는 3팀)
+    // 팀 초기화 (2/3/4팀)
     let teams = {};
     teamNames.forEach(name => {
       teams[name] = { players: [], goalkeeper: null };
     });
 
-    // ★ teamMode 저장 (핵심 추가!)
-    state.teamMode = teamCount;
+    // teamMode는 setAttendingPlayersAndDate에서 저장한 값을 유지합니다.
     
     // 능력치 계산 (criteria는 기존 로직 유지)
     let criteria = 'sheet_only';
@@ -519,8 +522,13 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
     
     assignCaptains(teams);
     
-    // ★ 최종 teams 구조 생성 (2팀/3팀 동적)
-    const finalTeams = {};
+    // ★ 최종 teams 구조 생성 (항상 4팀 키 유지)
+    const finalTeams = {
+      RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
+      BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
+      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
+      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
+    };
     teamNames.forEach(name => {
       finalTeams[name] = {
         players: teams[name].players.map(p => p.name),
@@ -529,11 +537,6 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
         viceCaptain: teams[name].viceCaptain
       };
     });
-    
-    // YELLOW 팀이 없으면 빈 구조 추가 (기존 코드 호환성)
-    if (!finalTeams.YELLOW) {
-      finalTeams.YELLOW = { players: [], goalkeeper: null, captain: null, viceCaptain: null };
-    }
     
     state.teams = finalTeams;
     state.currentScreen = 'screen-team-allocation';
