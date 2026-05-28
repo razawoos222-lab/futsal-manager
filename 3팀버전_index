@@ -12,10 +12,10 @@
     <style>
         /* Custom colors for dark theme */
         :root {
-            --color-primary-bg: #243042; /* Slightly lighter blue-gray (Android 대비) */
-            --color-card-bg: #36465D;    /* Lighter card surface */
-            --color-text-main: #F1F5F9; /* Near-white */
-            --color-text-secondary: #B6C2D1; /* Softer gray */
+            --color-primary-bg: #1A202C; /* Dark blue-gray */
+            --color-card-bg: #2D3748;    /* Slightly lighter dark blue-gray */
+            --color-text-main: #E2E8F0; /* Light gray */
+            --color-text-secondary: #94A3B8; /* Medium gray */
             --color-accent-blue: rgb(133,173,197); /* User requested color */
         }
         /* 전체적인 디자인: 다크 테마로 변경 */
@@ -191,7 +191,6 @@
         <select id="team-mode" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
             <option value="3">3팀 대결 (순환)</option>
             <option value="2">2팀 대결</option>
-            <option value="4">4팀 대결</option>
         </select>
     </div>
     <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
@@ -218,17 +217,27 @@
         </label>
         <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
     </div>
-    <div id="team-allocation-container" class="flex flex-col gap-6"></div>
-    <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 준비 완료</button>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card text-left">
+            <h2 class="text-5xl font-black mb-4">선수</h2>
+            <p class="text-2xl text-gray-400 mb-4">카드를 드래그해서 팀으로 옮기세요.</p>
+            <div id="unassigned-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+        </div>
+        <div class="space-y-6">
+            <div id="team-columns" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+        </div>
+    </div>
+    <button id="lineup-confirm" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>라인업 확정</button>
+    <button data-action="go-to-match-select" id="btn-go-to-match-select" class="btn btn-secondary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 선택으로</button>
 </div>
    
     <!-- 3. 경기 선택 화면 -->
     <div id="screen-match-select" class="hidden w-full max-w-4xl mx-auto text-center space-y-8">
         <h1 class="text-7xl font-black mb-4">경기 선택</h1>
         <!-- 경기 시간 설정 드롭다운 추가 -->
-        <div class="card p-4 flex flex-col items-center space-y-4">
-            <label for="match-duration" class="text-3xl font-bold">경기 시간 설정:</label>
-            <select id="match-duration" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
+        <div class="card p-4 flex items-center justify-between gap-4">
+            <label for="match-duration" class="text-5xl font-bold">경기 시간 설정:</label>
+            <select id="match-duration" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-5xl font-semibold border border-gray-500">
                 <option value="60">1분</option>
                 <option value="360">6분</option>
                 <option value="420">7분</option>
@@ -237,19 +246,10 @@
                 <option value="600">10분</option>
             </select>
         </div>
-        <!-- 구장명 선택 드롭다운 추가 -->
-        <div class="card p-4 flex flex-col items-center space-y-4">
-            <label for="field-select" class="text-3xl font-bold">구장명 선택:</label>
-            <select id="field-select" class="w-full max-w-xs p-4 rounded-lg bg-gray-700 text-gray-100 text-3xl font-semibold border border-gray-500">
-                <option value="A 구장">A 구장</option>
-                <option value="B 구장">B 구장</option>
-                <option value="C 구장">C 구장</option>
-            </select>
-        </div>
         <p class="text-3xl text-gray-400">경기를 진행할 2팀을 선택하세요.</p>
         <div id="team-select-container" class="flex flex-col gap-6"></div> <!-- 세로로 배치 -->
         <!-- 경기 시작 버튼 추가 -->
-        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 시작</button>
+        <button id="btn-start-match" data-action="start-selected-match" class="btn btn-primary w-full text-6xl py-6 opacity-50 cursor-not-allowed" disabled>경기 시작</button>
     </div>
 
 
@@ -379,12 +379,11 @@
 
 <script>
     let MASTER_PLAYERS_DB = [], localState = {}, timerInterval = null, currentEventData = {};
-    let PLAYER_ARCHIVE_STATS = {};
     let pageLeaveTime = null, timerWasRunning = false;
     let currentGoalkeeperSelectTeam = null;
     let currentPlayerToSwapOut = null;
     let isProcessingEvent = false; 
-    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500', BLACK: 'text-gray-200' };
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
 
 
 // --- 서버 호출 ---
@@ -584,25 +583,25 @@ function recoverTimerIfNeeded() {
 
 
         // 기존 코드를 이것으로 교체:
-let teamTotalWins = 0;
-let teamTotalLosses = 0;
+let teamTotalCCP = 0;
+let teamTotalWinRate = 0;
 const allTeamPlayers = [...players, goalkeeper].filter(Boolean);
 allTeamPlayers.forEach(pName => {
-    const stats = PLAYER_ARCHIVE_STATS[pName];
-    if (stats) {
-        teamTotalWins += Number(stats.wins) || 0;
-        teamTotalLosses += Number(stats.losses) || 0;
+    const pData = playerStats[pName];
+    if (pData) {
+        teamTotalCCP += (pData.ccp || 0);
+        teamTotalWinRate += (pData.winRate || 0);
     }
 });
 
-const teamWinRateAgg = (teamTotalWins + teamTotalLosses) > 0
-  ? ((teamTotalWins / (teamTotalWins + teamTotalLosses)) * 100).toFixed(1)
-  : '-';
+const teamTotalPlayers = new Set(allTeamPlayers).size;
+const teamAvgCCP = teamTotalPlayers > 0 ? (teamTotalCCP / teamTotalPlayers).toFixed(1) : 0;
+const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlayers) * 100).toFixed(1) : 0;
 
 
         return `
             <div class="card space-y-4 w-full">
-                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(평균 승률 ${teamWinRateAgg}%)</span></h3>
+                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
                 <div class="grid grid-cols-2 gap-2">
                     ${players.map(p => {
                         const isCaptain = p === teamData.captain;
@@ -635,27 +634,25 @@ function renderMatchSelectScreen() {
     if (matchDurationSelect) {
         matchDurationSelect.value = localState.match.selectedDuration;
     }
+    
+    // ★ 고정 4팀 카드 표시 (선수 0명인 팀은 비활성)
+    const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
 
-    const fieldSelect = document.getElementById('field-select');
-    if (fieldSelect) {
-        fieldSelect.value = localState.selectedField;
-    }
-    
-    // ★ 활성 팀만 필터링 (선수가 1명 이상)
-    const activeTeams = Object.keys(localState.teams)
-        .filter(t => localState.teams[t].players.length > 0 || localState.teams[t].goalkeeper);
-    
     const container = document.getElementById('team-select-container');
-    container.innerHTML = activeTeams.map(teamName => {
+    container.innerHTML = TEAM_ORDER.map(teamName => {
+        const team = localState.teams && localState.teams[teamName];
+        const hasPlayers = team && ((team.players && team.players.length > 0) || team.goalkeeper);
         const isSelected = localState.match.playingTeams.includes(teamName) ? 'selected' : '';
-        const teamStat = localState.sessionStats.teamStats[teamName] || { wins: 0, draws: 0, losses: 0 };
-        return `
-            <div data-action="toggle-team-select" data-team-name="${teamName}" 
-                 class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ${isSelected}">
-                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">${teamName}</h2>
-                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)</p>
-            </div>
-        `;
+        const disabledClass = hasPlayers ? '' : 'opacity-40 cursor-not-allowed';
+        const teamStat = (localState.sessionStats.teamStats && localState.sessionStats.teamStats[teamName]) || { wins: 0, draws: 0, losses: 0 };
+
+        return (
+            '<div data-action="toggle-team-select" data-team-name="' + teamName + '" ' +
+            'class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ' + isSelected + ' ' + disabledClass + '">' +
+                '<h2 class="text-6xl font-black ' + (teamColorClasses[teamName] || '') + '">' + teamName + '</h2>' +
+                '<p class="text-2xl text-gray-400 mt-2">(' + teamStat.wins + '승 ' + teamStat.draws + '무 ' + teamStat.losses + '패)</p>' +
+            '</div>'
+        );
     }).join('');
 
     const startMatchBtn = document.getElementById('btn-start-match');
@@ -758,7 +755,7 @@ function renderMatchSelectScreen() {
                             if (emptySlots <= 0) return '';
                             
                             // 대기 팀 찾기 (경기 안 하는 팀)
-                            const waitingTeam = Object.keys(localState.teams || {}).find(t => 
+                            const waitingTeam = ['RED', 'BLUE', 'YELLOW'].find(t => 
                                 t !== localState.match.teamA.name && t !== localState.match.teamB.name
                             );
                             
@@ -1191,7 +1188,6 @@ function renderSessionSummaryScreen() {
         try {
             const data = await serverCall('getInitialData');
             MASTER_PLAYERS_DB = data.masterPlayers;
-            PLAYER_ARCHIVE_STATS = data.playerArchiveStats || {};
             localState = data.appState;
             renderUI();
         } catch (e) {
@@ -1276,7 +1272,6 @@ function renderSessionSummaryScreen() {
                     return;
                 }
                 const selectedDuration = parseInt(document.getElementById('match-duration').value);
-                const selectedField = document.getElementById('field-select').value;
                 serverCall('startMatch', selectedTeamsToStart, selectedDuration, selectedField);
                 break;
 
@@ -1353,7 +1348,7 @@ function renderSessionSummaryScreen() {
                 currentGoalkeeperSelectTeam = teamName;
                 document.getElementById('gk-team-name').textContent = teamName;
                 const gkPlayerListEl = document.getElementById('gk-player-list');
-                const allTeamNames = Object.keys(localState.teams || {});
+                const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
                 const availablePlayers = localState.attendingPlayerNames.filter(pName => {
                     return !allTeamNames.some(tName => localState.teams[tName].players.includes(pName) || localState.teams[tName].goalkeeper === pName);
                 });
@@ -1384,7 +1379,7 @@ function renderSessionSummaryScreen() {
                 document.getElementById('swap-out-player-info').textContent = `${playerName} (${teamName}) ${currentPlayerToSwapOut.isGoalkeeper ? 'GK' : ''} ➡️`;
                 const swapInPlayerListEl = document.getElementById('swap-in-player-list');
                 let swapOptionsHtml = '';
-                const allTeamNamesForSwap = Object.keys(localState.teams || {});
+                const allTeamNamesForSwap = ['RED', 'BLUE', 'YELLOW'];
                 allTeamNamesForSwap.forEach(otherTeamName => {
                     if (otherTeamName !== teamName) {
                         const playersAndGk = [...localState.teams[otherTeamName].players, localState.teams[otherTeamName].goalkeeper].filter(Boolean);
@@ -1512,7 +1507,7 @@ function renderTeamRankingsTable() {
         });
 
 
-    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500', BLACK: 'text-gray-200' };
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
 
 
     const tableHtml = `
@@ -1568,9 +1563,6 @@ function renderTeamRankingsTable() {
     // 날짜 및 구장명 변경 이벤트 리스너
     document.getElementById('game-date').addEventListener('change', (e) => {
         localState.selectedDate = e.target.value;
-    });
-    document.getElementById('field-select').addEventListener('change', (e) => {
-        localState.selectedField = e.target.value;
     });
 
 // 탭 전환 감지 (기존 beforeunload 위에 추가)

@@ -97,11 +97,13 @@ function getAppState() {
     selectedField: 'A 구장',
     teamMode: 3,
     attendingPlayerNames: [],
+    coaches: [],
+    lineupConfirmed: false,
     teams: {
-      RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
+      RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null },
+      BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null },
+      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null },
+      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null }
     },
     originalTeams: null,
     match: {
@@ -164,6 +166,9 @@ function getAppState() {
   s.teamMode = Number(s.teamMode) || 3;
   s.originalTeams = s.originalTeams || null;
 
+  if (!Array.isArray(s.coaches)) s.coaches = [];
+  s.lineupConfirmed = !!s.lineupConfirmed;
+
   // attendingPlayerNames
   if (!Array.isArray(s.attendingPlayerNames)) s.attendingPlayerNames = [];
 
@@ -179,6 +184,7 @@ function getAppState() {
     if (!('goalkeeper' in s.teams[t])) s.teams[t].goalkeeper = null;
     if (!('captain' in s.teams[t])) s.teams[t].captain = null;
     if (!('viceCaptain' in s.teams[t])) s.teams[t].viceCaptain = null;
+    if (!('coach' in s.teams[t])) s.teams[t].coach = null;
   });
 
   // match
@@ -367,6 +373,41 @@ function setAttendingPlayersAndDate(playerNames, selectedDate, teamMode) {
     saveAppState(state); // 변경된 상태를 저장합니다.
     return state; // 업데이트된 상태를 반환합니다.
   });
+// 감독(감독/코치) 목록을 저장합니다.
+function setCoaches(coachNames) {
+  return safeExecute(() => {
+    const state = getAppState();
+    const teamCount = [2, 3, 4].includes(Number(state.teamMode)) ? Number(state.teamMode) : 3;
+    const teamNames = teamCount === 2 ? ['RED', 'BLUE'] : teamCount === 3 ? ['RED', 'BLUE', 'YELLOW'] : ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+
+    if (!Array.isArray(coachNames)) throw new Error('감독 목록이 유효하지 않습니다.');
+    const unique = [...new Set(coachNames)].filter(Boolean);
+    if (unique.length !== teamCount) throw new Error(`감독은 ${teamCount}명 선택해야 합니다.`);
+    unique.forEach(n => {
+      if (!state.attendingPlayerNames.includes(n)) throw new Error('감독은 참석자 중에서만 선택할 수 있습니다.');
+    });
+
+    state.coaches = unique;
+    teamNames.forEach((t, idx) => {
+      if (!state.teams[t]) state.teams[t] = { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null };
+      state.teams[t].coach = unique[idx] || null;
+    });
+
+    state.lineupConfirmed = false;
+    saveAppState(state);
+    return state;
+  });
+}
+
+function setLineupConfirmed(confirmed) {
+  return safeExecute(() => {
+    const s = getAppState();
+    s.lineupConfirmed = !!confirmed;
+    saveAppState(s);
+    return s;
+  });
+}
+
 }
 
 
@@ -441,6 +482,8 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
       state.attendingPlayerNames.includes(p.name)
     );
     
+    const seededCoaches = Array.isArray(state.coaches) ? state.coaches : [];
+
     // ★ 팀 수 결정: 사용자가 선택한 teamMode(2/3/4) 우선
     const teamCount = [2, 3, 4].includes(Number(state.teamMode)) ? Number(state.teamMode) : 3;
     const teamNames =
@@ -455,6 +498,18 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
     });
 
     // teamMode는 setAttendingPlayersAndDate에서 저장한 값을 유지합니다.
+
+    // 감독은 팀별로 1명씩 우선 고정 배치합니다.
+    if (seededCoaches.length === teamNames.length) {
+      teamNames.forEach((tName, idx) => {
+        const coachName = seededCoaches[idx];
+        const i = attendingPlayersData.findIndex(p => p.name === coachName);
+        if (i >= 0) {
+          teams[tName].players.push(attendingPlayersData[i]);
+          attendingPlayersData.splice(i, 1);
+        }
+      });
+    }
     
     // 능력치 계산 (criteria는 기존 로직 유지)
     let criteria = 'sheet_only';
@@ -524,17 +579,18 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
     
     // ★ 최종 teams 구조 생성 (항상 4팀 키 유지)
     const finalTeams = {
-      RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
+      RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null },
+      BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null },
+      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null },
+      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null, coach: null }
     };
     teamNames.forEach(name => {
       finalTeams[name] = {
         players: teams[name].players.map(p => p.name),
         goalkeeper: teams[name].goalkeeper,
         captain: teams[name].captain,
-        viceCaptain: teams[name].viceCaptain
+        viceCaptain: teams[name].viceCaptain,
+        coach: (state.teams && state.teams[name] ? state.teams[name].coach : null)
       };
     });
     
