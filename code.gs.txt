@@ -15,6 +15,36 @@ function getTeamNamesForMode(teamMode) {
   return ['RED', 'BLUE', 'YELLOW'];
 }
 
+const VALID_SCREENS = [
+  'screen-attendance',
+  'screen-team-allocation',
+  'screen-match-select',
+  'screen-match-controller',
+  'screen-session-summary',
+  'screen-final-results'
+];
+
+function syncTeamsForMode_(state) {
+  const mode = [2, 3, 4].includes(Number(state.teamMode)) ? Number(state.teamMode) : 3;
+  state.teamMode = mode;
+  if (!state.teams || typeof state.teams !== 'object') state.teams = {};
+  getTeamNamesForMode(mode).forEach(name => {
+    if (!state.teams[name] || typeof state.teams[name] !== 'object') {
+      state.teams[name] = { players: [], goalkeeper: null, captain: null, viceCaptain: null };
+    }
+    if (!Array.isArray(state.teams[name].players)) {
+      if (Array.isArray(state.teams[name])) {
+        state.teams[name] = { players: state.teams[name], goalkeeper: null, captain: null, viceCaptain: null };
+      } else {
+        state.teams[name].players = [];
+      }
+    }
+    if (!('goalkeeper' in state.teams[name])) state.teams[name].goalkeeper = null;
+    if (!('captain' in state.teams[name])) state.teams[name].captain = null;
+    if (!('viceCaptain' in state.teams[name])) state.teams[name].viceCaptain = null;
+  });
+}
+
 
 let batchSaveTimer = null;
 let lastBatchSave = 0;
@@ -244,6 +274,11 @@ function getAppState() {
   if (!('bestDefender' in s.sessionResults)) s.sessionResults.bestDefender = null;
   if (!('bestGoalkeeper' in s.sessionResults)) s.sessionResults.bestGoalkeeper = null;
 
+  syncTeamsForMode_(s);
+  if (!VALID_SCREENS.includes(s.currentScreen)) {
+    s.currentScreen = 'screen-attendance';
+  }
+
   // 4) 복원된 상태를 다시 저장(깨진 상태가 계속 남는 것 방지)
   saveAppState(s);
   return s;
@@ -336,10 +371,13 @@ function restoreOriginalTeams() {
 // 현재 화면을 변경하고 앱 상태를 저장하는 함수입니다.
 function changeScreen(id) {
   return safeExecute(() => {
-    const s = getAppState(); // 현재 앱 상태를 가져옵니다.
-    s.currentScreen = id; // 화면 ID를 업데이트합니다.
-    saveAppState(s); // 변경된 상태를 저장합니다.
-    return s; // 업데이트된 상태를 반환합니다.
+    if (!id || !VALID_SCREENS.includes(id)) {
+      throw new Error('잘못된 화면 이동 요청입니다.');
+    }
+    const s = getAppState();
+    s.currentScreen = id;
+    saveAppState(s);
+    return s;
   });
 }
 
@@ -361,8 +399,9 @@ function setAttendingPlayersAndDate(playerNames, selectedDate, teamMode) {
 
     state.attendingPlayerNames = playerNames;
     state.selectedDate = selectedDate;
-    state.teamMode = teamMode || 3; // 팀 모드 저장 (기본값 3)
-   
+    state.teamMode = [2, 3, 4].includes(Number(teamMode)) ? Number(teamMode) : 3;
+    syncTeamsForMode_(state);
+
     // 참석자 목록이 변경되면 playerStats의 초기화도 다시 수행 (새로운 참석자 추가 등)
     playerNames.forEach(pName => {
       if (!state.sessionStats.playerStats[pName]) {
@@ -693,7 +732,7 @@ function recordEvent(eventData, seconds) {
           ? [s.match.teamA, s.match.teamB]
           : [s.match.teamB, s.match.teamA];
 
-      teamToScore.score = (Number(teamToScore.score) || 0) + 1;
+      teamToScore.score++;
 
       // ✅ teamStats 존재 보장
       const scoreStats = ensureTeamStats_(s, teamToScore.name);
@@ -708,7 +747,7 @@ function recordEvent(eventData, seconds) {
           ? [s.match.teamB, s.match.teamA]
           : [s.match.teamA, s.match.teamB];
 
-      scoringTeam.score = (Number(scoringTeam.score) || 0) + 1;
+      scoringTeam.score++;
 
       // ✅ teamStats 존재 보장
       const scoreStats = ensureTeamStats_(s, scoringTeam.name);

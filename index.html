@@ -384,7 +384,7 @@
     let currentPlayerToSwapOut = null;
     let isProcessingEvent = false;
     const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
-    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500', BLACK: 'text-gray-300' };
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500', BLACK: 'text-white' };
 
     function getTeamNamesForMode(teamMode) {
         const mode = Number(teamMode) || 3;
@@ -394,7 +394,12 @@
     }
 
     function getActiveTeamsInOrder() {
-        return getTeamNamesForMode(localState.teamMode).filter(t => {
+        const mode = Number(localState.teamMode) || 3;
+        const names = getTeamNamesForMode(mode);
+        if (mode === 4) {
+            return names.filter(t => localState.teams && localState.teams[t]);
+        }
+        return names.filter(t => {
             const td = localState.teams[t];
             return td && (td.players.length > 0 || td.goalkeeper);
         });
@@ -519,23 +524,40 @@ function recoverTimerIfNeeded() {
 
 
     // --- UI 렌더링 ---
+    const VALID_SCREENS = [
+        'screen-attendance', 'screen-team-allocation', 'screen-match-select',
+        'screen-match-controller', 'screen-session-summary', 'screen-final-results'
+    ];
+
     function renderUI() {
-        const { currentScreen } = localState;
+        let { currentScreen } = localState;
+        if (!VALID_SCREENS.includes(currentScreen)) {
+            currentScreen = 'screen-attendance';
+            localState.currentScreen = currentScreen;
+        }
         document.querySelectorAll('body > div[id^="screen-"]').forEach(s => s.classList.add('hidden'));
-        document.getElementById(currentScreen).classList.remove('hidden');
+        const screenEl = document.getElementById(currentScreen);
+        if (!screenEl) {
+            console.error('Unknown screen:', currentScreen);
+            return;
+        }
+        screenEl.classList.remove('hidden');
 
 
         const backBtn = document.getElementById('btn-back');
         const showBackBtn = currentScreen !== 'screen-attendance' && currentScreen !== 'screen-final-results';
         backBtn.classList.toggle('hidden', !showBackBtn);
         if(showBackBtn) {
+            const hasActiveMatch = localState.match?.teamA?.name && localState.match?.teamB?.name;
             const screenFlow = {
                 'screen-team-allocation': 'screen-attendance',
-                'screen-match-select': localState.match.count > 1 ? 'screen-match-controller' : 'screen-team-allocation',
+                'screen-match-select': (localState.match.count > 1 && hasActiveMatch)
+                    ? 'screen-match-controller'
+                    : 'screen-team-allocation',
                 'screen-match-controller': 'screen-match-select',
-                'screen-session-summary': 'screen-match-controller'
+                'screen-session-summary': 'screen-match-select'
             };
-            backBtn.dataset.targetScreen = screenFlow[currentScreen];
+            backBtn.dataset.targetScreen = screenFlow[currentScreen] || 'screen-attendance';
         }
        
         const renderMap = {
@@ -594,7 +616,8 @@ function recoverTimerIfNeeded() {
         }
 
 
-        if (players.length === 0 && !goalkeeper) return '';
+        const showEmptyTeam = Number(localState.teamMode) === 4;
+        if (players.length === 0 && !goalkeeper && !showEmptyTeam) return '';
 
 
         // 기존 코드를 이것으로 교체:
@@ -614,9 +637,14 @@ const teamAvgCCP = teamTotalPlayers > 0 ? (teamTotalCCP / teamTotalPlayers).toFi
 const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlayers) * 100).toFixed(1) : 0;
 
 
+        const emptyHint = (players.length === 0 && !goalkeeper)
+            ? '<p class="text-2xl text-gray-400">배분된 선수가 없습니다.</p>'
+            : '';
+
         return `
             <div class="card space-y-4 w-full">
-                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
+                <h3 class="text-5xl font-black ${teamColorClasses[teamName] || 'text-gray-100'}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
+                ${emptyHint}
                 <div class="grid grid-cols-2 gap-2">
                     ${players.map(p => {
                         const isCaptain = p === teamData.captain;
@@ -712,6 +740,15 @@ function renderMatchSelectScreen() {
     recoverTimerIfNeeded(); 
     const { teamA, teamB, count, timeline, timerRunning, seconds, todayHeadToHead } = localState.match;
         const container = document.getElementById('screen-match-controller');
+
+        if (!teamA?.name || !teamB?.name) {
+            container.innerHTML = `
+                <div class="card space-y-6">
+                    <p class="text-3xl text-gray-300">진행 중인 경기가 없습니다.</p>
+                    <button data-action="go-to-match-select" class="btn btn-primary text-3xl w-full">경기 선택으로 이동</button>
+                </div>`;
+            return;
+        }
        
         const headToHeadKey = [teamA.name, teamB.name].sort().join('_');
         const h2hStats = todayHeadToHead[headToHeadKey] || { [teamA.name]: { wins: 0, draws: 0, losses: 0 }, [teamB.name]: { wins: 0, draws: 0, losses: 0 } };
@@ -1231,9 +1268,13 @@ function renderSessionSummaryScreen() {
         timerInterval = null;
         console.log('화면 전환으로 타이머 정리됨');
     }
-
-        saveTimerStateBeforeLeave(); // 이 줄만 추가
-        serverCall('changeScreen', targetScreen);
+        saveTimerStateBeforeLeave();
+        const backTarget = document.getElementById('btn-back')?.dataset?.targetScreen;
+        if (!backTarget) {
+            alert('이전 화면으로 돌아갈 수 없습니다.');
+            break;
+        }
+        serverCall('changeScreen', backTarget);
         break;
             case 'toggle-attendance':
               const names = localState.attendingPlayerNames;
