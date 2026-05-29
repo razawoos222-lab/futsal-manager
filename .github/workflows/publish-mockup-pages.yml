@@ -1,0 +1,24 @@
+# design-preview → GitHub Pages (gh-pages 브랜치)
+name: Publish JMFC mockup (Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'design-preview/**'
+      - '.github/workflows/publish-mockup-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./design-preview
+          commit_message: 'Deploy design-preview to Pages'
