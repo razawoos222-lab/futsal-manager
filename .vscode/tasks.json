@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "JMFC: serve mockup",
+      "type": "shell",
+      "command": "python3 -m http.server 17876",
+      "options": {
+        "cwd": "${workspaceFolder}/design-preview"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "jmfc-mockup",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Serving HTTP"
+        }
+      },
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    }
+  ]
+}

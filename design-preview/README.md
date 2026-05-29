@@ -9,8 +9,18 @@
 | **`jmfc-mockup.html`** | JMFC 로고( **EST. 206** )가 **6개 화면**마다 들어간 다크 프리미엄 목업 |
 | `assets/jmfc-logo.svg` | 원형 엠블럼 SVG (목업·이후 `index` 스킨에서 재사용 가능) |
 
-1. `design-preview/jmfc-mockup.html` 을 PC에 저장하거나 clone 후 더블클릭합니다.
-2. `assets/jmfc-logo.svg` 가 같은 상대 경로에 있어야 로고가 보입니다.
+### Cursor에서 열기 (권장)
+
+1. [저장소를 Cursor로 열기](https://cursor.com/link/github?url=https%3A%2F%2Fgithub.com%2Frazawoos222-lab%2Ffutsal-manager) 후 브랜치 `cursor/jmfc-mockup-6e09` 체크아웃 (또는 PR #7 머지 후 `main`).
+2. 탐색기에서 **`design-preview/jmfc-mockup.html`** 클릭 (로고는 HTML 안에 포함).
+3. **화면처럼 보기:** `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win) → **`Live Preview: Show Preview`**  
+   - 처음이면 확장 **Live Preview** (`ms-vscode.livepreview`) 설치 안내가 뜹니다.
+
+**대안 (내장 Simple Browser):** `Tasks: Run Task` → **`JMFC: serve mockup`** 실행 후, `Cmd+Shift+P` → **`Simple Browser: Show`** → 주소 `http://localhost:17876/jmfc-mockup.html`
+
+### PC 브라우저로 열기
+
+1. clone 후 `design-preview/jmfc-mockup.html` 더블클릭 (별도 SVG 불필요).
 
 ## A/B/C 비교 시안 (`index.html`)
 

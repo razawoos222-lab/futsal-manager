@@ -107,7 +107,7 @@
       background: linear-gradient(180deg, rgba(201,162,39,0.1) 0%, transparent 100%);
       border-bottom: 1px solid var(--card-border);
     }
-    .jmfc-bar img {
+    .jmfc-logo-icon {
       width: 44px;
       height: 44px;
       flex-shrink: 0;
@@ -313,6 +313,20 @@
   </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="jmfc-logo" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="56" fill="#0c1222" stroke="#c9a227" stroke-width="4"/>
+      <circle cx="60" cy="60" r="48" fill="none" stroke="#c9a227" stroke-width="1" opacity="0.5"/>
+      <path id="estArc" d="M 24 68 A 36 36 0 1 1 96 68" fill="none"/>
+      <text font-family="Georgia, serif" font-size="7.5" font-weight="700" fill="#c9a227" letter-spacing="0.12em">
+        <textPath href="#estArc" startOffset="50%" text-anchor="middle">EST. 206</textPath>
+      </text>
+      <path d="M60 28 L74 36 V52 C74 64 68 72 60 76 C52 72 46 64 46 52 V36 Z" fill="#c9a227"/>
+      <path d="M60 34 L68 39 V51 C68 60 64 66 60 69 C56 66 52 60 52 51 V39 Z" fill="#0c1222"/>
+      <path d="M52 48 C54 44 58 42 60 42 C62 42 66 44 68 48 C66 52 63 54 60 54 C57 54 54 52 52 48 Z" fill="#c9a227"/>
+      <text x="60" y="92" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="900" fill="#c9a227" letter-spacing="0.08em">JMFC</text>
+    </symbol>
+  </svg>
   <header class="page-header">
     <h1>JMFC 풋살 매니저</h1>
     <p>기능·<code>Code.gs</code>는 그대로 두고 UI만 JMFC 브랜드(다크 프리미엄)로 정리한 <strong>단일 목업</strong>입니다. 모든 화면 상단에 동일한 JMFC 엠블럼을 넣었고, 로고 리본 문구는 <strong>EST. 206</strong>입니다.</p>
@@ -326,7 +340,7 @@
       <div class="phone">
         <div class="status-bar">9:41</div>
         <div class="jmfc-bar">
-          <img src="assets/jmfc-logo.svg" alt="JMFC" width="44" height="44" />
+          <svg class="jmfc-logo-icon" aria-label="JMFC"><use href="#jmfc-logo"/></svg>
           <div class="brand">
             <div class="brand-title">JMFC FUTSAL</div>
             <div class="brand-sub">풋살 매니저 · EST. 206</div>
@@ -362,7 +376,7 @@
       <div class="phone">
         <div class="status-bar">9:41</div>
         <div class="jmfc-bar">
-          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <svg class="jmfc-logo-icon" aria-label="JMFC"><use href="#jmfc-logo"/></svg>
           <div class="brand">
             <div class="brand-title">JMFC FUTSAL</div>
             <div class="brand-sub">밸런스 배분 · 셔플 OFF</div>
@@ -403,7 +417,7 @@
       <div class="phone">
         <div class="status-bar">9:41</div>
         <div class="jmfc-bar">
-          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <svg class="jmfc-logo-icon" aria-label="JMFC"><use href="#jmfc-logo"/></svg>
           <div class="brand">
             <div class="brand-title">JMFC FUTSAL</div>
             <div class="brand-sub">8분 · A 구장</div>
@@ -435,7 +449,7 @@
       <div class="phone">
         <div class="status-bar">9:41</div>
         <div class="jmfc-bar">
-          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <svg class="jmfc-logo-icon" aria-label="JMFC"><use href="#jmfc-logo"/></svg>
           <div class="brand">
             <div class="brand-title">JMFC FUTSAL</div>
             <div class="brand-sub">Match #3</div>
@@ -467,7 +481,7 @@
       <div class="phone">
         <div class="status-bar">9:41</div>
         <div class="jmfc-bar">
-          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <svg class="jmfc-logo-icon" aria-label="JMFC"><use href="#jmfc-logo"/></svg>
           <div class="brand">
             <div class="brand-title">JMFC FUTSAL</div>
             <div class="brand-sub">기록 수정 · 저장 전</div>
@@ -494,7 +508,7 @@
       <div class="phone">
         <div class="status-bar">9:41</div>
         <div class="jmfc-bar">
-          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <svg class="jmfc-logo-icon" aria-label="JMFC"><use href="#jmfc-logo"/></svg>
           <div class="brand">
             <div class="brand-title">JMFC FUTSAL</div>
             <div class="brand-sub">EST. 206</div>
@@ -524,8 +538,8 @@
   </div>
 
   <footer class="note">
-    <strong>열기:</strong> GitHub Raw URL은 HTML이 아니라 소스만 보입니다. <code>design-preview/jmfc-mockup.html</code>을 PC에 저장한 뒤 브라우저로 열거나, 저장소를 clone한 다음 해당 파일을 더블클릭하세요. 로고 파일은 같은 폴더의 <code>assets/jmfc-logo.svg</code>를 참조합니다.<br><br>
-    <strong>다음 단계:</strong> 이 목업이 괜찮으면 동일한 JMFC 바·색·버튼 스타일만 <code>live/index.html</code>에 적용합니다. <code>live/Code.gs</code>는 변경하지 않습니다.
+    <strong>Cursor에서 보기:</strong> 저장소 폴더를 연 뒤 <code>Cmd+Shift+P</code> → <code>Live Preview: Show Preview</code> (확장 «Live Preview»). 파일 하나에 로고 포함.<br><br>
+    <strong>다음 단계:</strong> 목업 확정 시 <code>live/index.html</code> 스킨만 적용 · <code>live/Code.gs</code> 무변경.
   </footer>
 </body>
 </html>
