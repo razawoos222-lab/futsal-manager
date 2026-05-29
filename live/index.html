@@ -787,7 +787,7 @@ function renderMatchSelectScreen() {
                     </div>
                 </div>
                 <div class="flex justify-center items-center gap-8">
-    ${localState.originalTeams ? `<button data-action="restore-original-teams" class="btn btn-secondary text-4xl px-10">🔄 원팀</button>` : ''}
+    ${localState.originalTeams ? `<button data-action="restore-original-teams" class="btn btn-secondary text-2xl sm:text-3xl px-4 sm:px-6 whitespace-nowrap shrink-0 min-w-0 max-w-[9rem] sm:max-w-none">🔄 원팀복귀</button>` : ''}
     <span id="timer-display" class="text-7xl font-mono card py-5 px-10 bg-gray-700 text-gray-100">${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}</span>
     <button data-action="toggle-timer" class="btn ${timerRunning ? 'btn-secondary' : 'btn-primary'} text-4xl px-10 w-48">${timerRunning ? '일시정지' : '시작'}</button>
 </div>
@@ -1131,9 +1131,7 @@ function renderSessionSummaryScreen() {
       const stats = teamStats[teamName];
       const points = (stats.wins * 3) + (stats.draws * 1);
       const goalDifference = stats.goalsFor - stats.goalsAgainst;
-      const winRate = (stats.wins + stats.losses) > 0
-        ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1) + '%'
-        : '-';
+      const winRate = formatTeamWinRate(stats);
       return {
         name: teamName,
         played: stats.matchesPlayed,
@@ -1570,7 +1568,7 @@ function renderTeamRankingsTable() {
             const stats = teamStats[teamName];
             const points = (stats.wins * 3) + (stats.draws * 1);
             const goalDifference = stats.goalsFor - stats.goalsAgainst;
-            const winRate = (stats.wins + stats.losses) > 0 ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1) + '%' : '-';
+            const winRate = formatTeamWinRate(stats);
             return { name: teamName, played: stats.matchesPlayed, wins: stats.wins, draws: stats.draws, losses: stats.losses, gf: stats.goalsFor, ga: stats.goalsAgainst, gd: goalDifference, points: points, winRate: winRate };
         })
         .sort((a, b) => {
