@@ -191,6 +191,7 @@
         <select id="team-mode" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
             <option value="3">3팀 대결 (순환)</option>
             <option value="2">2팀 대결</option>
+            <option value="4">4팀 대결 (BLACK)</option>
         </select>
     </div>
     <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
@@ -200,21 +201,23 @@
     <button data-action="go-to-allocation" class="btn btn-primary w-full text-4xl">참석 완료</button>
 </div>
 
-<!-- 2. 팀 배분 & 라인업 화면 (별도!) -->
+<!-- 2. 팀 배분 & 라인업 화면 -->
 <div id="screen-team-allocation" class="hidden w-full max-w-5xl mx-auto text-center space-y-8">
     <h1 class="text-6xl font-black mb-4">팀 배분 & 라인업</h1>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="card text-left">
-            <h2 class="text-5xl font-black mb-4">선수</h2>
-            <p class="text-2xl text-gray-400 mb-4">카드를 드래그해서 팀으로 옮기세요.</p>
-            <div id="unassigned-player-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-        </div>
-        <div class="space-y-6">
-            <div id="team-columns" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
-        </div>
+    <div class="flex flex-col sm:flex-row gap-4">
+        <select id="assignment-strategy" class="flex-1 p-4 rounded-xl bg-gray-700 text-gray-100 border border-gray-500 font-semibold text-3xl">
+            <option value="balanced">밸런스 (기본)</option>
+            <option value="snakeMethod">스네이크</option>
+            <option value="random">랜덤</option>
+        </select>
+        <label class="flex items-center gap-3 p-4 bg-gray-700 rounded-xl cursor-pointer whitespace-nowrap">
+            <input type="checkbox" id="shuffle-enabled" class="w-8 h-8">
+            <span class="text-3xl font-bold text-gray-100">🎲셔플</span>
+        </label>
+        <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
     </div>
-    <button id="lineup-confirm" class="btn btn-primary w-full text-4xl opacity-50 cursor-not-allowed" disabled>라인업 확정</button>
-    <button data-action="go-to-match-select" id="btn-go-to-match-select" class="btn btn-secondary w-full text-4xl opacity-50 cursor-not-allowed" disabled>경기 선택으로</button>
+    <div id="team-allocation-container" class="flex flex-col gap-6"></div>
+    <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 선택으로</button>
 </div>
    
     <!-- 3. 경기 선택 화면 -->
@@ -369,7 +372,19 @@
     let currentGoalkeeperSelectTeam = null;
     let currentPlayerToSwapOut = null;
     let isProcessingEvent = false; 
-    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500', BLACK: 'text-gray-200' };
+
+    function getActiveTeamNames() {
+        const mode = [2, 3, 4].includes(Number(localState.teamMode)) ? Number(localState.teamMode) : 3;
+        if (mode === 2) return ['RED', 'BLUE'];
+        if (mode === 3) return ['RED', 'BLUE', 'YELLOW'];
+        return ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+    }
+
+    function teamHasPlayers(teamName) {
+        const team = localState.teams && localState.teams[teamName];
+        return team && ((team.players && team.players.length > 0) || team.goalkeeper);
+    }
 
 
 // --- 서버 호출 ---
@@ -548,7 +563,7 @@ function recoverTimerIfNeeded() {
     const container = document.getElementById('team-allocation-container');
     if (!container) return;
     const playerStats = MASTER_PLAYERS_DB.reduce((acc, p) => { acc[p.name] = p; return acc; }, {});
-    container.innerHTML = Object.keys(localState.teams).map(teamName => {
+    container.innerHTML = getActiveTeamNames().map(teamName => {
         const teamData = localState.teams[teamName];
         let players = teamData.players;
         const goalkeeper = teamData.goalkeeper;
@@ -621,13 +636,9 @@ function renderMatchSelectScreen() {
         matchDurationSelect.value = localState.match.selectedDuration;
     }
     
-    // ★ 고정 4팀 카드 표시 (선수 0명인 팀은 비활성)
-    const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
-
     const container = document.getElementById('team-select-container');
-    container.innerHTML = TEAM_ORDER.map(teamName => {
-        const team = localState.teams && localState.teams[teamName];
-        const hasPlayers = team && ((team.players && team.players.length > 0) || team.goalkeeper);
+    container.innerHTML = getActiveTeamNames().map(teamName => {
+        const hasPlayers = teamHasPlayers(teamName);
         const isSelected = localState.match.playingTeams.includes(teamName) ? 'selected' : '';
         const disabledClass = hasPlayers ? '' : 'opacity-40 cursor-not-allowed';
         const teamStat = (localState.sessionStats.teamStats && localState.sessionStats.teamStats[teamName]) || { wins: 0, draws: 0, losses: 0 };
@@ -1044,7 +1055,7 @@ function renderSessionSummaryScreen() {
 
   // --- 2) 팀 순위 표 ---
   const teamsArray = Object.keys(teamStats)
-    .filter(teamName => teamStats[teamName].matchesPlayed > 0)
+    .filter(teamName => getActiveTeamNames().includes(teamName) && teamStats[teamName].matchesPlayed > 0)
     .map(teamName => {
       const stats = teamStats[teamName];
       const points = (stats.wins * 3) + (stats.draws * 1);
@@ -1105,7 +1116,7 @@ function renderSessionSummaryScreen() {
   const teamStatsHtml = `
     <div class="card mb-8 overflow-x-auto">
       <h2 class="text-5xl font-black mb-6 text-gray-100">팀별 개인 스탯</h2>
-      ${Object.keys(localState.teams).map(teamName => {
+      ${getActiveTeamNames().map(teamName => {
         const teamData = localState.teams[teamName];
         const playersInTeam = [...new Set([...teamData.players, teamData.goalkeeper].filter(Boolean))];
         if (playersInTeam.length === 0) return '';
@@ -1211,25 +1222,38 @@ function renderSessionSummaryScreen() {
               else names.push(playerName);
               renderAttendanceScreen();
               break;
-            case 'go-to-allocation':
-            if (localState.attendingPlayerNames.length < 2) return alert('최소 2명 이상 선택해주세요.');
+            case 'go-to-allocation': {
+            const teamMode = parseInt(document.getElementById('team-mode').value, 10);
+            const minPlayers = [2, 3, 4].includes(teamMode) ? teamMode : 3;
+            if (localState.attendingPlayerNames.length < minPlayers) {
+                return alert(`최소 ${minPlayers}명 이상 선택해주세요. (${minPlayers}팀 모드)`);
+            }
             (async () => {
                 try {
                     const selectedDate = document.getElementById('game-date').value;
-                    const teamMode = parseInt(document.getElementById('team-mode').value);
                     await serverCall('setAttendingPlayersAndDate', localState.attendingPlayerNames, selectedDate, teamMode);
-                    await serverCall('performTeamAllocation', 'balanced', false);
+                    const algorithm = document.getElementById('assignment-strategy')?.value || 'balanced';
+                    const shuffleEnabled = document.getElementById('shuffle-enabled')?.checked || false;
+                    await serverCall('performTeamAllocation', algorithm, shuffleEnabled);
                 } catch (e) {
                     console.error('팀 배분 중 오류 발생:', e);
                     alert('팀 배분 중 오류가 발생했습니다.');
                 }
             })();
             break;
+            }
+            case 're-allocate': {
+                const algorithm = document.getElementById('assignment-strategy')?.value || 'balanced';
+                const shuffleEnabled = document.getElementById('shuffle-enabled')?.checked || false;
+                serverCall('performTeamAllocation', algorithm, shuffleEnabled);
+                break;
+            }
             case 'go-to-match-select':
                 serverCall('changeScreen', 'screen-match-select');
                 break;
             case 'toggle-team-select':
                 const teamToToggle = teamName;
+                if (!teamHasPlayers(teamToToggle)) return;
                 const isCurrentlySelected = localState.match.playingTeams.includes(teamToToggle);
                 let tempUpdatedPlayingTeams = [];
                 if (isCurrentlySelected) {
@@ -1471,7 +1495,7 @@ function renderSessionSummaryScreen() {
 function renderTeamRankingsTable() {
     const { teamStats } = localState.sessionStats;
     const teamsArray = Object.keys(teamStats)
-        .filter(teamName => teamStats[teamName].matchesPlayed > 0)
+        .filter(teamName => getActiveTeamNames().includes(teamName) && teamStats[teamName].matchesPlayed > 0)
         .map(teamName => {
             const stats = teamStats[teamName];
             const points = (stats.wins * 3) + (stats.draws * 1);
@@ -1484,9 +1508,6 @@ function renderTeamRankingsTable() {
             if (b.gd !== a.gd) return b.gd - a.gd;
             return b.gf - a.gf;
         });
-
-
-    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
 
 
     const tableHtml = `

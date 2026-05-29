@@ -10,6 +10,14 @@ const CONFIG = {
 let batchSaveTimer = null;
 let lastBatchSave = 0;
 
+/** teamMode(2/3/4)에 따른 활성 팀 이름 목록 */
+function getTeamNamesForMode(teamMode) {
+  const teamCount = [2, 3, 4].includes(Number(teamMode)) ? Number(teamMode) : 3;
+  if (teamCount === 2) return ['RED', 'BLUE'];
+  if (teamCount === 3) return ['RED', 'BLUE', 'YELLOW'];
+  return ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+}
+
 // --- 웹 앱 진입점 ---
 // 웹 앱이 처음 로드될 때 실행되는 함수입니다.
 function doGet(e) {
@@ -252,6 +260,10 @@ function getAppState() {
 // ✅ 팀스탯 안전 생성 헬퍼 (undo/recordEvent 방탄용)
 // =================================================================
 function ensureTeamStats_(state, teamName) {
+  if (!state) throw new Error('AppState가 비어있습니다.');
+  if (!teamName || typeof teamName !== 'string') {
+    throw new Error(`유효하지 않은 teamName 입니다: ${teamName}`);
+  }
   if (!state.sessionStats) state.sessionStats = {};
   if (!state.sessionStats.teamStats) state.sessionStats.teamStats = {};
   if (!state.sessionStats.teamStats[teamName]) {
@@ -373,12 +385,15 @@ function setAttendingPlayersAndDate(playerNames, selectedDate, teamMode) {
     saveAppState(state); // 변경된 상태를 저장합니다.
     return state; // 업데이트된 상태를 반환합니다.
   });
+}
+
+
 // 감독(감독/코치) 목록을 저장합니다.
 function setCoaches(coachNames) {
   return safeExecute(() => {
     const state = getAppState();
-    const teamCount = [2, 3, 4].includes(Number(state.teamMode)) ? Number(state.teamMode) : 3;
-    const teamNames = teamCount === 2 ? ['RED', 'BLUE'] : teamCount === 3 ? ['RED', 'BLUE', 'YELLOW'] : ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+    const teamNames = getTeamNamesForMode(state.teamMode);
+    const teamCount = teamNames.length;
 
     if (!Array.isArray(coachNames)) throw new Error('감독 목록이 유효하지 않습니다.');
     const unique = [...new Set(coachNames)].filter(Boolean);
@@ -406,8 +421,6 @@ function setLineupConfirmed(confirmed) {
     saveAppState(s);
     return s;
   });
-}
-
 }
 
 
@@ -485,11 +498,8 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
     const seededCoaches = Array.isArray(state.coaches) ? state.coaches : [];
 
     // ★ 팀 수 결정: 사용자가 선택한 teamMode(2/3/4) 우선
-    const teamCount = [2, 3, 4].includes(Number(state.teamMode)) ? Number(state.teamMode) : 3;
-    const teamNames =
-      teamCount === 2 ? ['RED', 'BLUE'] :
-      teamCount === 3 ? ['RED', 'BLUE', 'YELLOW'] :
-      ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+    const teamNames = getTeamNamesForMode(state.teamMode);
+    const teamCount = teamNames.length;
     
     // 팀 초기화 (2/3/4팀)
     let teams = {};
@@ -657,35 +667,6 @@ function startMatch(teamNames, selectedDuration, selectedField) {
   });
 }
 
-
-
-// ✅ 팀 스탯이 없으면 항상 생성해주는 안전장치
-function ensureTeamStats_(s, teamName) {
-  if (!s) throw new Error("AppState가 비어있습니다.");
-
-  if (!s.sessionStats) s.sessionStats = {};
-  if (!s.sessionStats.teamStats) s.sessionStats.teamStats = {};
-
-  // teamName이 비정상이면 여기서 바로 차단 (원인 추적 쉬워짐)
-  if (!teamName || typeof teamName !== "string") {
-    throw new Error(`유효하지 않은 teamName 입니다: ${teamName}`);
-  }
-
-  if (!s.sessionStats.teamStats[teamName]) {
-    s.sessionStats.teamStats[teamName] = {
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      consecutiveMatches: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      matchesPlayed: 0,
-      consecutivePlays: 0
-    };
-  }
-
-  return s.sessionStats.teamStats[teamName];
-}
 
 
 // ✅ recordEvent 통째 교체 버전 (goalsFor/goalsAgainst 크래시 방지 포함)
@@ -1247,8 +1228,11 @@ function selectNextPlayingTeam(selectedTeamName) {
   return safeExecute(() => {
     const s = getAppState();
     const { teamA, teamB } = s.match;
-    const allTeamNames = Object.keys(s.teams || {});
-    const waitingTeam = allTeamNames.find(name => name !== teamA.name && name !== teamB.name);
+    const activeTeams = getTeamNamesForMode(s.teamMode).filter(name => {
+      const t = s.teams[name];
+      return t && ((t.players && t.players.length > 0) || t.goalkeeper);
+    });
+    const waitingTeam = activeTeams.find(name => name !== teamA.name && name !== teamB.name);
 
 
     // [오류 수정] selectedTeamName이 유효한지 확인
