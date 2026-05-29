@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="JMFC">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5e6b8"/>
+      <stop offset="45%" stop-color="#c9a227"/>
+      <stop offset="100%" stop-color="#8b6914"/>
+    </linearGradient>
+    <linearGradient id="navy" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a2744"/>
+      <stop offset="100%" stop-color="#0c1222"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#navy)" stroke="url(#gold)" stroke-width="4" filter="url(#soft)"/>
+  <circle cx="60" cy="60" r="48" fill="none" stroke="url(#gold)" stroke-width="1" opacity="0.5"/>
+  <path id="estArc" d="M 24 68 A 36 36 0 1 1 96 68" fill="none"/>
+  <text font-family="Georgia, 'Times New Roman', serif" font-size="7.5" font-weight="700" fill="url(#gold)" letter-spacing="0.12em">
+    <textPath href="#estArc" startOffset="50%" text-anchor="middle">EST. 206</textPath>
+  </text>
+  <path d="M60 28 L74 36 V52 C74 64 68 72 60 76 C52 72 46 64 46 52 V36 Z" fill="url(#gold)" opacity="0.95"/>
+  <path d="M60 34 L68 39 V51 C68 60 64 66 60 69 C56 66 52 60 52 51 V39 Z" fill="#0c1222"/>
+  <path d="M52 48 C54 44 58 42 60 42 C62 42 66 44 68 48 C66 52 63 54 60 54 C57 54 54 52 52 48 Z" fill="url(#gold)"/>
+  <path d="M56 54 L60 62 L64 54 C62 58 58 58 56 54 Z" fill="#c9a227"/>
+  <text x="60" y="92" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="900" fill="url(#gold)" letter-spacing="0.08em">JMFC</text>
+</svg>

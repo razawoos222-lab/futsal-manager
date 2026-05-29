@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JMFC 풋살 매니저 — UI 목업 (EST. 206)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080d18;
+      --bg-elevated: #0c1222;
+      --card: #151d2e;
+      --card-border: rgba(201, 162, 39, 0.12);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --gold: #c9a227;
+      --gold-light: #f5e6b8;
+      --accent: #85adc5;
+      --glow: rgba(133, 173, 197, 0.35);
+      --red: #ff6b6b;
+      --blue: #5eb3ff;
+      --yellow: #ffe566;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(201, 162, 39, 0.08), transparent 50%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .page-header {
+      max-width: 1100px;
+      margin: 0 auto 2rem;
+      text-align: center;
+    }
+    .page-header h1 {
+      font-family: Cinzel, Georgia, serif;
+      font-size: clamp(1.25rem, 4vw, 1.75rem);
+      font-weight: 900;
+      color: var(--gold-light);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+    .page-header p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 36rem;
+      margin: 0 auto;
+    }
+    .page-header .badge {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      border: 1px solid var(--card-border);
+      background: rgba(201, 162, 39, 0.08);
+    }
+    .gallery {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      align-items: start;
+    }
+    .screen-block { text-align: center; }
+    .screen-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.6rem;
+    }
+    .phone {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      border-radius: 28px;
+      border: 2px solid rgba(201, 162, 39, 0.25);
+      overflow: hidden;
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04);
+      background: var(--bg-elevated);
+      text-align: left;
+    }
+    .status-bar {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      background: #060a12;
+    }
+    .jmfc-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, rgba(201,162,39,0.1) 0%, transparent 100%);
+      border-bottom: 1px solid var(--card-border);
+    }
+    .jmfc-bar img {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+    .jmfc-bar .brand {
+      flex: 1;
+      min-width: 0;
+    }
+    .jmfc-bar .brand-title {
+      font-family: Cinzel, Georgia, serif;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--gold-light);
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+    }
+    .jmfc-bar .brand-sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .screen-body {
+      padding: 12px 14px 16px;
+      min-height: 480px;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .screen-body h2 {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--accent);
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .card-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .field {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    .player-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .player-chip {
+      padding: 10px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+    }
+    .player-chip.on {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      border-color: #3b82f6;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(59,130,246,0.4);
+    }
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #0c1222;
+      background: linear-gradient(180deg, var(--gold-light), var(--gold));
+      cursor: default;
+    }
+    .team-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .team-pill {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+    }
+    .team-pill.sel {
+      border-color: var(--accent);
+      box-shadow: 0 0 18px var(--glow);
+    }
+    .team-pill .name { font-size: 1.1rem; font-weight: 900; }
+    .team-pill .meta { font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+    .t-red { color: var(--red); }
+    .t-blue { color: var(--blue); }
+    .t-yellow { color: var(--yellow); }
+    .t-black { color: #e2e8f0; }
+    .team-block {
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 6px;
+      border-left: 4px solid;
+    }
+    .team-block.red { border-color: var(--red); background: rgba(255,107,107,0.06); }
+    .team-block.blue { border-color: var(--blue); background: rgba(94,179,255,0.06); }
+    .team-block.yellow { border-color: var(--yellow); background: rgba(255,229,102,0.06); }
+    .team-block h3 { font-size: 0.85rem; font-weight: 900; margin-bottom: 6px; }
+    .roster { font-size: 0.65rem; color: var(--muted); line-height: 1.5; }
+    .score-hero {
+      font-size: 2.25rem;
+      font-weight: 900;
+      text-align: center;
+      padding: 16px 8px;
+      margin: 4px 0 10px;
+      font-variant-numeric: tabular-nums;
+      background: radial-gradient(ellipse at center, rgba(133,173,197,0.12) 0%, transparent 70%);
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+    }
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .chip {
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .chip.gold { background: rgba(201,162,39,0.2); border-color: rgba(201,162,39,0.4); color: var(--gold-light); }
+    .chip.goal { background: #166534; border-color: #22c55e; }
+    .chip.def { background: #854d0e; }
+    .chip.save { background: #5b21b6; }
+    .mvp-box {
+      padding: 12px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #1a2332, #121a28);
+      border: 1px solid rgba(252,211,77,0.25);
+      margin-bottom: 8px;
+    }
+    .mvp-label { font-size: 0.68rem; color: #fcd34d; font-weight: 700; }
+    .mvp-names { font-size: 0.85rem; font-weight: 900; margin-top: 4px; }
+    table { width: 100%; font-size: 0.62rem; border-collapse: collapse; }
+    th, td { padding: 7px 3px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th { color: var(--muted); font-weight: 600; }
+    .hint-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .count-pill {
+      font-weight: 900;
+      color: var(--gold-light);
+      font-size: 0.8rem;
+    }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .award-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .award {
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(201,162,39,0.08);
+      border: 1px solid var(--card-border);
+    }
+    .award .t { font-size: 0.62rem; color: var(--gold); font-weight: 700; }
+    .award .v { font-size: 0.75rem; font-weight: 900; margin-top: 4px; }
+    footer.note {
+      max-width: 1100px;
+      margin: 2.5rem auto 0;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.6;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+    }
+    footer.note strong { color: var(--gold-light); }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <h1>JMFC 풋살 매니저</h1>
+    <p>기능·<code>Code.gs</code>는 그대로 두고 UI만 JMFC 브랜드(다크 프리미엄)로 정리한 <strong>단일 목업</strong>입니다. 모든 화면 상단에 동일한 JMFC 엠블럼을 넣었고, 로고 리본 문구는 <strong>EST. 206</strong>입니다.</p>
+    <span class="badge">목업 전용 · GAS 미연동</span>
+  </header>
+
+  <div class="gallery">
+    <!-- 1 참석 -->
+    <div class="screen-block">
+      <div class="screen-label">1 · 참석 조사</div>
+      <div class="phone">
+        <div class="status-bar">9:41</div>
+        <div class="jmfc-bar">
+          <img src="assets/jmfc-logo.svg" alt="JMFC" width="44" height="44" />
+          <div class="brand">
+            <div class="brand-title">JMFC FUTSAL</div>
+            <div class="brand-sub">풋살 매니저 · EST. 206</div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <h2>참석 조사</h2>
+          <div class="card">
+            <div class="card-label">경기 날짜</div>
+            <input class="field" type="text" value="2026-05-29" readonly />
+          </div>
+          <div class="card">
+            <div class="card-label">팀 구성</div>
+            <input class="field" type="text" value="4팀 대결 (BLACK)" readonly />
+          </div>
+          <div class="hint-row"><span>참석 인원</span><span class="count-pill">12명</span></div>
+          <div class="player-grid">
+            <div class="player-chip on">김기호</div>
+            <div class="player-chip on">이장영</div>
+            <div class="player-chip on">박민수</div>
+            <div class="player-chip">—</div>
+            <div class="player-chip on">최준혁</div>
+            <div class="player-chip on">정우진</div>
+          </div>
+          <button type="button" class="btn-primary">참석 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 배분 -->
+    <div class="screen-block">
+      <div class="screen-label">2 · 팀 배분 &amp; 라인업</div>
+      <div class="phone">
+        <div class="status-bar">9:41</div>
+        <div class="jmfc-bar">
+          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <div class="brand">
+            <div class="brand-title">JMFC FUTSAL</div>
+            <div class="brand-sub">밸런스 배분 · 셔플 OFF</div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <h2>팀 배분 &amp; 라인업</h2>
+          <div class="row-2" style="margin-bottom:8px">
+            <input class="field" value="밸런스 (기본)" readonly />
+            <input class="field" value="🔄 다시 배분" readonly style="text-align:center" />
+          </div>
+          <div class="team-col">
+            <div class="team-block red">
+              <h3 class="t-red">RED</h3>
+              <div class="roster">김기호 · 이장영 · 박민수 · …</div>
+            </div>
+            <div class="team-block blue">
+              <h3 class="t-blue">BLUE</h3>
+              <div class="roster">최준혁 · 정우진 · …</div>
+            </div>
+            <div class="team-block yellow">
+              <h3 class="t-yellow">YELLOW</h3>
+              <div class="roster">…</div>
+            </div>
+            <div class="team-block" style="border-color:#64748b;background:rgba(100,116,139,0.08)">
+              <h3 class="t-black">BLACK</h3>
+              <div class="roster">…</div>
+            </div>
+          </div>
+          <button type="button" class="btn-primary">경기 준비 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 경기 선택 -->
+    <div class="screen-block">
+      <div class="screen-label">3 · 경기 선택</div>
+      <div class="phone">
+        <div class="status-bar">9:41</div>
+        <div class="jmfc-bar">
+          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <div class="brand">
+            <div class="brand-title">JMFC FUTSAL</div>
+            <div class="brand-sub">8분 · A 구장</div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <h2>경기 선택</h2>
+          <p style="font-size:0.72rem;color:var(--muted);margin-bottom:8px">진행할 2팀을 선택하세요</p>
+          <div class="team-pill sel">
+            <span class="name t-yellow">YELLOW</span>
+            <div class="meta">2승 1무 0패 · 승률 66.7%</div>
+          </div>
+          <div class="team-pill">
+            <span class="name t-red">RED</span>
+            <div class="meta">1승 0무 2패</div>
+          </div>
+          <div class="team-pill">
+            <span class="name t-black">BLACK</span>
+            <div class="meta">0승 1무 0패 · 승률 0.0%</div>
+          </div>
+          <button type="button" class="btn-primary">경기 시작</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 경기 진행 -->
+    <div class="screen-block">
+      <div class="screen-label">4 · 경기 진행</div>
+      <div class="phone">
+        <div class="status-bar">9:41</div>
+        <div class="jmfc-bar">
+          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <div class="brand">
+            <div class="brand-title">JMFC FUTSAL</div>
+            <div class="brand-sub">Match #3</div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="score-hero"><span class="t-red">RED</span> 1 : 0 <span class="t-yellow">YLW</span></div>
+          <div class="chip-row">
+            <span class="chip gold">일시정지</span>
+            <span class="chip">07:42</span>
+            <span class="chip">원팀복귀</span>
+          </div>
+          <div class="chip-row">
+            <span class="chip goal">득점</span>
+            <span class="chip def">수비</span>
+            <span class="chip save">선방</span>
+          </div>
+          <div class="card" style="margin-top:10px">
+            <div class="card-label">라인업 스냅샷</div>
+            <div class="roster" style="color:var(--text)">RED: 김기호(GK) · … / YLW: …</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 세션 요약 -->
+    <div class="screen-block">
+      <div class="screen-label">5 · 세션 요약</div>
+      <div class="phone">
+        <div class="status-bar">9:41</div>
+        <div class="jmfc-bar">
+          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <div class="brand">
+            <div class="brand-title">JMFC FUTSAL</div>
+            <div class="brand-sub">기록 수정 · 저장 전</div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <h2>세션 요약</h2>
+          <div class="card">
+            <div class="hint-row" style="margin:0"><span>오늘 경기 수</span><span class="count-pill">5경기</span></div>
+          </div>
+          <table>
+            <tr><th>선수</th><th>득</th><th>도</th><th>MP</th></tr>
+            <tr><td>김기호</td><td>2</td><td>1</td><td>4</td></tr>
+            <tr><td>이장영</td><td>1</td><td>2</td><td>3</td></tr>
+          </table>
+          <button type="button" class="btn-primary" style="margin-top:12px">시트에 저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6 오늘의 결과 -->
+    <div class="screen-block">
+      <div class="screen-label">6 · 오늘의 경기 결과</div>
+      <div class="phone">
+        <div class="status-bar">9:41</div>
+        <div class="jmfc-bar">
+          <img src="assets/jmfc-logo.svg" alt="JMFC" />
+          <div class="brand">
+            <div class="brand-title">JMFC FUTSAL</div>
+            <div class="brand-sub">EST. 206</div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <h2>오늘의 경기 결과</h2>
+          <div class="mvp-box">
+            <div class="mvp-label">🏆 MVP · MP 4점</div>
+            <div class="mvp-names">김기호 · 이장영</div>
+          </div>
+          <div class="award-grid">
+            <div class="award"><div class="t">⚽ 최다득점</div><div class="v">김기호 2</div></div>
+            <div class="award"><div class="t">🧤 선방왕</div><div class="v">박민수</div></div>
+          </div>
+          <div class="card" style="padding:8px">
+            <table>
+              <tr><th>팀</th><th>승</th><th>무</th><th>패</th><th>승률</th></tr>
+              <tr><td class="t-yellow">YELLOW</td><td>2</td><td>1</td><td>0</td><td>66.7%</td></tr>
+              <tr><td class="t-red">RED</td><td>1</td><td>0</td><td>2</td><td>33.3%</td></tr>
+              <tr><td class="t-black">BLACK</td><td>0</td><td>1</td><td>0</td><td>0.0%</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">
+    <strong>열기:</strong> GitHub Raw URL은 HTML이 아니라 소스만 보입니다. <code>design-preview/jmfc-mockup.html</code>을 PC에 저장한 뒤 브라우저로 열거나, 저장소를 clone한 다음 해당 파일을 더블클릭하세요. 로고 파일은 같은 폴더의 <code>assets/jmfc-logo.svg</code>를 참조합니다.<br><br>
+    <strong>다음 단계:</strong> 이 목업이 괜찮으면 동일한 JMFC 바·색·버튼 스타일만 <code>live/index.html</code>에 적용합니다. <code>live/Code.gs</code>는 변경하지 않습니다.
+  </footer>
+</body>
+</html>
