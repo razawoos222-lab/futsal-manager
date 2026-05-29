@@ -146,6 +146,12 @@
         .text-orange-600 { color: #F97316; } /* Orange for stats */
         .text-teal-600 { color: #14B8A6; } /* Teal for stats */
 
+        /* 팀명 색 (안드로이드 WebView 대비 강화 — Tailwind 500보다 밝게) */
+        .team-name-RED { color: #FF6B6B !important; }
+        .team-name-BLUE { color: #5EB3FF !important; }
+        .team-name-YELLOW { color: #FFE566 !important; }
+        .team-name-BLACK { color: #F1F5F9 !important; }
+
 
       /* 커스텀 주장 완장 스타일 */
       .armband {
