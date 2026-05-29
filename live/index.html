@@ -405,6 +405,20 @@
         });
     }
 
+    /** 승/(승+패). 무승부만 있으면 0.0% (BLACK 등) */
+    function formatTeamWinRate(stats) {
+        const wins = Number(stats.wins) || 0;
+        const losses = Number(stats.losses) || 0;
+        const played = Number(stats.matchesPlayed) || 0;
+        if (wins + losses > 0) {
+            return ((wins / (wins + losses)) * 100).toFixed(1) + '%';
+        }
+        if (played > 0) {
+            return '0.0%';
+        }
+        return '-';
+    }
+
 
 // --- 서버 호출 ---
 function serverCall(funcName, ...args) {
