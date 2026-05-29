@@ -2,7 +2,7 @@
 
 ## 1. 가장 쉬운 방법 (크롬·사파리·폰 브라우저)
 
-**[▶ JMFC 목업 보기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html)**
+**[▶ JMFC 목업 보기 (v2)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html)**
 
 1. 위 파란 링크를 누릅니다.
 2. 중간에 **「Open the page」**(페이지 열기) 버튼이 나오면 **한 번 더** 누릅니다.
