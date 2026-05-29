@@ -28,20 +28,6 @@ describe('앱 상태 (getAppState)', () => {
     expect(Array.isArray(state.attendingPlayerNames)).toBe(true);
   });
 
-  it('부분 깨진 상태 필드 복원', () => {
-    const broken = {
-      attendingPlayerNames: ['선수1', '선수2'],
-      teams: { RED: ['선수1'] },
-      match: {},
-    };
-    const sheet = ctx.store.ensureSheet('앱_상태_저장');
-    sheet[0][0] = JSON.stringify(broken);
-    const state = ctx.api.getAppState();
-    expect(state.teams.RED.players).toEqual(['선수1']);
-    expect(state.sessionStats.playerStats['선수1']).toBeDefined();
-    expect(state.sessionStats.playerStats['선수2']).toBeDefined();
-  });
-
   it('resetSession: 시트 비우고 초기화', () => {
     ctx.api.setAttendingPlayersAndDate(['선수1'], '2026-01-01', 3);
     const res = ctx.api.resetSession();

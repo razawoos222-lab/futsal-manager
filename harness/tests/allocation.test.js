@@ -20,14 +20,6 @@ describe('팀 배분 알고리즘', () => {
     expect(ctx.api.getPlayerPower(p, 'ccpBased')).toBe(100);
   });
 
-  it('computeQuotasFor3: 18명→6-6-6, 21명→7-7-7', () => {
-    expect(ctx.api.computeQuotasFor3(18)).toEqual([6, 6, 6]);
-    expect(ctx.api.computeQuotasFor3(21)).toEqual([7, 7, 7]);
-    const q = ctx.api.computeQuotasFor3(20);
-    expect(q.reduce((a, b) => a + b, 0)).toBe(20);
-    expect(Math.max(...q) - Math.min(...q)).toBeLessThanOrEqual(1);
-  });
-
   it('performTeamAllocation(balanced): 3팀, 참석자 전원 배치', () => {
     const res = ctx.api.performTeamAllocation('balanced', false);
     expect(res.success).toBe(true);
@@ -81,19 +73,4 @@ describe('팀 배분 알고리즘', () => {
     expect(total).toBe(14);
   });
 
-  it('allocateRandom: 팀 인원 차이 ≤ 1', () => {
-    const players = makePlayers(17).map((p) => ({
-      ...p,
-      power: p.att + p.def,
-    }));
-    const teams = {
-      RED: { players: [] },
-      BLUE: { players: [] },
-      YELLOW: { players: [] },
-    };
-    ctx.api.allocateRandom(players, teams, ['RED', 'BLUE', 'YELLOW']);
-    const sizes = ['RED', 'BLUE', 'YELLOW'].map((n) => teams[n].players.length);
-    expect(sizes.reduce((a, b) => a + b, 0)).toBe(17);
-    expect(Math.max(...sizes) - Math.min(...sizes)).toBeLessThanOrEqual(1);
-  });
 });

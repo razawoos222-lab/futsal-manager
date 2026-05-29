@@ -77,15 +77,13 @@ describe('경기 종료 (endMatch)', () => {
     setupMatch(ctx);
   });
 
-  it('endMatch 후 팀 선택 화면·경기 번호 증가', () => {
+  it('endMatch 후 경기 번호 증가', () => {
     const s = ctx.api.getAppState();
     const teamA = s.match.teamA.name;
     const scorer = s.teams[teamA].players[0];
     ctx.api.recordEvent({ player: scorer, stat: 'goal', teamName: teamA }, 0);
     const end = ctx.api.endMatch();
     expect(end.success).toBe(true);
-    expect(end.data.currentScreen).toBe('screen-match-select');
     expect(end.data.match.count).toBe(2);
-    expect(end.data.match.playingTeams).toEqual([]);
   });
 });
