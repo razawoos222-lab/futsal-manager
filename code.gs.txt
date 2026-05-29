@@ -6,6 +6,15 @@ const CONFIG = {
   APP_STATE_SHEET: "앱_상태_저장" 
 };
 
+const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+
+function getTeamNamesForMode(teamMode) {
+  const mode = Number(teamMode) || 3;
+  if (mode === 2) return ['RED', 'BLUE'];
+  if (mode === 4) return ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+  return ['RED', 'BLUE', 'YELLOW'];
+}
+
 
 let batchSaveTimer = null;
 let lastBatchSave = 0;
@@ -98,7 +107,8 @@ function getAppState() {
     teams: {
       RED: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
       BLUE: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
-      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
+      YELLOW: { players: [], goalkeeper: null, captain: null, viceCaptain: null },
+      BLACK: { players: [], goalkeeper: null, captain: null, viceCaptain: null }
     },
     originalTeams: null,
     match: {
@@ -119,7 +129,8 @@ function getAppState() {
       teamStats: {
         RED: { ...teamStatTemplate },
         BLUE: { ...teamStatTemplate },
-        YELLOW: { ...teamStatTemplate }
+        YELLOW: { ...teamStatTemplate },
+        BLACK: { ...teamStatTemplate }
       }
     },
     sessionResults: {
@@ -165,7 +176,7 @@ function getAppState() {
 
   // teams
   if (!s.teams || typeof s.teams !== 'object') s.teams = {};
-  ['RED','BLUE','YELLOW'].forEach(t => {
+  TEAM_ORDER.forEach(t => {
     if (!s.teams[t] || typeof s.teams[t] !== 'object') s.teams[t] = {};
     if (!Array.isArray(s.teams[t].players)) {
       // 예전 버전에서 teams[t]가 배열로 저장된 경우 복구
@@ -200,8 +211,8 @@ function getAppState() {
   if (!s.sessionStats.playerStats || typeof s.sessionStats.playerStats !== 'object') s.sessionStats.playerStats = {};
   if (!s.sessionStats.teamStats || typeof s.sessionStats.teamStats !== 'object') s.sessionStats.teamStats = {};
 
-  // teamStats: RED/BLUE/YELLOW 최소 보장 + goalsFor/goalsAgainst 포함
-  ['RED','BLUE','YELLOW'].forEach(t => {
+  // teamStats: RED/BLUE/YELLOW/BLACK 최소 보장 + goalsFor/goalsAgainst 포함
+  TEAM_ORDER.forEach(t => {
     if (!s.sessionStats.teamStats[t] || typeof s.sessionStats.teamStats[t] !== 'object') {
       s.sessionStats.teamStats[t] = { ...teamStatTemplate };
     } else {
@@ -437,20 +448,16 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
       state.attendingPlayerNames.includes(p.name)
     );
     
-    // ★ 인원수 기반 팀 수 결정
-    const totalPlayers = attendingPlayersData.length;
-    const teamCount = totalPlayers <= 14 ? 2 : 3;
-    const teamNames = teamCount === 2 
-      ? ['RED', 'BLUE'] 
-      : ['RED', 'BLUE', 'YELLOW'];
-    
-    // 팀 초기화 (2팀 또는 3팀)
+    const teamCount = [2, 3, 4].includes(Number(state.teamMode))
+      ? Number(state.teamMode)
+      : 3;
+    const teamNames = getTeamNamesForMode(teamCount);
+
     let teams = {};
     teamNames.forEach(name => {
-      teams[name] = { players: [], goalkeeper: null };
+      teams[name] = { players: [], goalkeeper: null, captain: null, viceCaptain: null };
     });
 
-    // ★ teamMode 저장 (핵심 추가!)
     state.teamMode = teamCount;
     
     // 능력치 계산 (criteria는 기존 로직 유지)
@@ -530,11 +537,12 @@ function performTeamAllocation(algorithm, shuffleEnabled = false) {
       };
     });
     
-    // YELLOW 팀이 없으면 빈 구조 추가 (기존 코드 호환성)
-    if (!finalTeams.YELLOW) {
-      finalTeams.YELLOW = { players: [], goalkeeper: null, captain: null, viceCaptain: null };
-    }
-    
+    getTeamNamesForMode(teamCount).forEach(name => {
+      if (!finalTeams[name]) {
+        finalTeams[name] = { players: [], goalkeeper: null, captain: null, viceCaptain: null };
+      }
+    });
+
     state.teams = finalTeams;
     state.currentScreen = 'screen-team-allocation';
     saveAppState(state);
@@ -580,14 +588,12 @@ function startMatch(teamNames, selectedDuration, selectedField) {
 
     // 현재 참석자 중 세션 통계에 없는 플레이어의 초기 스탯을 설정합니다.
     // sessionStats.teamStats 초기화 (2팀 모드 대응)
-      const allTeamNames = Object.keys(s.teams);
-      allTeamNames.forEach(name => {
+      getTeamNamesForMode(s.teamMode).forEach(name => {
         if (!s.sessionStats.teamStats[name]) {
           s.sessionStats.teamStats[name] = { wins: 0, draws: 0, losses: 0, consecutiveMatches: 0, goalsFor: 0, goalsAgainst: 0, matchesPlayed: 0, consecutivePlays: 0 };
         }
       });
 
-      // 현재 참석자 중 세션 통계에 없는 플레이어의 초기 스탯을 설정합니다.
       s.attendingPlayerNames.forEach(pName => {
         if (!s.sessionStats.playerStats[pName]) {
           s.sessionStats.playerStats[pName] = { goal: 0, assist: 0, defense: 0, save: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0 };
@@ -687,7 +693,7 @@ function recordEvent(eventData, seconds) {
           ? [s.match.teamA, s.match.teamB]
           : [s.match.teamB, s.match.teamA];
 
-      teamToScore.score++;
+      teamToScore.score = (Number(teamToScore.score) || 0) + 1;
 
       // ✅ teamStats 존재 보장
       const scoreStats = ensureTeamStats_(s, teamToScore.name);
@@ -702,7 +708,7 @@ function recordEvent(eventData, seconds) {
           ? [s.match.teamB, s.match.teamA]
           : [s.match.teamA, s.match.teamB];
 
-      scoringTeam.score++;
+      scoringTeam.score = (Number(scoringTeam.score) || 0) + 1;
 
       // ✅ teamStats 존재 보장
       const scoreStats = ensureTeamStats_(s, scoringTeam.name);
@@ -856,12 +862,19 @@ function endMatch() {
       throw new Error("경기 종료 처리를 위한 팀 정보가 부족합니다.");
     }
 
+    const scoreA = Number(teamA.score);
+    const scoreB = Number(teamB.score);
+    if (isNaN(scoreA)) throw new Error("팀 A 점수가 올바르지 않습니다.");
+    if (isNaN(scoreB)) throw new Error("팀 B 점수가 올바르지 않습니다.");
+    teamA.score = scoreA;
+    teamB.score = scoreB;
+
     // --- 승패 처리 (기존 로직 유지) ---
-    if (teamA.score === teamB.score) {
+    if (scoreA === scoreB) {
       teamStats[teamA.name].draws++;
       teamStats[teamB.name].draws++;
     } else {
-      const winner = teamA.score > teamB.score ? teamA.name : teamB.name;
+      const winner = scoreA > scoreB ? teamA.name : teamB.name;
       const loser = winner === teamA.name ? teamB.name : teamA.name;
       teamStats[winner].wins++;
       teamStats[loser].losses++;
@@ -879,11 +892,11 @@ function endMatch() {
       };
     }
 
-    if (teamA.score === teamB.score) {
+    if (scoreA === scoreB) {
       s.match.todayHeadToHead[headToHeadKey][teamA_name].draws++;
       s.match.todayHeadToHead[headToHeadKey][teamB_name].draws++;
     } else {
-      const winner = teamA.score > teamB.score ? teamA_name : teamB_name;
+      const winner = scoreA > scoreB ? teamA_name : teamB_name;
       const loser = winner === teamA_name ? teamB_name : teamA_name;
       s.match.todayHeadToHead[headToHeadKey][winner].wins++;
       s.match.todayHeadToHead[headToHeadKey][loser].losses++;
@@ -911,10 +924,10 @@ function endMatch() {
 
       playerStats[pName].gamesPlayed++;
 
-      if (teamA.score === teamB.score) {
+      if (scoreA === scoreB) {
         playerStats[pName].draws++;
       } else {
-        const winnerTeam = teamA.score > teamB.score ? teamA_name : teamB_name;
+        const winnerTeam = scoreA > scoreB ? teamA_name : teamB_name;
         const winnerTeamData = s.teams[winnerTeam] || { players: [], goalkeeper: null };
 
         if (winnerTeamData.players.includes(pName) || winnerTeamData.goalkeeper === pName) {
@@ -926,7 +939,12 @@ function endMatch() {
     });
 
     // --- 연속 출전 / matchesPlayed 업데이트 (기존 로직 유지) ---
-    const allTeamNames = Object.keys(s.teams); // 동적
+    const allTeamNames = getTeamNamesForMode(s.teamMode);
+    allTeamNames.forEach(name => {
+      if (!s.teams[name]) {
+        s.teams[name] = { players: [], goalkeeper: null, captain: null, viceCaptain: null };
+      }
+    });
     allTeamNames.forEach(name => {
       if (!teamStats[name]) {
         teamStats[name] = {
