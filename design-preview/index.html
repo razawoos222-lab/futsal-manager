@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>풋살 매니저 — 디자인 시안 A/B/C</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #0f1419;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    header {
+      max-width: 1400px;
+      margin: 0 auto 1.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+    header p { font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      max-width: 1400px;
+      margin: 0 auto 2rem;
+    }
+    .tabs button {
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.65rem 1.25rem;
+      border: 2px solid #334155;
+      border-radius: 999px;
+      background: #1e293b;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      border-color: #38bdf8;
+      background: #0c4a6e;
+      color: #fff;
+    }
+    .panel { display: none; max-width: 1400px; margin: 0 auto; }
+    .panel.active { display: block; }
+    .panel-desc {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    .panel-desc strong { color: #f1f5f9; }
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .phone-wrap { text-align: center; }
+    .phone-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .phone {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      border-radius: 28px;
+      border: 3px solid #334155;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.45);
+      text-align: left;
+    }
+    .status-bar {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.6;
+    }
+    .screen-body { padding: 14px; min-height: 520px; }
+
+    /* —— Variant A: Light Sports —— */
+    .a { --bg: #f1f5f9; --card: #fff; --text: #0f172a; --muted: #64748b; --accent: #2563eb; }
+    .a .phone { background: var(--bg); color: var(--text); }
+    .a .status-bar { background: #e2e8f0; color: #475569; }
+    .a .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .a h2 { font-size: 1.1rem; font-weight: 900; margin-bottom: 8px; }
+    .a .team-row {
+      display: flex;
+      align-items: stretch;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      border: 2px solid #e2e8f0;
+      background: #fff;
+    }
+    .a .team-stripe { width: 8px; flex-shrink: 0; }
+    .a .team-stripe.red { background: #ef4444; }
+    .a .team-stripe.blue { background: #3b82f6; }
+    .a .team-stripe.yellow { background: #eab308; }
+    .a .team-stripe.black { background: #1e293b; }
+    .a .team-body { padding: 12px 14px; flex: 1; }
+    .a .team-name { font-weight: 900; font-size: 1.25rem; }
+    .a .team-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .a .btn-p {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1rem;
+      margin-top: 8px;
+    }
+    .a .scoreboard {
+      text-align: center;
+      padding: 16px 8px;
+      background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 10px;
+    }
+    .a .score-big { font-size: 2.5rem; font-weight: 900; letter-spacing: 0.05em; }
+    .a .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .a .stat-btn {
+      padding: 14px 8px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #fff;
+    }
+    .a .award-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .a .award {
+      padding: 10px;
+      border-radius: 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+    .a .award-title { font-size: 0.7rem; color: #b45309; font-weight: 700; }
+    .a .award-val { font-size: 0.85rem; font-weight: 900; margin-top: 4px; }
+    .a table { width: 100%; font-size: 0.65rem; border-collapse: collapse; }
+    .a th, .a td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+    .a th { background: #f8fafc; font-weight: 700; color: #475569; }
+
+    /* —— Variant B: Dark Premium —— */
+    .b { --bg: #0c1222; --card: #151d2e; --text: #f1f5f9; --muted: #94a3b8; --accent: #85adc5; --glow: rgba(133,173,197,0.35); }
+    .b .phone { background: var(--bg); color: var(--text); border-color: #1e293b; }
+    .b .status-bar { background: #0a0f18; }
+    .b .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .b h2 { font-size: 1rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 10px; color: var(--accent); }
+    .b .team-pill {
+      padding: 14px;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent);
+    }
+    .b .team-pill.sel { border-color: var(--accent); box-shadow: 0 0 20px var(--glow); }
+    .b .t-red { color: #ff6b6b; }
+    .b .t-blue { color: #5eb3ff; }
+    .b .t-yellow { color: #ffe566; }
+    .b .t-black { color: #f1f5f9; }
+    .b .score-hero {
+      font-size: 3rem;
+      font-weight: 900;
+      text-align: center;
+      padding: 20px 0;
+      background: radial-gradient(ellipse at center, rgba(133,173,197,0.15) 0%, transparent 70%);
+      border-radius: 16px;
+      margin-bottom: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .b .chip-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+    .b .chip {
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .b .chip.primary { background: #1d4ed8; border-color: #3b82f6; }
+    .b .mvp-box {
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #1a2332, #121a28);
+      border: 1px solid rgba(252,211,77,0.25);
+      margin-bottom: 8px;
+    }
+    .b .mvp-label { font-size: 0.7rem; color: #fcd34d; font-weight: 700; }
+    .b .mvp-names { font-size: 0.9rem; font-weight: 900; margin-top: 6px; }
+    .b table { width: 100%; font-size: 0.6rem; }
+    .b th, .b td { padding: 8px 3px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .b th { color: var(--muted); font-weight: 600; }
+
+    /* —— Variant C: Minimal One-hand —— */
+    .c { --bg: #18181b; --card: #27272a; --text: #fafafa; --muted: #a1a1aa; --accent: #22c55e; }
+    .c .phone { background: var(--bg); color: var(--text); border-color: #3f3f46; }
+    .c .status-bar { background: #09090b; }
+    .c .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .c .list-team {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--card);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .c .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .c .dot.red { background: #ef4444; }
+    .c .dot.blue { background: #3b82f6; }
+    .c .dot.yellow { background: #eab308; }
+    .c .list-team strong { font-size: 1.1rem; display: block; }
+    .c .list-team span { font-size: 0.75rem; color: var(--muted); }
+    .c .fab-dock {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      padding-top: 12px;
+      background: linear-gradient(transparent, var(--bg) 24%);
+    }
+    .c .fab {
+      padding: 16px 8px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      color: #fff;
+    }
+    .c .fab.goal { background: #22c55e; }
+    .c .fab.end { background: #3f3f46; grid-column: span 1; }
+    .c .fab.timer { background: #2563eb; }
+    .c .score-minimal {
+      font-size: 2.75rem;
+      font-weight: 900;
+      text-align: center;
+      padding: 24px 0 8px;
+      letter-spacing: 0.08em;
+    }
+    .c .seg {
+      display: flex;
+      background: #27272a;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 12px;
+    }
+    .c .seg button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 8px;
+      font-family: inherit;
+    }
+    .c .seg button.on { background: #3f3f46; color: #fff; }
+    .c .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #3f3f46;
+      font-size: 0.8rem;
+    }
+    .c .result-row .rank { font-weight: 900; color: var(--accent); width: 1.5rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>풋살 매니저 — 디자인 시안 (기능 동일 · UI만 변경)</h1>
+    <p>각 시안마다 <strong>경기 선택 · 경기 진행 · 오늘의 결과</strong> 3화면 목업입니다. 탭으로 A/B/C를 비교해 보세요.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="active" data-panel="a">A · 라이트 스포츠</button>
+    <button type="button" data-panel="b">B · 다크 프리미엄</button>
+    <button type="button" data-panel="c">C · 미니멀 원핸드</button>
+  </div>
+
+  <!-- A: Light -->
+  <section class="panel a active" id="panel-a">
+    <div class="panel-desc"><strong>A · 라이트 스포츠</strong> — 밝은 배경, 팀 색 왼쪽 띠, 일반 앱 느낌. 안드로이드에서 팀 구분이 잘 됩니다.</div>
+    <div class="phones">
+      <div class="phone-wrap">
+        <div class="phone-label">경기 선택</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <h2>경기 선택</h2>
+            <div class="card">
+              <div style="font-size:0.75rem;color:#64748b;margin-bottom:6px">8분 · A 구장</div>
+            </div>
+            <div class="team-row"><div class="team-stripe yellow"></div><div class="team-body"><div class="team-name" style="color:#ca8a04">YELLOW</div><div class="team-meta">2승 1무 0패</div></div></div>
+            <div class="team-row" style="border-color:#2563eb;border-width:2px"><div class="team-stripe red"></div><div class="team-body"><div class="team-name" style="color:#dc2626">RED</div><div class="team-meta">1승 0무 2패 · 선택됨</div></div></div>
+            <div class="team-row"><div class="team-stripe black"></div><div class="team-body"><div class="team-name">BLACK</div><div class="team-meta">0승 1무 0패</div></div></div>
+            <button class="btn-p">경기 시작</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-label">경기 진행</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <div class="scoreboard">
+              <div style="font-size:0.7rem;color:#64748b">Match #3</div>
+              <div class="score-big"><span style="color:#dc2626">RED</span> 1 : 0 <span style="color:#ca8a04">YELLOW</span></div>
+              <div style="font-size:0.75rem;color:#64748b;margin-top:6px">07:42</div>
+            </div>
+            <div class="stat-grid">
+              <button class="stat-btn" style="background:#22c55e">득점</button>
+              <button class="stat-btn" style="background:#eab308;color:#422006">수비</button>
+              <button class="stat-btn" style="background:#8b5cf6">선방</button>
+              <button class="stat-btn" style="background:#64748b">원팀복귀</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-label">오늘의 결과</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <h2>오늘의 경기 결과</h2>
+            <div class="award-grid">
+              <div class="award"><div class="award-title">🏆 MVP</div><div class="award-val">김기호 · MP 4</div></div>
+              <div class="award"><div class="award-title">⚽ 최다득점</div><div class="award-val">1득점</div></div>
+            </div>
+            <div class="card" style="padding:8px;margin-top:8px">
+              <table>
+                <tr><th>팀</th><th>승</th><th>무</th><th>패</th><th>승률</th></tr>
+                <tr><td style="color:#ca8a04;font-weight:800">YELLOW</td><td>2</td><td>1</td><td>0</td><td>66.7%</td></tr>
+                <tr><td style="color:#1e293b;font-weight:800">BLACK</td><td>0</td><td>1</td><td>0</td><td>0.0%</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- B: Dark Premium -->
+  <section class="panel b" id="panel-b">
+    <div class="panel-desc"><strong>B · 다크 프리미엄</strong> — 지금과 비슷한 다크 톤을 정리. 스코어 보드 강조, MP 박스, 밝은 팀 색(현재 main 반영 방향).</div>
+    <div class="phones">
+      <div class="phone-wrap">
+        <div class="phone-label">경기 선택</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <h2>경기 선택</h2>
+            <div class="card" style="font-size:0.8rem;color:#94a3b8">8분 · A 구장</div>
+            <div class="team-pill sel"><span class="t-yellow" style="font-size:1.2rem;font-weight:900">YELLOW</span><br><span style="font-size:0.7rem;color:#94a3b8">2승 1무 0패</span></div>
+            <div class="team-pill"><span class="t-red" style="font-size:1.2rem;font-weight:900">RED</span><br><span style="font-size:0.7rem;color:#94a3b8">1승 0무 2패</span></div>
+            <div class="team-pill"><span class="t-black" style="font-size:1.2rem;font-weight:900">BLACK</span><br><span style="font-size:0.7rem;color:#94a3b8">0승 1무 · 승률 0.0%</span></div>
+            <button style="width:100%;padding:14px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-weight:800;margin-top:8px">경기 시작</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-label">경기 진행</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <div class="score-hero"><span class="t-red">RED</span> 1 : 0 <span class="t-yellow">YLW</span></div>
+            <div class="chip-row">
+              <span class="chip primary">일시정지</span>
+              <span class="chip">07:42</span>
+              <span class="chip">원팀복귀</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip" style="background:#166534">득점</span>
+              <span class="chip" style="background:#854d0e">수비</span>
+              <span class="chip" style="background:#5b21b6">선방</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-label">오늘의 결과</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <h2>오늘의 경기 결과</h2>
+            <div class="mvp-box">
+              <div class="mvp-label">🏆 MVP · MP 4점</div>
+              <div class="mvp-names">김기호 · 이장영</div>
+            </div>
+            <div class="card" style="padding:8px">
+              <table>
+                <tr><th>팀</th><th>승</th><th>무</th><th>승률</th></tr>
+                <tr><td class="t-yellow">YELLOW</td><td>2</td><td>1</td><td>66.7%</td></tr>
+                <tr><td class="t-black">BLACK</td><td>0</td><td>1</td><td>0.0%</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- C: Minimal -->
+  <section class="panel c" id="panel-c">
+    <div class="panel-desc"><strong>C · 미니멀 원핸드</strong> — 경기 중 엄지 존에 버튼 고정. 리스트형 팀 선택, 결과는 한 줄 요약.</div>
+    <div class="phones">
+      <div class="phone-wrap">
+        <div class="phone-label">경기 선택</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <div class="top-bar"><span>경기 선택</span><span>8분</span></div>
+            <div class="list-team"><div class="dot yellow"></div><div><strong>YELLOW</strong><span>2승 1무 · 탭하여 선택</span></div></div>
+            <div class="list-team" style="outline:2px solid #22c55e"><div class="dot red"></div><div><strong>RED</strong><span>선택됨</span></div></div>
+            <div class="list-team"><div class="dot black" style="background:#71717a"></div><div><strong>BLACK</strong><span>0승 1무</span></div></div>
+            <button style="width:100%;margin-top:12px;padding:16px;border:none;border-radius:12px;background:#22c55e;color:#fff;font-weight:800">경기 시작</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-label">경기 진행</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body" style="display:flex;flex-direction:column;min-height:520px">
+            <div class="seg">
+              <button class="on">라인업</button>
+              <button>순위</button>
+              <button>기록</button>
+            </div>
+            <div class="score-minimal">1 : 0</div>
+            <div style="text-align:center;font-size:0.75rem;color:#a1a1aa;margin-bottom:auto">RED vs YELLOW · 07:42</div>
+            <div class="fab-dock">
+              <button class="fab goal">득점</button>
+              <button class="fab timer">타이머</button>
+              <button class="fab end">종료</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-label">오늘의 결과</div>
+        <div class="phone">
+          <div class="status-bar">9:41</div>
+          <div class="screen-body">
+            <div class="top-bar"><span>오늘의 결과</span></div>
+            <div class="result-row"><span class="rank">1</span><span style="color:#eab308;font-weight:800">YELLOW</span><span>7점 · 66.7%</span></div>
+            <div class="result-row"><span class="rank">2</span><span style="color:#ef4444;font-weight:800">RED</span><span>3점</span></div>
+            <div class="result-row"><span class="rank">3</span><span style="font-weight:800">BLACK</span><span>1점 · 0.0%</span></div>
+            <div style="margin-top:16px;padding:12px;background:#27272a;border-radius:12px;font-size:0.75rem">
+              🏆 MVP 김기호 (MP 4)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    document.querySelectorAll('.tabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
