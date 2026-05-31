@@ -1,5 +1,13 @@
 # JMFC 목업 — 여기만 누르세요
 
+## 0. 전체 프로세스 (Figma Flow) — **먼저 보기**
+
+**[▶ 전체 프로세스 플로우 (flow1)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=flow1)**
+
+1. 링크 클릭 → 2. **「Open the page」** → 3. **좌우 스크롤**로 10단계 확인
+
+---
+
 ## 1. 가장 쉬운 방법 (크롬·사파리·폰 브라우저)
 
 **[▶ JMFC 목업 보기 (v3)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=3)**

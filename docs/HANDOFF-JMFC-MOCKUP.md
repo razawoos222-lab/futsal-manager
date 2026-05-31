@@ -9,6 +9,12 @@
 
 ## 목업 한 번에 보기
 
+**전체 프로세스 (Figma Flow):**
+```
+https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=flow1
+```
+
+**화면 상세 (v3):**
 ```
 https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=3
 ```
