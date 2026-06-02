@@ -2,7 +2,7 @@
 
 **브랜치:** `cursor/jmfc-mockup-6e09`  
 **PR:** https://github.com/razawoos222-lab/futsal-manager/pull/7 (draft, **main 머지 금지** — 사용자 요청)  
-**최종 목업:** v3  
+**최종 목업:** v5 (라이트 · 기록 수정 · 실버 로고)  
 **저장일:** 2026-05-29
 
 ---
@@ -11,16 +11,16 @@
 
 **전체 프로세스 (Figma Flow):**
 ```
-https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=flow1
+https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5
 ```
 
-**화면 상세 (v3):**
+**화면 상세 (v5):**
 ```
-https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=3
+https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=5
 ```
 
 1. 링크 클릭 → 2. **Open the page** 클릭  
-3. 상단 금색 **v3** 배지 확인 (캐시면 `?v=4` 등으로 변경)
+3. 상단 **v5** 배지 · STEP 10–12(결과·기록수정·저장) 확인
 
 저장소 루트: [VIEW-MOCKUP.md](../VIEW-MOCKUP.md)
 
@@ -30,7 +30,8 @@ https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/d
 
 | 항목 | 방향 |
 |------|------|
-| 전체 톤 | JMFC 다크 프리미엄, 골드/네이비, 화면마다 JMFC 바 + 로고 |
+| 전체 톤 | **v5: 스타디움 라이트** (`#f4f4f5`, 흰 카드, 검정 CTA) · v3 다크는 보관 |
+| 기록 수정 | 결과(읽기) → **기록 수정**(입력) → 저장 · live에 `screen-record-edit` 분리됨 |
 | 로고 연도 | **EST. 206** (엠블럼 SVG: `design-preview/assets/jmfc-logo.svg`) |
 | `Code.gs` | **변경 없음** — UI만 `live/index.html` 스킨 예정 |
 | 구장 선택 | **제거** |

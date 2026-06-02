@@ -2,19 +2,19 @@
 
 ## 0. 전체 프로세스 (Figma Flow) — **먼저 보기**
 
-**[▶ 전체 프로세스 플로우 (flow1)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=flow1)**
+**[▶ 전체 프로세스 플로우 (v5 · 12단계)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5)**
 
-1. 링크 클릭 → 2. **「Open the page」** → 3. **좌우 스크롤**로 10단계 확인
+1. 링크 클릭 → 2. **「Open the page」** → 3. **좌우 스크롤**로 STEP 01–12 확인
 
 ---
 
 ## 1. 가장 쉬운 방법 (크롬·사파리·폰 브라우저)
 
-**[▶ JMFC 목업 보기 (v3)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=3)**
+**[▶ JMFC 목업 보기 (v5)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=5)**
 
 1. 위 파란 링크를 누릅니다.
 2. 중간에 **「Open the page」**(페이지 열기) 버튼이 나오면 **한 번 더** 누릅니다.
-3. 6개 화면 목업이 보이면 성공입니다.
+3. 스타디움 라이트 UI · **결과 / 기록 수정 / 저장** 화면이 보이면 성공입니다.
 
 > Cursor·다운로드·Raw 저장 **필요 없음**
 
