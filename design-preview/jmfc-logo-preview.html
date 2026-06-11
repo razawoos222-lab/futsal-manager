@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JMFC 로고 미리보기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      color: #f4f4f5;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
+        repeating-linear-gradient(90deg, #09090b 0 48px, #27272a 48px 96px);
+      padding: 2rem 1rem 3rem;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    h1 {
+      font-family: Cinzel, serif;
+      text-align: center;
+      font-size: 1.5rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    .sub { text-align: center; color: #a1a1aa; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.6; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+    .card h2 { font-size: 0.8rem; color: #d4d4d8; margin-bottom: 1rem; font-weight: 700; }
+    .card.light { background: #f4f4f5; color: #18181b; }
+    .card.light h2 { color: #52525b; }
+    .card.dark { background: #09090b; }
+    .logo-xl { width: 220px; height: 220px; }
+    .logo-md { width: 120px; height: 120px; }
+    .logo-sm { width: 38px; height: 38px; }
+    .bar {
+      display: flex; align-items: center; gap: 10px;
+      max-width: 360px; margin: 0 auto; padding: 10px 14px;
+      background: #fff; border-bottom: 1.5px solid #c4c4c8; border-radius: 12px 12px 0 0;
+    }
+    .bar strong {
+      display: block; font-family: Cinzel, serif; font-size: 0.82rem; letter-spacing: 0.06em;
+    }
+    .bar span { font-size: 0.68rem; color: #52525b; font-weight: 600; }
+    .phone-shell {
+      max-width: 360px; margin: 0 auto; border-radius: 24px; overflow: hidden;
+      border: 1.5px solid #a1a1aa; box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+    }
+    .note {
+      margin-top: 2rem; padding: 1rem 1.25rem; border-radius: 12px;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.85rem; line-height: 1.65; color: #d4d4d8;
+    }
+    .note code { color: #fbbf24; }
+    a.back {
+      display: inline-block; margin-top: 1.5rem; color: #fbbf24; font-weight: 700; text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>JMFC LOGO</h1>
+    <p class="sub">메탈릭 원형 엠블럼 · 사자 문장 · <strong>EST. 2016</strong><br>목업 헤더·앱 아이콘용 SVG</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>스타디움 배경 (원본 느낌)</h2>
+        <img class="logo-xl" src="assets/jmfc-logo.svg" alt="JMFC 로고" />
+      </div>
+      <div class="card light">
+        <h2>라이트 UI (앱 헤더)</h2>
+        <img class="logo-md" src="assets/jmfc-logo.svg" alt="JMFC 로고" />
+      </div>
+      <div class="card dark">
+        <h2>다크 배경</h2>
+        <img class="logo-md" src="assets/jmfc-logo.svg" alt="JMFC 로고" />
+      </div>
+    </div>
+
+    <div class="phone-shell" style="margin-top: 2rem">
+      <div class="bar">
+        <img class="logo-sm" src="assets/jmfc-logo.svg" alt="" />
+        <div>
+          <strong>JMFC FOOTBALL</strong>
+          <span>참석 조사</span>
+        </div>
+      </div>
+      <div style="background:#fff;height:120px;border-radius:0 0 24px 24px"></div>
+    </div>
+
+    <div class="note">
+      <strong>팀 파워 공식 (확정)</strong><br>
+      <code>팀 파워 = (팀 선수 총 CCP ÷ 팀 선수 총 경기수) × 100</code><br>
+      즉 CCP/G에 100을 곱한 값입니다. (예: CCP/G 0.76 → 파워 76)
+    </div>
+
+    <a class="back" href="jmfc-mockup.html?v=5.4">← 전체 화면 목업으로</a>
+  </div>
+</body>
+</html>

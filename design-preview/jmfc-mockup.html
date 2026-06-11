@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v5.3</title>
+  <title>JMFC 풋살 매니저 목업 v5.4</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -180,9 +180,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v5.3</h1>
-    <p>감독 선택 UX · 드래프트 <strong>전체 선수 풀</strong> · 팀 확정 시 <strong>팀 승률 · 팀 파워(100)</strong></p>
-    <span class="ver">v5.3 · ?v=5.3</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v5.4</h1>
+    <p>메탈릭 로고(EST.2016) · 감독 선택 · 드래프트 풀 · <strong>팀 파워 = (총 CCP÷총 경기)×100</strong></p>
+    <span class="ver">v5.4 · ?v=5.4</span>
   </div>
 
   <div class="gallery">
@@ -310,7 +310,7 @@
         <div class="body scroll">
           <h2>3팀 라인업</h2>
           <p class="status-line" style="color:#16a34a">미배정 0명</p>
-          <p class="formula-note">팀 승률 = Σ(선수 승) ÷ Σ(선수 승+패) · 팀 파워 = Σ(CCP/G×경기수) ÷ Σ(경기수) 를 0~100 환산 (단순 평균 아님)</p>
+          <p class="formula-note">팀 승률 = Σ(선수 승) ÷ Σ(선수 승+패) · 팀 파워 = (팀 선수 총 CCP ÷ 팀 선수 총 경기수) × 100 = CCP/G × 100</p>
           <div class="team-power-card">
             <div class="head"><h4 class="t-red">RED ×8</h4><strong style="font-size:1.1rem">파워 76</strong></div>
             <div class="power-bar-wrap">
@@ -319,7 +319,7 @@
             </div>
             <div class="team-metrics">
               <span>팀 승률<br><b style="color:var(--text)">51.2%</b></span>
-              <span>가중 CCP/G<br><b style="color:var(--text)">1.05</b></span>
+              <span>CCP/G<br><b style="color:var(--text)">0.76</b></span>
             </div>
             <div class="names" style="margin-top:8px;font-size:0.7rem">김기호(C) · 이영중 · 여도영 · 송환규 · …</div>
           </div>
@@ -331,7 +331,7 @@
             </div>
             <div class="team-metrics">
               <span>팀 승률<br><b style="color:var(--text)">54.8%</b></span>
-              <span>가중 CCP/G<br><b style="color:var(--text)">1.14</b></span>
+              <span>CCP/G<br><b style="color:var(--text)">0.82</b></span>
             </div>
             <div class="names" style="margin-top:8px;font-size:0.7rem">이윤수(C) · 배철호 · 김상덕 · …</div>
           </div>
@@ -343,7 +343,7 @@
             </div>
             <div class="team-metrics">
               <span>팀 승률<br><b style="color:var(--text)">47.6%</b></span>
-              <span>가중 CCP/G<br><b style="color:var(--text)">0.92</b></span>
+              <span>CCP/G<br><b style="color:var(--text)">0.68</b></span>
             </div>
             <div class="names" style="margin-top:8px;font-size:0.7rem">신윤호(C) · 이장영 · …</div>
           </div>

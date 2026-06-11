@@ -103,9 +103,7 @@
     }
     .phone-hd .logo {
       width: 22px; height: 22px; border-radius: 50%;
-      background: #0c1222; border: 2px solid var(--gold);
-      font-size: 6px; color: var(--gold); display: flex; align-items: center;
-      justify-content: center; font-weight: 900;
+      flex-shrink: 0; object-fit: contain;
     }
     .phone-bd { padding: 8px; min-height: 200px; }
     .arrow-col {
@@ -232,7 +230,7 @@
   <header class="top">
     <h1>JMFC 풋살 매니저 — 전체 프로세스</h1>
     <p>Figma Flow처럼 한눈에 보는 화면 흐름 (목업 · GAS 미연동)</p>
-    <span class="tag">flow v5.3 · STEP 01–12 · 가로 스크롤 →</span>
+    <span class="tag">flow v5.4 · STEP 01–12 · 가로 스크롤 →</span>
   </header>
 
   <div class="legend">
@@ -337,7 +335,7 @@
           <div class="phone-hd"><div class="logo">J</div><strong>확정</strong></div>
           <div class="phone-bd">
             <div style="font-weight:800;margin-bottom:4px">3팀 라인업</div>
-            <div class="pwr-meta">팀승률=Σ승÷Σ(승+패) · 파워=가중CCP/G→100</div>
+            <div class="pwr-meta">팀승률=Σ승÷Σ(승+패) · 파워=(ΣCCP÷Σ경기)×100</div>
             <div style="font-size:0.45rem;color:#ef4444;font-weight:800;margin-bottom:1px">RED 파워 76</div>
             <div class="pwr-row"><div class="pwr-bar"><i class="r" style="width:76%"></i></div><span>51%</span></div>
             <div style="font-size:0.45rem;color:#3b82f6;font-weight:800;margin-bottom:1px">BLUE 파워 82</div>
@@ -347,7 +345,7 @@
             <button class="btn-g">팀 구성 확정</button>
           </div>
         </div>
-        <p class="note">팀 파워·승률<br>가중 평균 표시</p>
+        <p class="note">팀 파워=CCP/G×100<br>총CCP÷총경기</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
