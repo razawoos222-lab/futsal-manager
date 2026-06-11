@@ -14,7 +14,8 @@
 |------|------|
 | **`jmfc-mockup.html`** | JMFC 로고(**EST. 206**) · 6화면 다크 프리미엄 목업 (로고 HTML 내장) |
 | `index.html` | 위 목업으로 자동 이동 |
-| `assets/jmfc-logo.svg` | 로고 SVG 원본 |
+| `assets/jmfc-logo.png` | 로고 PNG (헤더·아이콘) |
+| `assets/jmfc-logo-hero.png` | 로고 PNG (카본 배경 포함) |
 
 `live/Code.gs`는 변경하지 않습니다. 목업 확정 후 `live/index.html` 스킨만 적용합니다.
 

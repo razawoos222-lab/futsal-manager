@@ -2,7 +2,7 @@
 
 ## 0. 전체 프로세스 (Figma Flow) — **먼저 보기**
 
-**[▶ JMFC 로고 미리보기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-logo-preview.html)**
+**[▶ JMFC 로고 미리보기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-logo-preview.html?v=2)**
 
 **[▶ 전체 프로세스 플로우 (12단계)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5.4)**
 
