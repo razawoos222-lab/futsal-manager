@@ -230,14 +230,14 @@
   <header class="top">
     <h1>JMFC 풋살 매니저 — 전체 프로세스</h1>
     <p>Figma Flow처럼 한눈에 보는 화면 흐름 (목업 · GAS 미연동)</p>
-    <span class="tag">flow v5.4 · STEP 01–12 · 가로 스크롤 →</span>
+    <span class="tag">flow v5.5 · STEP 01–12 · 가로 스크롤 →</span>
   </header>
 
   <div class="legend">
     <span><i class="dot" style="background:var(--role-pivo)"></i> 피보</span>
     <span><i class="dot" style="background:var(--role-fixo)"></i> 픽소</span>
     <span><i class="dot" style="background:var(--role-ala)"></i> 아라</span>
-    <span><i class="dot" style="background:var(--role-all)"></i> 올라운더</span>
+    <span><i class="dot" style="background:var(--role-all)"></i> 올라운드</span>
     <span>|</span>
     <span><b style="color:var(--coach-c)">■</b> 감독 C 뱃지</span>
     <span>|</span>
@@ -260,7 +260,7 @@
               <div class="pcard pivo" style="margin:0"><div class="row1"><span>김기호</span><span>18</span></div><div class="role">피보</div></div>
               <div class="pcard fixo" style="margin:0"><div class="row1"><span>이영중</span><span>7</span></div><div class="role">픽소</div></div>
               <div class="pcard ala" style="margin:0"><div class="row1"><span>여도영</span><span>—</span></div><div class="role">아라</div></div>
-              <div class="pcard all" style="margin:0"><div class="row1"><span>이장영</span><span>3</span></div><div class="role">올라</div></div>
+              <div class="pcard all" style="margin:0"><div class="row1"><span>이장영</span><span>3</span></div><div class="role">올라운드</div></div>
             </div>
             <button class="btn-g">참석 완료 →</button>
           </div>
@@ -275,7 +275,7 @@
         <div class="step-num">STEP 02</div>
         <div class="step-title">감독 지정</div>
         <div class="phone">
-          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>팀 짜기</strong></div>
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>Draft</strong></div>
           <div class="phone-bd">
             <div style="font-weight:800;margin-bottom:4px">감독 3명 선택</div>
             <div class="step-hint">① 감독 자리 탭 → ② 선수 카드 탭 → ③ 3팀 C 완료</div>
@@ -290,7 +290,7 @@
                 <div class="pcard pivo pick"><div class="row1"><span>김기호</span><span>18</span></div><div class="role">피보</div></div>
                 <div class="pcard fixo"><div class="row1"><span>이윤수</span><span>9</span></div><div class="role">픽소</div></div>
                 <div class="pcard ala"><div class="row1"><span>신윤호</span><span>—</span></div><div class="role">아라</div></div>
-                <div class="pcard all"><div class="row1"><span>이장영</span><span>3</span></div><div class="role">올라</div></div>
+                <div class="pcard all"><div class="row1"><span>이장영</span><span>3</span></div><div class="role">올라운드</div></div>
               </div>
             </div>
           </div>
@@ -335,17 +335,17 @@
           <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>확정</strong></div>
           <div class="phone-bd">
             <div style="font-weight:800;margin-bottom:4px">3팀 라인업</div>
-            <div class="pwr-meta">팀승률=Σ승÷Σ(승+패) · 파워=(ΣCCP÷Σ경기)×100</div>
-            <div style="font-size:0.45rem;color:#ef4444;font-weight:800;margin-bottom:1px">RED 파워 76</div>
-            <div class="pwr-row"><div class="pwr-bar"><i class="r" style="width:76%"></i></div><span>51%</span></div>
-            <div style="font-size:0.45rem;color:#3b82f6;font-weight:800;margin-bottom:1px">BLUE 파워 82</div>
-            <div class="pwr-row"><div class="pwr-bar"><i class="b" style="width:82%"></i></div><span>55%</span></div>
-            <div style="font-size:0.45rem;color:#ca8a04;font-weight:800;margin-bottom:1px">YLW 파워 68</div>
-            <div class="pwr-row" style="margin-bottom:6px"><div class="pwr-bar"><i class="y" style="width:68%"></i></div><span>48%</span></div>
+            <div class="pwr-meta">파워=(팀CCP/G÷세션최고)×100</div>
+            <div style="font-size:0.45rem;color:#ef4444;font-weight:800;margin-bottom:1px">RED 파워 94 · 2.21</div>
+            <div class="pwr-row"><div class="pwr-bar"><i class="r" style="width:94%"></i></div><span>51%</span></div>
+            <div style="font-size:0.45rem;color:#3b82f6;font-weight:800;margin-bottom:1px">BLUE 파워 100 · 2.35</div>
+            <div class="pwr-row"><div class="pwr-bar"><i class="b" style="width:100%"></i></div><span>55%</span></div>
+            <div style="font-size:0.45rem;color:#ca8a04;font-weight:800;margin-bottom:1px">YLW 파워 84 · 1.98</div>
+            <div class="pwr-row" style="margin-bottom:6px"><div class="pwr-bar"><i class="y" style="width:84%"></i></div><span>48%</span></div>
             <button class="btn-g">팀 구성 확정</button>
           </div>
         </div>
-        <p class="note">팀 파워=CCP/G×100<br>총CCP÷총경기</p>
+        <p class="note">파워=CCP/G를<br>100점 환산</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
