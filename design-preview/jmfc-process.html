@@ -202,13 +202,37 @@
     }
     .branch .arrow-col { padding-top: 0; width: auto; }
     .stack-78 { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .coach-slots { display: flex; gap: 2px; margin-bottom: 4px; }
+    .coach-slot {
+      flex: 1; min-height: 28px; border-radius: 5px; border: 1px dashed #cbd5e1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.38rem; font-weight: 800; color: var(--muted); padding: 2px;
+    }
+    .coach-slot.pick { border-color: #3b82f6; border-style: solid; background: #eff6ff; }
+    .coach-slot.red { border-style: solid; border-color: #ef4444; background: #fef2f2; color: #ef4444; }
+    .coach-slot.blue { border-style: solid; border-color: #3b82f6; background: #eff6ff; color: #3b82f6; }
+    .coach-slot.ylw { border-style: solid; border-color: #eab308; background: #fffbeb; color: #ca8a04; }
+    .pool-mini { max-height: 72px; overflow: hidden; margin-bottom: 3px; }
+    .pool-mini .grid2 { gap: 2px; }
+    .pool-mini .pcard { margin-bottom: 2px; padding: 4px; }
+    .pool-mini .pcard.dim { opacity: 0.35; }
+    .pool-mini .pcard.pick { border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(37,99,235,0.4); }
+    .step-hint {
+      font-size: 0.42rem; color: var(--muted); line-height: 1.35;
+      background: #f8fafc; border-radius: 4px; padding: 3px 4px; margin-bottom: 4px;
+    }
+    .pwr-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; font-size: 0.42rem; }
+    .pwr-bar { flex: 1; height: 5px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .pwr-bar i { display: block; height: 100%; border-radius: 999px; }
+    .pwr-bar i.r { background: #ef4444; } .pwr-bar i.b { background: #3b82f6; } .pwr-bar i.y { background: #eab308; }
+    .pwr-meta { font-size: 0.4rem; color: var(--muted); text-align: center; margin-bottom: 4px; }
   </style>
 </head>
 <body>
   <header class="top">
     <h1>JMFC 풋살 매니저 — 전체 프로세스</h1>
     <p>Figma Flow처럼 한눈에 보는 화면 흐름 (목업 · GAS 미연동)</p>
-    <span class="tag">flow v5 · STEP 01–12 · 가로 스크롤 →</span>
+    <span class="tag">flow v5.3 · STEP 01–12 · 가로 스크롤 →</span>
   </header>
 
   <div class="legend">
@@ -255,20 +279,25 @@
         <div class="phone">
           <div class="phone-hd"><div class="logo">J</div><strong>팀 짜기</strong></div>
           <div class="phone-bd">
-            <div style="font-weight:800;margin-bottom:6px">감독 3명 선택</div>
-            <div class="pcard pivo" style="border-color:#ef4444">
-              <span class="coach-badge">C</span>
-              <div class="row1"><span>김기호</span><span>18</span></div><div class="role">RED 감독</div>
+            <div style="font-weight:800;margin-bottom:4px">감독 3명 선택</div>
+            <div class="step-hint">① 감독 자리 탭 → ② 선수 카드 탭 → ③ 3팀 C 완료</div>
+            <div class="coach-slots">
+              <div class="coach-slot pick"><span>RED</span>감독?</div>
+              <div class="coach-slot"><span>BLU</span>빈자리</div>
+              <div class="coach-slot"><span>YLW</span>빈자리</div>
             </div>
-            <div class="pcard fixo" style="border-color:#3b82f6;opacity:0.85">
-              <div class="row1"><span>이윤수</span><span>9</span></div><div class="role">BLUE 감독</div>
-            </div>
-            <div class="pcard ala" style="border-color:#eab308;opacity:0.85">
-              <div class="row1"><span>신윤호</span><span>—</span></div><div class="role">YLW 감독</div>
+            <div style="font-size:0.42rem;font-weight:700;color:var(--muted);margin-bottom:2px">참석 선수 풀</div>
+            <div class="pool-mini">
+              <div class="grid2">
+                <div class="pcard pivo pick"><div class="row1"><span>김기호</span><span>18</span></div><div class="role">피보</div></div>
+                <div class="pcard fixo"><div class="row1"><span>이윤수</span><span>9</span></div><div class="role">픽소</div></div>
+                <div class="pcard ala"><div class="row1"><span>신윤호</span><span>—</span></div><div class="role">아라</div></div>
+                <div class="pcard all"><div class="row1"><span>이장영</span><span>3</span></div><div class="role">올라</div></div>
+              </div>
             </div>
           </div>
         </div>
-        <p class="note">감독 카드 우상단<br>라임 그린 C</p>
+        <p class="note">자리 선택 후<br>풀에서 카드 탭</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
@@ -280,20 +309,22 @@
         <div class="phone">
           <div class="phone-hd"><div class="logo">J</div><strong>드래프트</strong></div>
           <div class="phone-bd">
-            <div class="banner">BLUE 감독 차례 · 5픽</div>
-            <div class="pcard fixo">
-              <div class="row1"><span>배철호</span><span>12</span></div>
-              <div class="role">픽소</div>
-              <div class="stats">승률 48% · MP/G 1.1</div>
+            <div class="banner">BLUE 감독 차례 · 5픽 · 남은 12명</div>
+            <div style="font-size:0.42rem;font-weight:700;color:var(--muted);margin-bottom:2px">미배정 선수 전원</div>
+            <div class="pool-mini" style="max-height:88px">
+              <div class="grid2">
+                <div class="pcard fixo pick"><div class="row1"><span>배철호</span><span>12</span></div><div class="stats">48%·1.1</div></div>
+                <div class="pcard ala"><div class="row1"><span>송환규</span><span>—</span></div><div class="stats">41%·0.9</div></div>
+                <div class="pcard all"><div class="row1"><span>이호섭</span><span>5</span></div><div class="stats">45%·1.0</div></div>
+                <div class="pcard pivo dim"><div class="row1"><span>이영중</span><span>7</span></div><div class="role">RED✓</div></div>
+                <div class="pcard fixo"><div class="row1"><span>김상덕</span><span>11</span></div><div class="stats">47%</div></div>
+                <div class="pcard ala"><div class="row1"><span>양승현</span><span>—</span></div><div class="stats">43%</div></div>
+              </div>
             </div>
-            <div style="font-size:0.48rem;color:var(--muted);margin:4px 0">미배정 풀 · 카드 탭</div>
-            <div class="grid2">
-              <div class="chip">송환규</div><div class="chip on">배철호 ✓</div>
-            </div>
-            <button class="btn-g" style="background:#64748b;color:#fff">↩ 마지막 픽 취소</button>
+            <button class="btn-g" style="background:#64748b;color:#fff;font-size:0.45rem;padding:4px">↩ 픽 취소</button>
           </div>
         </div>
-        <p class="note">텍스트 카드 탭<br>드래그 X · 승률·MP/G</p>
+        <p class="note">전체 네임카드 풀<br>탭 픽 · 배정됨 흐림</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
@@ -305,15 +336,18 @@
         <div class="phone">
           <div class="phone-hd"><div class="logo">J</div><strong>확정</strong></div>
           <div class="phone-bd">
-            <div style="font-weight:800;margin-bottom:6px">3팀 라인업</div>
-            <div style="font-size:0.48rem;margin-bottom:3px;color:#ef4444;font-weight:800">RED ×8</div>
-            <div class="chip" style="margin-bottom:4px">김기호·이영중·…</div>
-            <div style="font-size:0.48rem;margin-bottom:3px;color:#3b82f6;font-weight:800">BLUE ×8</div>
-            <div class="chip" style="margin-bottom:6px">이윤수·배철호·…</div>
+            <div style="font-weight:800;margin-bottom:4px">3팀 라인업</div>
+            <div class="pwr-meta">팀승률=Σ승÷Σ(승+패) · 파워=가중CCP/G→100</div>
+            <div style="font-size:0.45rem;color:#ef4444;font-weight:800;margin-bottom:1px">RED 파워 76</div>
+            <div class="pwr-row"><div class="pwr-bar"><i class="r" style="width:76%"></i></div><span>51%</span></div>
+            <div style="font-size:0.45rem;color:#3b82f6;font-weight:800;margin-bottom:1px">BLUE 파워 82</div>
+            <div class="pwr-row"><div class="pwr-bar"><i class="b" style="width:82%"></i></div><span>55%</span></div>
+            <div style="font-size:0.45rem;color:#ca8a04;font-weight:800;margin-bottom:1px">YLW 파워 68</div>
+            <div class="pwr-row" style="margin-bottom:6px"><div class="pwr-bar"><i class="y" style="width:68%"></i></div><span>48%</span></div>
             <button class="btn-g">팀 구성 확정</button>
           </div>
         </div>
-        <p class="note">미배정 0명 시<br>경기 선택으로</p>
+        <p class="note">팀 파워·승률<br>가중 평균 표시</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>

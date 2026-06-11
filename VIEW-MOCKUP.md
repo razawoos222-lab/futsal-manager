@@ -2,7 +2,7 @@
 
 ## 0. 전체 프로세스 (Figma Flow) — **먼저 보기**
 
-**[▶ 전체 프로세스 플로우 (12단계)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5.1)**
+**[▶ 전체 프로세스 플로우 (12단계)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5.3)**
 
 1. 링크 클릭 → 2. **「Open the page」** → 3. **좌우 스크롤**로 STEP 01–12 확인
 
@@ -10,11 +10,11 @@
 
 ## 1. 가장 쉬운 방법 (크롬·사파리·폰 브라우저)
 
-**[▶ JMFC 목업 보기 (v5.2)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=5.2)**
+**[▶ JMFC 목업 보기 (v5.3)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=5.3)**
 
 1. 위 파란 링크를 누릅니다.
 2. 중간에 **「Open the page」**(페이지 열기) 버튼이 나오면 **한 번 더** 누릅니다.
-3. **v5.2** 배지 · 2/3/4팀 · 감독 드래프트 · 결과 팀순위가 보이면 성공입니다.
+3. **v5.3** 배지 · 감독 선택 방법 · 드래프트 전체 풀 · 팀 파워(100)·팀 승률이 보이면 성공입니다.
 
 > Cursor·다운로드·Raw 저장 **필요 없음**
 
