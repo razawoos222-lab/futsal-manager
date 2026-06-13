@@ -173,18 +173,36 @@
       border: none; border-radius: 4px; padding: 5px 2px;
       font-size: 0.48rem; font-weight: 800; color: #fff; font-family: inherit;
     }
-    .g { background: #16a34a; } .og { background: #dc2626; }
-    .d { background: #ca8a04; color: #000; } .s { background: #7c3aed; }
+    .g, .d, .s {
+      background: linear-gradient(165deg, #475569 0%, #334155 100%);
+      color: #f8fafc;
+    }
+    .og { background: #dc2626; color: #fff; }
     .assist { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-top: 4px; }
     .assist span {
-      padding: 3px 6px; border-radius: 999px; background: #dcfce7;
-      border: 1px solid #22c55e; font-size: 0.45rem;
+      padding: 3px 6px; border-radius: 999px; background: #fafafa;
+      border: 1px solid #cbd5e1; font-size: 0.45rem; font-weight: 800;
+    }
+    .assist span.on {
+      background: #f0fdf4; border-color: #16a34a; color: #15803d;
+      box-shadow: 0 0 0 1px rgba(22,163,74,0.25);
+    }
+    .assist span.on::after { content: ' ✓'; }
+    .btn-blue {
+      display: block; width: 100%; padding: 6px; margin-top: 4px;
+      border: none; border-radius: 6px; background: #2563eb; color: #fff;
+      font-weight: 800; font-size: 0.5rem; font-family: inherit;
+    }
+    .btn-green-sm {
+      display: block; width: 100%; padding: 6px; margin-top: 4px;
+      border: none; border-radius: 6px; background: #16a34a; color: #fff;
+      font-weight: 800; font-size: 0.5rem; font-family: inherit;
     }
     .tbl { width: 100%; font-size: 0.42rem; border-collapse: collapse; }
     .tbl th, .tbl td { padding: 2px; border-bottom: 1px solid #e2e8f0; text-align: center; }
     .btn-g {
       display: block; width: 100%; padding: 6px; margin-top: 4px;
-      border: none; border-radius: 6px; background: linear-gradient(180deg, var(--gold-l), var(--gold));
+      border: none; border-radius: 6px; background: #2563eb; color: #fff;
       font-weight: 800; font-size: 0.5rem; font-family: inherit;
     }
     .footer {
@@ -230,7 +248,7 @@
   <header class="top">
     <h1>JMFC 풋살 매니저 — 전체 프로세스</h1>
     <p>Figma Flow처럼 한눈에 보는 화면 흐름 (목업 · GAS 미연동)</p>
-    <span class="tag">flow v6.0 · STEP 01–13 · 가로 스크롤 →</span>
+    <span class="tag">flow v6.1 · STEP 01–13 · 파란 CTA · 평균 100점</span>
   </header>
 
   <div class="legend">
@@ -241,7 +259,7 @@
     <span>|</span>
     <span><b style="color:var(--coach-c)">■</b> 감독 C 뱃지</span>
     <span>|</span>
-    <span>팀 짤 때 Draft: <b>승률만</b> · 확정: <b>팀점수·승률</b></span>
+    <span>팀 짤 때 Draft: <b>승률만</b> · 확정: <b>평균 100점·승률</b></span>
   </div>
   <p class="scroll-hint">← 좌우로 스크롤하세요 →</p>
 
@@ -258,7 +276,7 @@
             <div class="chip" style="margin-bottom:4px">📅 2026-05-29</div>
             <div style="display:flex;gap:2px;margin-bottom:4px;font-size:0.42rem;font-weight:800">
               <span style="flex:1;padding:3px;background:#f1f5f9;border-radius:4px;text-align:center">2팀</span>
-              <span style="flex:1;padding:3px;background:#18181b;color:#fff;border-radius:4px;text-align:center">3팀</span>
+              <span style="flex:1;padding:3px;background:#2563eb;color:#fff;border-radius:4px;text-align:center">3팀</span>
               <span style="flex:1;padding:3px;background:#f1f5f9;border-radius:4px;text-align:center">4팀</span>
             </div>
             <div class="grid2">
@@ -339,14 +357,14 @@
           <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>확정</strong></div>
           <div class="phone-bd">
             <div style="font-weight:800;margin-bottom:4px">3팀 라인업</div>
-            <div class="pwr-meta">팀점수 Σ · 팀승률 Σ(승)÷Σ(승+패)</div>
-            <div style="font-size:0.45rem;color:#ef4444;font-weight:800">RED 704점 · 51%</div>
-            <div style="font-size:0.45rem;color:#3b82f6;font-weight:800">BLUE 752점 · 55%</div>
-            <div style="font-size:0.45rem;color:#ca8a04;font-weight:800;margin-bottom:6px">YLW 632점 · 48%</div>
-            <button class="btn-g">팀 구성 확정</button>
+            <div class="pwr-meta">평균 100점 · 팀승률 · 감독(C) 후 랜덤</div>
+            <div style="font-size:0.45rem;color:#ef4444;font-weight:800">RED 8명 · 평균 88 · 51%</div>
+            <div style="font-size:0.45rem;color:#3b82f6;font-weight:800">BLUE 8명 · 평균 94 · 55%</div>
+            <div style="font-size:0.45rem;color:#ca8a04;font-weight:800;margin-bottom:6px">YLW 8명 · 평균 79 · 48%</div>
+            <button class="btn-g">팀 구성 확정 →</button>
           </div>
         </div>
-        <p class="note">CCP/G 없음<br>팀 점수·승률</p>
+        <p class="note">평균 100점<br>감독 후 랜덤</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
@@ -430,7 +448,7 @@
                   <h4>여도영 득점!</h4>
                   <p style="font-size:0.45rem;color:var(--muted);text-align:center;margin-bottom:4px">도움 선택</p>
                   <div class="assist">
-                    <span>이영중</span><span>송환규</span><span style="background:#f1f5f9;border-color:#cbd5e1">없음</span>
+                    <span class="on">이영중</span><span>없음</span>
                   </div>
                 </div>
               </div>
@@ -475,11 +493,11 @@
               🏆 MVP · MP 4<br><strong>김기호 · 이장영</strong>
             </div>
             <div class="chip" style="margin-bottom:4px">팀 순위 · 팀별 스탯</div>
-            <button class="btn-g" style="background:#18181b;color:#fff;font-size:0.45rem">기록 수정 →</button>
+            <button class="btn-green-sm" style="font-size:0.45rem">✏️ 기록 수정</button>
+            <button class="btn-blue" style="font-size:0.45rem;margin-top:3px">💾 저장 &amp; NEW</button>
           </div>
         </div>
-        <p class="note">수상·팀순위·스탯<br>읽기 전용</p>
-        <button class="btn-g" style="margin-top:6px;font-size:0.45rem;background:#18181b;color:#fff">기록 수정 →</button>
+        <p class="note">녹색 수정<br>파란 저장</p>
       </div>
 
       <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
@@ -504,7 +522,7 @@
             </table>
             <div style="font-size:0.42rem;color:var(--muted);margin:4px 0">MVP 미리보기 갱신</div>
             <button style="width:100%;padding:3px;border:1px solid #e4e4e7;border-radius:4px;background:#fff;font-size:0.45rem;margin-bottom:2px">↩ 되돌리기</button>
-            <button class="btn-g" style="background:#18181b;color:#fff">저장 & NEW</button>
+            <button class="btn-blue">저장 &amp; NEW</button>
           </div>
         </div>
         <p class="note">팀 탭 · 숫자 input<br>15px+ · 44px 터치</p>
@@ -522,7 +540,7 @@
             <div style="font-size:1.2rem;margin:8px 0">✅</div>
             <div style="font-weight:800;margin-bottom:4px">저장할까요?</div>
             <div style="font-size:0.45rem;color:var(--muted);margin-bottom:6px">오늘 3경기 · 24명</div>
-            <button class="btn-g" style="background:#18181b;color:#fff">확인 · 저장</button>
+            <button class="btn-blue">확인 · 저장</button>
             <button style="width:100%;margin-top:3px;padding:4px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.48rem">취소</button>
           </div>
         </div>
@@ -533,9 +551,9 @@
 
   <footer class="footer">
     <strong>열기:</strong>
-    <a href="https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5">githack 링크 (v5)</a>
+    <a href="https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=6.1">githack 링크 (v6.1)</a>
     → <strong>Open the page</strong> 한 번 클릭 · <strong>12단계</strong> 좌우 스크롤.<br><br>
-    화면 상세 목업: <a href="jmfc-mockup.html?v=5">jmfc-mockup.html</a> (v5 · 라이트·기록수정)<br>
+    화면 상세 목업: <a href="jmfc-mockup.html?v=6.1">jmfc-mockup.html</a> (v6.1 · 파란 CTA · 평균 100점)<br>
     계획: <code>docs/HANDOFF-JMFC-MOCKUP.md</code>
   </footer>
 </body>
