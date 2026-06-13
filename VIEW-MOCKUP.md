@@ -1,14 +1,13 @@
 # JMFC 목업 — 여기만 누르세요
 
-## 1. 메인 목업 (v6.5)
+## 1. 메인 목업 (v6.6)
 
-**[▶ JMFC 화면 목업 (01–13)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=6.5)**
+**[▶ JMFC 화면 목업 (01–13)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=6.6)**
 
 **[▶ HTML 목록 허브](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/index.html)**
 
 1. 링크 클릭 → **「Open the page」** → 확인
 
-### v6.5
-- 결과 버튼 이모지 제거
-- 팀 순위 표: 글씨 확대 · RED/BLUE/YELLOW (TEAM 제거)
-- MVP: MP 4 버튼형 → 일반 텍스트
+### v6.6
+- 팀 순위 표 헤더 가로: 순위 · 경기 · 득 · 실 · 득실 · 승률 · 승점
+- 열 간격 정렬
