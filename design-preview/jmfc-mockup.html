@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v6.1</title>
+  <title>JMFC 풋살 매니저 목업 v6.2</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -14,10 +14,12 @@
       --cta: #2563eb; --cta-text: #fff;
       --green: #16a34a; --green-dark: #15803d;
       --stat-premium: #475569; --stat-premium-hi: #334155;
-      --red: #dc2626; --blue: #2563eb; --yellow: #ca8a04;
+      --red: #dc2626; --blue: #2563eb; --yellow: #facc15; --yellow-dark: #ca8a04;
+      --neon: #a3e635; --neon-dim: #84cc16;
       --coach-c: #a3e635;
       --role-pivo: #8b5cf6; --role-fixo: #3b82f6; --role-ala: #f59e0b; --role-all: #14b8a6;
       --font-player: 1.125rem; --font-btn: 0.9375rem;
+      --pcard-h: 76px;
       --touch-min: 48px; --input-h: 44px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -64,13 +66,31 @@
     .chip-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
     .chip { padding: 6px 10px; border-radius: 8px; background: #f4f4f5; border: 1.5px solid var(--border); font-size: 0.75rem; font-weight: 700; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .pcard { border-radius: 10px; border: 2px solid var(--role-fixo); padding: 8px; background: #fafafa; position: relative; }
+    .pcard {
+      border-radius: 10px; border: 2px solid var(--role-fixo); padding: 8px 6px;
+      background: #fafafa; position: relative;
+      min-height: var(--pcard-h); display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
     .pcard.pivo { border-color: var(--role-pivo); } .pcard.ala { border-color: var(--role-ala); } .pcard.all { border-color: var(--role-all); }
-    .pcard.selected { box-shadow: 0 0 0 3px rgba(37,99,235,0.25); background: #eff6ff; }
-    .pcard .name { font-weight: 800; font-size: 1rem; text-align: center; }
-    .pcard .role { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-top: 4px; }
-    .pcard .stats { text-align: center; font-size: 0.68rem; color: var(--blue); font-weight: 700; margin-top: 4px; }
-    .pcard.tap-pick { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.35); }
+    .pcard.selected {
+      border-color: #16a34a; background: linear-gradient(160deg, #f0fdf4 0%, #ecfdf5 100%);
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.28);
+    }
+    .pcard.selected::after {
+      content: '✓'; position: absolute; top: 5px; right: 5px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #16a34a; color: #fff; font-size: 0.62rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1; box-shadow: 0 2px 4px rgba(22,163,74,0.35);
+    }
+    .pcard:not(.selected) { /* default full opacity */ }
+    .grid2.attend .pcard:not(.selected) { opacity: 0.68; }
+    .pcard .name { font-weight: 800; font-size: 0.95rem; text-align: center; line-height: 1.2; }
+    .pcard .role { text-align: center; font-size: 0.68rem; font-weight: 700; color: var(--muted); margin-top: 3px; min-height: 1em; }
+    .pcard .stats { text-align: center; font-size: 0.65rem; color: var(--blue); font-weight: 700; margin-top: 2px; min-height: 1em; }
+    .pcard .stats:empty, .pcard .stats.empty { visibility: hidden; }
+    .pcard.tap-pick { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.35); opacity: 1; }
     .coach-slots { display: flex; gap: 6px; margin-bottom: 10px; }
     .coach-slot { flex: 1; min-height: 52px; border-radius: 10px; border: 2px dashed var(--border-strong); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: var(--muted); padding: 4px; }
     .coach-slot.filled-red { border-style: solid; border-color: var(--red); background: #fef2f2; color: var(--red); }
@@ -86,9 +106,15 @@
     .live-team { padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); margin-bottom: 6px; font-size: 0.72rem; line-height: 1.45; background: #fafafa; }
     .live-team b { font-size: 0.78rem; }
     .team-stat-card { padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 8px; background: #fafafa; }
+    .team-stat-card.red { border-left: 4px solid var(--red); }
+    .team-stat-card.blue { border-left: 4px solid var(--blue); }
+    .team-stat-card.yellow { border-left: 4px solid var(--yellow); background: linear-gradient(90deg, #fefce8 0%, #fafafa 28%); }
     .team-stat-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .team-stat-card .head h4 { font-size: 0.85rem; font-weight: 900; }
-    .team-stat-card .head .val { font-size: 1rem; font-weight: 900; color: var(--primary); }
+    .team-stat-card .head .val { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.02em; }
+    .team-stat-card .head .val-red { color: var(--red); }
+    .team-stat-card .head .val-blue { color: var(--blue); }
+    .team-stat-card .head .val-yellow { color: var(--yellow-dark); }
     .team-stat-card .sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
     .team-stat-card .names { font-size: 0.7rem; color: var(--muted); line-height: 1.45; margin-top: 6px; }
     .formula-note { font-size: 0.62rem; color: var(--muted); line-height: 1.45; margin: 8px 0; padding: 8px; border-radius: 8px; background: #f4f4f5; }
@@ -106,13 +132,39 @@
     .tabs { display: flex; justify-content: center; margin-bottom: 10px; border-bottom: 1.5px solid var(--border); }
     .tabs span { padding: 10px 6px; font-size: 0.72rem; font-weight: 800; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1.5px; }
     .tabs span.on { color: var(--text); border-bottom-color: var(--primary); }
-    .lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .lineup-col h3 { font-size: 0.78rem; font-weight: 900; text-align: center; margin-bottom: 6px; }
-    .prow { display: flex; gap: 4px; margin-bottom: 5px; }
-    .prow button { border: none; font-family: inherit; border-radius: 8px; }
-    .prow .name { flex: 1; text-align: left; padding: 10px; font-size: var(--font-player); font-weight: 700; background: #fafafa; border: 1.5px solid var(--border); min-height: var(--input-h); }
-    .prow .name.tap { border-color: var(--blue); background: #eff6ff; }
-    .prow .swap { width: 34px; background: #71717a; color: #fff; }
+    .lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .lineup-col {
+      border-radius: 14px; overflow: hidden;
+      border: 1.5px solid var(--border); background: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .lineup-col .team-head {
+      padding: 10px 8px; text-align: center; font-family: Cinzel, Georgia, serif;
+      font-size: 0.95rem; font-weight: 900; letter-spacing: 0.12em; color: #fff;
+    }
+    .lineup-col.team-red .team-head { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+    .lineup-col.team-blue .team-head { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+    .lineup-col.team-yellow .team-head { background: linear-gradient(135deg, #eab308, #facc15); color: #422006; }
+    .lineup-col .roster { padding: 8px 6px 10px; }
+    .prow { display: flex; gap: 4px; margin-bottom: 6px; align-items: stretch; }
+    .prow:last-child { margin-bottom: 0; }
+    .prow button { border: none; font-family: inherit; border-radius: 10px; }
+    .prow .name {
+      flex: 1; text-align: left; padding: 11px 10px;
+      font-size: 1.05rem; font-weight: 900; letter-spacing: -0.01em;
+      background: #f8fafc; border: 1.5px solid #e4e4e7;
+      min-height: 46px; display: flex; align-items: center;
+    }
+    .lineup-col.team-red .prow .name { border-left: 3px solid var(--red); }
+    .lineup-col.team-blue .prow .name { border-left: 3px solid var(--blue); }
+    .lineup-col.team-yellow .prow .name { border-left: 3px solid var(--yellow); }
+    .prow .name.tap { background: #eff6ff; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+    .prow .name .cap { font-size: 0.62rem; font-weight: 800; margin-right: 4px; background: #18181b; padding: 2px 5px; border-radius: 4px; color: var(--neon); }
+    .prow .swap { width: 36px; min-height: 46px; background: #52525b; color: #fff; font-size: 0.85rem; flex-shrink: 0; }
+    .lineup-share-hint {
+      font-size: 0.68rem; color: var(--muted); text-align: center; margin: 8px 0 10px;
+      padding: 6px; border-radius: 8px; background: #f4f4f5; font-weight: 700;
+    }
     .act2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0 0; }
     .act2 button { padding: 12px; min-height: var(--touch-min); border: none; border-radius: 12px; font-weight: 800; font-size: var(--font-btn); font-family: inherit; color: #fff; }
     .act2 .u { background: #71717a; } .act2 .e { background: var(--primary); }
@@ -126,9 +178,9 @@
     .modal-btns .no { background: #f4f4f5; color: var(--muted); border: 1.5px solid var(--border); }
     .modal-btns .danger { background: #991b1b; color: #fff; grid-column: 1 / -1; }
     .modal-btns .goal, .modal-btns .def, .modal-btns .save {
-      background: linear-gradient(165deg, var(--stat-premium) 0%, var(--stat-premium-hi) 100%);
-      color: #f8fafc; letter-spacing: 0.02em;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      background: #18181b; color: var(--neon);
+      letter-spacing: 0.06em; font-weight: 900;
+      box-shadow: inset 0 1px 0 rgba(163,230,53,0.18), 0 2px 8px rgba(0,0,0,0.25);
     }
     .modal-btns .og { background: #dc2626; color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.15); }
     .modal-btns .cancel { grid-column: 1 / -1; background: #f4f4f5; color: var(--muted); border: 1.5px solid var(--border); min-height: 44px; font-size: var(--font-btn); }
@@ -162,9 +214,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v6.1</h1>
-    <p>팀 8명 · 평균 100점 · 파란 CTA · 녹색 수정 · 도움 선택 표시</p>
-    <span class="ver">v6.1 · ?v=6.1</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v6.2</h1>
+    <p>팀파워 · 형광 기록 · 통일 카드 · 스샷용 라인업 · 참석 선택 ✓</p>
+    <span class="ver">v6.2 · ?v=6.2</span>
   </div>
 
   <div class="gallery">
@@ -185,13 +237,13 @@
             <button type="button">4팀</button>
           </div>
           <div class="chip-row"><span class="chip">참석 24명</span><span class="chip">전체 선택</span><span class="chip">전체 해제</span></div>
-          <div class="grid2">
-            <div class="pcard pivo selected"><div class="name">김기호</div><div class="role">피보</div></div>
-            <div class="pcard fixo selected"><div class="name">이영중</div><div class="role">픽소</div></div>
-            <div class="pcard ala selected"><div class="name">여도영</div><div class="role">아라</div></div>
-            <div class="pcard all selected"><div class="name">이장영</div><div class="role">올라운드</div></div>
-            <div class="pcard fixo selected"><div class="name">이윤수</div><div class="role">픽소</div></div>
-            <div class="pcard ala"><div class="name">신윤호</div><div class="role">아라</div></div>
+          <div class="grid2 attend">
+            <div class="pcard pivo selected"><div class="name">김기호</div><div class="role">피보</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard fixo selected"><div class="name">이영중</div><div class="role">픽소</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard ala selected"><div class="name">여도영</div><div class="role">아라</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard all selected"><div class="name">이장영</div><div class="role">올라운드</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard fixo selected"><div class="name">이윤수</div><div class="role">픽소</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard ala"><div class="name">신윤호</div><div class="role">아라</div><div class="stats empty">&nbsp;</div></div>
           </div>
           <button type="button" class="btn-cta">참석 완료 → Draft</button>
           <div class="nav-row"><button type="button" disabled>← 이전</button><button type="button" class="next">다음 →</button></div>
@@ -215,10 +267,10 @@
           </div>
           <p style="font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:6px">참석 선수 전원</p>
           <div class="pool-scroll"><div class="grid2">
-            <div class="pcard pivo tap-pick"><div class="name">김기호</div><div class="role">피보</div></div>
-            <div class="pcard fixo"><div class="name">이영중</div><div class="role">픽소</div></div>
-            <div class="pcard ala"><div class="name">여도영</div><div class="role">아라</div></div>
-            <div class="pcard all"><div class="name">이장영</div><div class="role">올라운드</div></div>
+            <div class="pcard pivo tap-pick"><div class="name">김기호</div><div class="role">피보</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard fixo"><div class="name">이영중</div><div class="role">픽소</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard ala"><div class="name">여도영</div><div class="role">아라</div><div class="stats empty">&nbsp;</div></div>
+            <div class="pcard all"><div class="name">이장영</div><div class="role">올라운드</div><div class="stats empty">&nbsp;</div></div>
           </div></div>
           <button type="button" class="btn-cta" style="opacity:0.45">드래프트 시작 (3명 필요)</button>
           <div class="nav-row"><button type="button">← 이전</button><button type="button" class="next">다음 →</button></div>
@@ -260,20 +312,18 @@
         <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>확정</span></div></div>
         <div class="body scroll">
           <h2>3팀 라인업</h2>
-          <p class="status-line" style="color:#16a34a">미배정 0명</p>
-          <p class="formula-note">평균 점수 = Σ(선수 점수)÷인원 (100점 만점) · 팀 승률 = Σ(승)÷Σ(승+패) · 선수 순서: 감독(C) 후 랜덤</p>
-          <div class="team-stat-card">
-            <div class="head"><h4 class="t-red">RED 8명</h4><span class="val">평균 88</span></div>
+          <div class="team-stat-card red">
+            <div class="head"><h4 class="t-red">RED 8명</h4><span class="val val-red">팀파워 88</span></div>
             <div class="sub">팀 승률 <b style="color:var(--text)">51.2%</b></div>
             <div class="names">김기호(C) · 송환규 · 여도영 · 이호섭 · 이영중 · 정세진 · …</div>
           </div>
-          <div class="team-stat-card">
-            <div class="head"><h4 class="t-blue">BLUE 8명</h4><span class="val">평균 94</span></div>
+          <div class="team-stat-card blue">
+            <div class="head"><h4 class="t-blue">BLUE 8명</h4><span class="val val-blue">팀파워 94</span></div>
             <div class="sub">팀 승률 <b style="color:var(--text)">54.8%</b></div>
             <div class="names">이윤수(C) · 김상덕 · 배철호 · 정세진 · 송환규 · …</div>
           </div>
-          <div class="team-stat-card">
-            <div class="head"><h4 class="t-yellow">YELLOW 8명</h4><span class="val">평균 79</span></div>
+          <div class="team-stat-card yellow">
+            <div class="head"><h4 class="t-yellow">YELLOW 8명</h4><span class="val val-yellow">팀파워 79</span></div>
             <div class="sub">팀 승률 <b style="color:var(--text)">47.6%</b></div>
             <div class="names">신윤호(C) · 양승현 · 이장영 · 장용호 · …</div>
           </div>
@@ -333,14 +383,25 @@
             <button type="button" class="btn-sm blue">시작</button>
           </div>
           <div class="tabs"><span class="on">라인업</span><span>팀 순위</span><span>개인기록</span></div>
+          <p class="lineup-share-hint">📸 팀원 공유용 · 이름 탭 → 기록</p>
           <div class="lineup-grid">
-            <div class="lineup-col"><h3 class="t-red">RED</h3>
-              <div class="prow"><button type="button" class="name tap">여도영</button><button type="button" class="swap">🔄</button></div>
-              <div class="prow"><button type="button" class="name">이영중</button><button type="button" class="swap">🔄</button></div>
+            <div class="lineup-col team-red">
+              <div class="team-head">RED</div>
+              <div class="roster">
+                <div class="prow"><button type="button" class="name tap"><span class="cap">C</span>김기호</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name tap">여도영</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name">이영중</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name">송환규</button><button type="button" class="swap">🔄</button></div>
+              </div>
             </div>
-            <div class="lineup-col"><h3 class="t-blue">BLUE</h3>
-              <div class="prow"><button type="button" class="name">이윤수</button><button type="button" class="swap">🔄</button></div>
-              <div class="prow"><button type="button" class="name">배철호</button><button type="button" class="swap">🔄</button></div>
+            <div class="lineup-col team-blue">
+              <div class="team-head">BLUE</div>
+              <div class="roster">
+                <div class="prow"><button type="button" class="name"><span class="cap">C</span>이윤수</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name">배철호</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name">김상덕</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name">정세진</button><button type="button" class="swap">🔄</button></div>
+              </div>
             </div>
           </div>
           <div class="act2"><button type="button" class="u">스탯 취소</button><button type="button" class="e">현재 경기 종료</button></div>
