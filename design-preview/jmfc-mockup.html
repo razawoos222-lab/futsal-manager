@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v6.4</title>
+  <title>JMFC 풋살 매니저 목업 v6.5</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -228,8 +228,9 @@
     table.data { width: 100%; font-size: 0.68rem; border-collapse: collapse; }
     table.data th, table.data td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--border); }
     table.data th { color: var(--muted); font-weight: 800; }
-    table.data.rank { table-layout: fixed; font-size: 0.58rem; }
-    table.data.rank th, table.data.rank td { padding: 5px 1px; white-space: nowrap; font-size: 0.56rem; }
+    table.data.rank { font-size: 0.68rem; }
+    table.data.rank th, table.data.rank td { padding: 6px 3px; font-size: 0.68rem; }
+    table.data.rank .col-team { font-weight: 900; white-space: nowrap; padding-right: 6px; }
     .result-hero {
       padding: 16px 14px; border-radius: 16px; margin-bottom: 12px;
       background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
@@ -243,10 +244,9 @@
       text-align: center; font-size: 1.2rem; font-weight: 900; color: #fff;
       margin-top: 10px; letter-spacing: -0.02em;
     }
-    .result-hero .mp-tag {
-      display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 999px;
-      background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.45);
-      color: var(--gold-light); font-size: 0.72rem; font-weight: 800;
+    .result-hero .mp-plain {
+      text-align: center; margin-top: 8px;
+      color: var(--gold-light); font-size: 0.82rem; font-weight: 800;
     }
     .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
     .award {
@@ -276,9 +276,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v6.4</h1>
-    <p>TEAM RED · TEAM BLUE · TEAM YELLOW · 모달 좌우 배치</p>
-    <span class="ver">v6.4 · ?v=6.4</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v6.5</h1>
+    <p>결과 표 가독 · MVP MP4 · 버튼 이모지 제거</p>
+    <span class="ver">v6.5 · ?v=6.5</span>
   </div>
 
   <div class="gallery">
@@ -549,7 +549,7 @@
           <div class="result-hero">
             <div class="eyebrow">SESSION MVP</div>
             <div class="mvp-names">여도영 · 이장영</div>
-            <div style="text-align:center"><span class="mp-tag">MP 4</span></div>
+            <div class="mp-plain">MP 4</div>
           </div>
           <div class="award-g">
             <div class="award"><b>TOP SCORER</b>여도영 2</div>
@@ -561,9 +561,9 @@
             <table class="data rank">
               <thead><tr><th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th></tr></thead>
               <tbody>
-                <tr><td>1</td><td class="t-blue">TEAM BLUE</td><td>3</td><td>2</td><td>1</td><td>0</td><td>8</td><td>4</td><td>+4</td><td>83%</td><td>7</td></tr>
-                <tr><td>2</td><td class="t-red">TEAM RED</td><td>3</td><td>1</td><td>0</td><td>2</td><td>5</td><td>7</td><td>-2</td><td>33%</td><td>3</td></tr>
-                <tr><td>3</td><td class="t-yellow">TEAM YELLOW</td><td>2</td><td>1</td><td>0</td><td>1</td><td>4</td><td>6</td><td>-2</td><td>50%</td><td>3</td></tr>
+                <tr><td>1</td><td class="t-blue col-team">BLUE</td><td>3</td><td>2</td><td>1</td><td>0</td><td>8</td><td>4</td><td>+4</td><td>83%</td><td>7</td></tr>
+                <tr><td>2</td><td class="t-red col-team">RED</td><td>3</td><td>1</td><td>0</td><td>2</td><td>5</td><td>7</td><td>-2</td><td>33%</td><td>3</td></tr>
+                <tr><td>3</td><td class="t-yellow col-team">YELLOW</td><td>2</td><td>1</td><td>0</td><td>1</td><td>4</td><td>6</td><td>-2</td><td>50%</td><td>3</td></tr>
               </tbody>
             </table>
           </div>
@@ -581,9 +581,9 @@
             </table>
           </div>
           <div class="result-btns">
-            <button type="button" class="btn-green">✏️ 기록 수정하기</button>
-            <button type="button" class="btn-cta" style="margin-top:0">💾 기록 저장 &amp; NEW 세션</button>
-            <button type="button" class="btn-danger" style="margin-top:0">🗑️ 기록 리셋 &amp; NEW 세션</button>
+            <button type="button" class="btn-green">기록 수정하기</button>
+            <button type="button" class="btn-cta" style="margin-top:0">기록 저장 &amp; NEW 세션</button>
+            <button type="button" class="btn-danger" style="margin-top:0">기록 리셋 &amp; NEW 세션</button>
           </div>
           <div class="nav-row"><button type="button">← 이전</button><button type="button" class="next">다음 →</button></div>
         </div>
