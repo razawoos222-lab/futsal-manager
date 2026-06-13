@@ -1,21 +1,36 @@
 # 디자인 시안 미리보기 (HTML)
 
-기능은 현재 `live/index.html` + `live/Code.gs`와 동일하게 유지하고, **UI만** 바꿀 때 참고용 목업입니다.
+## ▶ JMFC 목업 — 한 번에 보기 (제일 쉬움)
 
-## 보는 방법
+**[JMFC 목업 열기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html)**
 
-1. PC에서 이 폴더의 **`index.html`** 을 더블클릭하거나, 브라우저로 드래그합니다.
-2. 상단 탭으로 **A · 라이트 스포츠 / B · 다크 프리미엄 / C · 미니멀 원핸드** 를 전환합니다.
-3. 각 탭마다 **경기 선택 · 경기 진행 · 오늘의 결과** 3개 화면이 나란히 표시됩니다.
+1. 링크 클릭 → 2. **「Open the page」** 한 번 클릭 → 끝.
 
-## 시안 요약
+저장소 루트 **[VIEW-MOCKUP.md](../VIEW-MOCKUP.md)** 에도 같은 링크가 있습니다.
 
-| 시안 | 느낌 | 특징 |
-|------|------|------|
-| **A** | 밝은 스포츠 앱 | 흰 카드, 팀 색 왼쪽 띠, 안드로이드 가독성 |
-| **B** | 다크 프리미엄 | 현재 앱 계열, 스코어·MVP 강조 (main 개선 방향) |
-| **C** | 미니멀 원핸드 | 하단 고정 버튼, 리스트형 팀 선택 |
+---
 
-## 다음 단계
+| 파일 | 설명 |
+|------|------|
+| **`jmfc-mockup.html`** | JMFC 로고(**EST. 206**) · 6화면 다크 프리미엄 목업 (로고 HTML 내장) |
+| `index.html` | 위 목업으로 자동 이동 |
+| `assets/jmfc-logo.png` | 로고 PNG (헤더·아이콘) |
+| `assets/jmfc-logo-hero.png` | 로고 PNG (카본 배경 포함) |
 
-선호 시안을 정하면 해당 스타일로 `live/index.html` 전체 스킨 작업을 진행합니다. `Code.gs`는 그대로 둡니다.
+`live/Code.gs`는 변경하지 않습니다. 목업 확정 후 `live/index.html` 스킨만 적용합니다.
+
+## A/B/C 비교 (`index.html` 옆 `../design-preview`의 상위 `index.html` 아님)
+
+`design-preview` 폴더의 **`index.html`(A/B/C 탭)** 은 별도 파일이 없고, 저장소 루트가 아닌 **이 폴더에는 `jmfc-mockup.html`만 단일 목업**입니다. A/B/C는 예전 `index.html` 탭 시안 — GitHub에서 `design-preview/index.html`이 JMFC로 리다이렉트됩니다.
+
+A/B/C 3탭 시안은 Git 히스토리의 `design-preview/index.html` (구버전) 또는 브랜치 이전 커밋을 참고하세요. 필요 시 `design-preview/abc-index.html`로 복구할 수 있습니다.
+
+---
+
+## GitHub Pages (선택)
+
+`main`에 머지 후 저장소 **Settings → Pages → Branch: gh-pages / (root)** 로 두면:
+
+`https://razawoos222-lab.github.io/futsal-manager/jmfc-mockup.html`
+
+워크플로: `.github/workflows/publish-mockup-pages.yml`

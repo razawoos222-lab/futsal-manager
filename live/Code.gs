@@ -21,6 +21,7 @@ const VALID_SCREENS = [
   'screen-match-select',
   'screen-match-controller',
   'screen-session-summary',
+  'screen-record-edit',
   'screen-final-results'
 ];
 
@@ -1363,8 +1364,22 @@ function finishSessionToSummary() {
       s.teams = JSON.parse(JSON.stringify(s.originalTeams));
     }
 
+    s.sessionStats.editSnapshot = JSON.parse(JSON.stringify(s.sessionStats.playerStats || {}));
+
     s.currentScreen = 'screen-session-summary';
     saveAppState(s);
+    return s;
+  });
+}
+
+// 기록 수정 화면: 세션 종료 시점 스냅샷으로 되돌리기
+function restoreSessionStatsSnapshot() {
+  return safeExecute(() => {
+    const s = getAppState();
+    if (s.sessionStats && s.sessionStats.editSnapshot) {
+      s.sessionStats.playerStats = JSON.parse(JSON.stringify(s.sessionStats.editSnapshot));
+      saveAppState(s);
+    }
     return s;
   });
 }

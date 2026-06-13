@@ -115,14 +115,15 @@
             background-color: var(--color-card-bg); /* 다크 테마에 맞게 변경 */
         }
         .edit-table input[type="number"] {
-            width: 80px; /* 입력 칸 넓힘 */
-            padding: 0.5rem; /* 패딩 키움 */
-            background-color: var(--color-primary-bg); /* 다크 테마에 맞게 변경 */
-            border: 1px solid #4B5563; /* 다크 테마에 맞게 변경 */
+            width: 80px;
+            min-height: 44px;
+            padding: 0.5rem;
+            background-color: var(--color-primary-bg);
+            border: 1px solid #4B5563;
             border-radius: 0.25rem;
-            color: var(--color-text-main); /* 다크 테마에 맞게 변경 */
+            color: var(--color-text-main);
             text-align: center;
-            font-size: 1.25rem; /* 폰트 키움 */
+            font-size: 1.25rem;
         }
         /* 특정 텍스트 색상 조정 (다크 테마에 맞춰) */
         .text-gray-700 { color: var(--color-text-secondary); }
@@ -262,8 +263,11 @@
     <!-- 4. 스코어 대시보드 화면 -->
     <div id="screen-match-controller" class="hidden w-full max-w-5xl mx-auto text-center"></div>
    
-    <!-- 5. 세션 요약 및 기록 수정 화면 (신규) -->
+    <!-- 5. 오늘의 경기 결과 (읽기 전용) -->
     <div id="screen-session-summary" class="hidden w-full max-w-5xl mx-auto text-center space-y-8"></div>
+
+    <!-- 5-B. 기록 수정 (편집) -->
+    <div id="screen-record-edit" class="hidden w-full max-w-5xl mx-auto text-center space-y-8"></div>
 
 
     <!-- 6. 최종 결과 화면 (단순화) -->
@@ -546,7 +550,7 @@ function recoverTimerIfNeeded() {
     // --- UI 렌더링 ---
     const VALID_SCREENS = [
         'screen-attendance', 'screen-team-allocation', 'screen-match-select',
-        'screen-match-controller', 'screen-session-summary', 'screen-final-results'
+        'screen-match-controller', 'screen-session-summary', 'screen-record-edit', 'screen-final-results'
     ];
 
     function renderUI() {
@@ -575,7 +579,8 @@ function recoverTimerIfNeeded() {
                     ? 'screen-match-controller'
                     : 'screen-team-allocation',
                 'screen-match-controller': 'screen-match-select',
-                'screen-session-summary': 'screen-match-select'
+                'screen-session-summary': 'screen-match-select',
+                'screen-record-edit': 'screen-session-summary'
             };
             backBtn.dataset.targetScreen = screenFlow[currentScreen] || 'screen-attendance';
         }
@@ -586,6 +591,7 @@ function recoverTimerIfNeeded() {
             'screen-match-select': renderMatchSelectScreen,
             'screen-match-controller': renderMatchControllerScreen,
             'screen-session-summary': renderSessionSummaryScreen,
+            'screen-record-edit': renderRecordEditScreen,
             'screen-final-results': renderFinalResultsScreen
         };
         if (renderMap[currentScreen]) renderMap[currentScreen]();
@@ -1227,13 +1233,98 @@ function renderSessionSummaryScreen() {
     </div>
   `;
 
-  // --- 최종 렌더 ---
+  // --- 최종 렌더 (읽기 전용) ---
   container.innerHTML = `
     <h1 class="text-7xl font-black mb-8 text-gray-100">오늘의 경기 결과</h1>
     ${awardsHtml}
     ${teamRankingsHtml}
     ${teamStatsHtml}
     <div class="flex flex-col sm:flex-row gap-4 mt-8">
+      <button data-action="go-to-record-edit" class="btn btn-primary w-full text-3xl">✏️ 기록 수정하기</button>
+    </div>
+  `;
+}
+
+let recordEditActiveTeam = null;
+
+function renderRecordEditScreen() {
+  const container = document.getElementById('screen-record-edit');
+  const { sessionStats } = localState;
+  const playerStats = sessionStats.playerStats || {};
+  const teamNames = getTeamNamesForMode(localState.teamMode).filter(t => localState.teams[t]);
+  if (!recordEditActiveTeam || !teamNames.includes(recordEditActiveTeam)) {
+    recordEditActiveTeam = teamNames[0] || 'RED';
+  }
+
+  const calcMP = (s) => ((s.goal || 0) * 2) + ((s.assist || 0) * 2) + ((s.defense || 0) * 1) + ((s.save || 0) * 1);
+
+  function getTopMvpPreview() {
+    let maxMp = -1;
+    let names = [];
+    Object.keys(playerStats).forEach(name => {
+      const mp = calcMP(playerStats[name] || {});
+      if (mp > maxMp) {
+        maxMp = mp;
+        names = [name];
+      } else if (mp === maxMp && mp > 0) {
+        names.push(name);
+      }
+    });
+    if (maxMp <= 0) return '—';
+    return `${names.slice(0, 3).join(' · ')} (MP ${maxMp})`;
+  }
+
+  const teamTabsHtml = teamNames.map(tn => {
+    const active = tn === recordEditActiveTeam;
+    const colorClass = teamColorClasses[tn] || '';
+    return `<button type="button" data-action="record-edit-team-tab" data-team-name="${tn}" class="btn ${active ? 'btn-primary' : 'btn-secondary'} text-2xl flex-1 min-h-[48px] ${colorClass}">${tn}</button>`;
+  }).join('');
+
+  const teamData = localState.teams[recordEditActiveTeam];
+  const playersInTeam = teamData
+    ? [...new Set([...teamData.players, teamData.goalkeeper].filter(Boolean))]
+  : [];
+
+  const statRowsHtml = playersInTeam.map(pName => {
+    const stats = playerStats[pName] || { goal: 0, assist: 0, defense: 0, save: 0 };
+    const mp = calcMP(stats);
+    return `
+      <tr>
+        <td class="font-bold text-gray-100 text-left whitespace-nowrap">${pName}</td>
+        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="goal" value="${stats.goal || 0}" /></td>
+        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="assist" value="${stats.assist || 0}" /></td>
+        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="defense" value="${stats.defense || 0}" /></td>
+        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="save" value="${stats.save || 0}" /></td>
+        <td class="font-bold text-blue-400 record-mp-cell" data-player-name="${pName}">${mp}</td>
+      </tr>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <h1 class="text-7xl font-black mb-6 text-gray-100">기록 수정</h1>
+    <div class="card mb-6 text-left">
+      <p class="text-3xl text-yellow-200 leading-snug">
+        득점 수를 바꿔도 <strong>팀 승패·득실</strong>은 경기 기록 기준이라 자동 반영되지 않을 수 있습니다.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-3 mb-6">${teamTabsHtml}</div>
+    <div class="card mb-6 overflow-x-auto text-left">
+      <h2 class="text-5xl font-black mb-4 ${teamColorClasses[recordEditActiveTeam]}">${recordEditActiveTeam} 팀</h2>
+      <table class="w-full text-4xl edit-table">
+        <thead>
+          <tr>
+            <th class="text-left">선수명</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th>
+          </tr>
+        </thead>
+        <tbody>${statRowsHtml || '<tr><td colspan="6">선수 없음</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="card mb-6 text-left">
+      <p class="text-3xl text-gray-300"><strong>MVP 미리보기:</strong> ${getTopMvpPreview()}</p>
+    </div>
+    <div class="flex flex-col gap-4">
+      <button data-action="restore-session-stats-snapshot" class="btn btn-secondary w-full text-3xl">↩ 세션 종료 시점으로 되돌리기</button>
+      <button data-action="back-to-session-summary" class="btn btn-secondary w-full text-3xl">수정 완료 → 결과로</button>
       <button data-action="save-and-start-new-session" class="btn btn-primary w-full text-3xl">기록 저장 & NEW 세션시작</button>
       <button data-action="discard-and-start-new-session" class="btn btn-secondary w-full text-3xl">기록 리셋 & NEW 세션시작</button>
     </div>
@@ -1268,6 +1359,18 @@ function renderSessionSummaryScreen() {
         }
     });
 
+
+    document.body.addEventListener('change', async (e) => {
+        const input = e.target;
+        if (!input.classList || !input.classList.contains('record-stat-input')) return;
+        const { playerName, statType } = input.dataset;
+        if (!playerName || !statType) return;
+        await serverCall('updateSessionPlayerStats', playerName, statType, input.value);
+        const stats = localState.sessionStats?.playerStats?.[playerName] || {};
+        const mp = ((stats.goal || 0) * 2) + ((stats.assist || 0) * 2) + ((stats.defense || 0) * 1) + ((stats.save || 0) * 1);
+        const mpCell = document.querySelector(`.record-mp-cell[data-player-name="${playerName}"]`);
+        if (mpCell) mpCell.textContent = mp;
+    });
 
     document.body.addEventListener('click', async (e) => {
         const target = e.target.closest('[data-action]');
@@ -1540,6 +1643,21 @@ function renderSessionSummaryScreen() {
                 document.getElementById('confirm-session-end-modal').classList.add('hidden');
                 if (isConfirmed === 'true') {
                     serverCall('finishSessionToSummary');
+                }
+                break;
+            case 'go-to-record-edit':
+                await serverCall('changeScreen', 'screen-record-edit');
+                break;
+            case 'back-to-session-summary':
+                await serverCall('changeScreen', 'screen-session-summary');
+                break;
+            case 'record-edit-team-tab':
+                recordEditActiveTeam = teamName;
+                renderRecordEditScreen();
+                break;
+            case 'restore-session-stats-snapshot':
+                if (window.confirm('세션 종료 시점의 스탯으로 되돌리시겠습니까?')) {
+                    await serverCall('restoreSessionStatsSnapshot');
                 }
                 break;
             case 'save-and-start-new-session':
