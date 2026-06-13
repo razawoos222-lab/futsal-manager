@@ -3,48 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>풋살 매니저 — 디자인 미리보기</title>
+  <title>JMFC 풋살 매니저 — HTML 목업 모음</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg: #0c1222;
+      --card: #151d2e;
+      --border: rgba(255,255,255,0.1);
+      --gold: #f5e6b8;
+      --muted: #94a3b8;
+      --text: #f1f5f9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', 'Noto Sans KR', sans-serif;
-      background: #0c1222;
-      color: #f1f5f9;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-      text-align: center;
+      padding: 2rem 1rem 3rem;
     }
-    .box { max-width: 22rem; }
-    h1 { font-size: 1.25rem; margin-bottom: 1.5rem; color: #f5e6b8; }
-    a {
-      display: block;
-      margin: 0.75rem 0;
-      padding: 1rem 1.25rem;
-      border-radius: 12px;
-      font-weight: 800;
-      text-decoration: none;
-      color: #0c1222;
-      background: linear-gradient(180deg, #f5e6b8, #c9a227);
+    .wrap { max-width: 720px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2rem; }
+    header img { width: 72px; height: 72px; margin-bottom: 0.75rem; }
+    h1 { font-size: 1.35rem; color: var(--gold); letter-spacing: 0.06em; margin-bottom: 0.35rem; }
+    .ver {
+      display: inline-block; margin-top: 0.5rem; padding: 0.25rem 0.65rem;
+      background: #c9a227; color: #0c1222; font-size: 0.72rem; font-weight: 900; border-radius: 6px;
     }
-    a.secondary {
-      background: #151d2e;
-      color: #94a3b8;
-      border: 1px solid rgba(255,255,255,0.1);
-      font-weight: 600;
+    .sub { font-size: 0.88rem; color: var(--muted); line-height: 1.6; margin-top: 0.5rem; }
+    .hint {
+      font-size: 0.78rem; color: #64748b; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.5rem; line-height: 1.55;
     }
-    p { font-size: 0.8rem; color: #64748b; margin-top: 1.25rem; line-height: 1.5; }
+    .hint strong { color: var(--gold); }
+    section { margin-bottom: 1.75rem; }
+    section h2 {
+      font-size: 0.72rem; font-weight: 800; color: var(--muted);
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.65rem;
+    }
+    .card {
+      display: block; text-decoration: none; color: inherit;
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 1.1rem 1.25rem; margin-bottom: 0.65rem;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .card:hover { border-color: rgba(201,162,39,0.45); transform: translateY(-1px); }
+    .card.primary { border-color: rgba(201,162,39,0.35); background: linear-gradient(135deg, #1a2438 0%, #151d2e 100%); }
+    .card h3 { font-size: 1rem; font-weight: 900; color: var(--gold); margin-bottom: 0.35rem; }
+    .card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+    .card .tag {
+      display: inline-block; margin-top: 0.5rem; font-size: 0.68rem; font-weight: 700;
+      color: #a3e635; background: rgba(163,230,53,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;
+    }
+    .changelog {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--muted); line-height: 1.65;
+    }
+    .changelog ul { margin: 0.5rem 0 0 1.1rem; }
+    .changelog li { margin-bottom: 0.25rem; }
+    .changelog code { color: #fbbf24; font-size: 0.75rem; }
+    footer { text-align: center; margin-top: 2rem; font-size: 0.75rem; color: #64748b; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>디자인 미리보기</h1>
-    <a href="jmfc-logo-preview.html">JMFC 로고 미리보기</a>
-    <a href="jmfc-process.html?v=5.7">전체 프로세스 (Flow)</a>
-    <a href="jmfc-mockup.html?v=5.7">JMFC 화면 목업 (v5.7)</a>
-    <a class="secondary" href="abc-tabs-preview.html">A / B / C 탭 비교</a>
-    <p>GitHub에서 바로 보려면 저장소 루트 <strong>VIEW-MOCKUP.md</strong> 링크를 사용하세요.</p>
+  <div class="wrap">
+    <header>
+      <img src="assets/jmfc-logo.png" alt="JMFC" />
+      <h1>JMFC FOOTBALL<br>HTML 목업 모음</h1>
+      <span class="ver">최신 v5.7</span>
+      <p class="sub">지금까지 만든 디자인 미리보기 전부 · GAS 미연동 · 브라우저에서 바로 열기</p>
+    </header>
+
+    <p class="hint">
+      GitHub 링크로 열 때 중간에 <strong>「Open the page」</strong>가 나오면 한 번 더 누르세요.<br>
+      로컬에서는 이 페이지(<code>index.html</code>)에서 아래 카드를 누르면 됩니다.
+    </p>
+
+    <section>
+      <h2>메인 — 꼭 볼 것</h2>
+      <a class="card primary" href="jmfc-mockup.html?v=5.7">
+        <h3>📱 화면 목업 전체 (01–12)</h3>
+        <p>참석 → Draft(감독·스네이크) → 팀 확정(CCP/G·100점) → 경기 → 결과 · 기록 수정 · 저장<br>모바일 프레임 12개 갤러리</p>
+        <span class="tag">jmfc-mockup.html</span>
+      </a>
+      <a class="card primary" href="jmfc-process.html?v=5.7">
+        <h3>↔️ 전체 프로세스 Flow (STEP 01–12)</h3>
+        <p>Figma Flow처럼 가로 스크롤 · 12단계 한눈에 · 좌우로 밀어서 확인</p>
+        <span class="tag">jmfc-process.html</span>
+      </a>
+    </section>
+
+    <section>
+      <h2>에셋 · 기타</h2>
+      <a class="card" href="jmfc-logo-preview.html">
+        <h3>🏷️ JMFC 로고 미리보기</h3>
+        <p>메탈릭 엠블럼 PNG · EST. 2016 · 헤더 적용 예시</p>
+        <span class="tag">jmfc-logo-preview.html</span>
+      </a>
+      <a class="card" href="abc-tabs-preview.html">
+        <h3>🔤 A / B / C 탭 비교 (초기)</h3>
+        <p>초기 UI 탭 스타일 비교용</p>
+        <span class="tag">abc-tabs-preview.html</span>
+      </a>
+    </section>
+
+    <section>
+      <h2>v5.7 반영 내용 요약</h2>
+      <div class="changelog">
+        <ul>
+          <li>로고: 제공 엠블럼 PNG (EST. 2016)</li>
+          <li>팀 구성: <strong>Draft</strong> (감독 선택 → 스네이크 · 전체 선수 카드 풀)</li>
+          <li>역할: <strong>올라운드</strong> · 2/3/4팀 선택</li>
+          <li>팀 확정: <code>점수 = (CCP/G ÷ 2.5) × 100</code> (2.08 → 83점)</li>
+          <li>팀 승률: Σ(승) ÷ Σ(승+패)</li>
+          <li>경기 선택·경기 중: <strong>🚨 전체 세션 종료</strong> 버튼</li>
+          <li>결과: MVP · 수상 · 팀 순위표(모바일 한 줄) · 팀별 스탯</li>
+          <li>기록: 모달(득점/자책/수비/선방) · 기록 수정 · 저장 확인</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      branch: cursor/jmfc-mockup-6e09 · design-preview/
+    </footer>
   </div>
 </body>
 </html>
