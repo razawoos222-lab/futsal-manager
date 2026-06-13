@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v6.5</title>
+  <title>JMFC 풋살 매니저 목업 v6.6</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -228,9 +228,18 @@
     table.data { width: 100%; font-size: 0.68rem; border-collapse: collapse; }
     table.data th, table.data td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--border); }
     table.data th { color: var(--muted); font-weight: 800; }
-    table.data.rank { font-size: 0.68rem; }
-    table.data.rank th, table.data.rank td { padding: 6px 3px; font-size: 0.68rem; }
-    table.data.rank .col-team { font-weight: 900; white-space: nowrap; padding-right: 6px; }
+    table.data.rank {
+      font-size: 0.68rem; width: 100%; table-layout: fixed;
+    }
+    table.data.rank th, table.data.rank td {
+      padding: 7px 2px; font-size: 0.68rem;
+      white-space: nowrap; text-align: center; vertical-align: middle;
+    }
+    table.data.rank th {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+    table.data.rank .col-team { font-weight: 900; }
     .result-hero {
       padding: 16px 14px; border-radius: 16px; margin-bottom: 12px;
       background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
@@ -276,9 +285,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v6.5</h1>
-    <p>결과 표 가독 · MVP MP4 · 버튼 이모지 제거</p>
-    <span class="ver">v6.5 · ?v=6.5</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v6.6</h1>
+    <p>팀 순위 표 헤더 가로 · 축약 라벨</p>
+    <span class="ver">v6.6 · ?v=6.6</span>
   </div>
 
   <div class="gallery">
@@ -559,7 +568,13 @@
           </div>
           <div class="result-card" style="overflow-x:auto">
             <table class="data rank">
-              <thead><tr><th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th></tr></thead>
+              <colgroup>
+                <col style="width:8%" /><col style="width:14%" /><col style="width:9%" />
+                <col style="width:7%" /><col style="width:7%" /><col style="width:7%" />
+                <col style="width:8%" /><col style="width:8%" /><col style="width:10%" />
+                <col style="width:11%" /><col style="width:11%" />
+              </colgroup>
+              <thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
               <tbody>
                 <tr><td>1</td><td class="t-blue col-team">BLUE</td><td>3</td><td>2</td><td>1</td><td>0</td><td>8</td><td>4</td><td>+4</td><td>83%</td><td>7</td></tr>
                 <tr><td>2</td><td class="t-red col-team">RED</td><td>3</td><td>1</td><td>0</td><td>2</td><td>5</td><td>7</td><td>-2</td><td>33%</td><td>3</td></tr>
