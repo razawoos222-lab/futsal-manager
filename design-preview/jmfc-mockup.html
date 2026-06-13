@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v5.6</title>
+  <title>JMFC 풋살 매니저 목업 v5.7</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -175,7 +175,7 @@
     }
     .team-stat-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .team-stat-card .head h4 { font-size: 0.85rem; font-weight: 900; }
-    .team-stat-card .head .ccp { font-size: 1.05rem; font-weight: 900; color: var(--text); }
+    .team-stat-card .head .score { font-size: 1.1rem; font-weight: 900; color: var(--text); }
     .ccp-bar-wrap { margin-bottom: 6px; }
     .ccp-bar-wrap label { font-size: 0.65rem; color: var(--muted); font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 3px; }
     .ccp-bar { height: 10px; border-radius: 999px; background: #e4e4e7; overflow: hidden; }
@@ -190,9 +190,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v5.6</h1>
-    <p>팀 확정 <strong>CCP/G</strong> · Draft · 전체 세션 종료 · 모바일 팀순위표</p>
-    <span class="ver">v5.6 · ?v=5.6</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v5.7</h1>
+    <p><strong>CCP/G → 100점</strong> (2.5=100) · Draft · 전체 세션 종료</p>
+    <span class="ver">v5.7 · ?v=5.7</span>
   </div>
 
   <div class="gallery">
@@ -292,12 +292,12 @@
           <p style="font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:6px">미배정 선수 전원 (12명) · 카드 탭하여 픽</p>
           <div class="pool-scroll">
             <div class="pool-grid">
-              <div class="pcard fixo tap-pick"><div class="row1"><span>배철호</span><span class="jersey">12</span></div><div class="role">픽소</div><div class="stats">승률 48% · CCP/G 2.08</div></div>
-              <div class="pcard ala"><div class="row1"><span>송환규</span><span class="jersey">—</span></div><div class="role">아라</div><div class="stats">승률 41% · CCP/G 1.92</div></div>
-              <div class="pcard all"><div class="row1"><span>이호섭</span><span class="jersey">5</span></div><div class="role">올라운드</div><div class="stats">승률 45% · CCP/G 2.15</div></div>
-              <div class="pcard pivo"><div class="row1"><span>정세진</span><span class="jersey">—</span></div><div class="role">피보</div><div class="stats">승률 50% · CCP/G 2.31</div></div>
-              <div class="pcard fixo"><div class="row1"><span>김상덕</span><span class="jersey">11</span></div><div class="role">픽소</div><div class="stats">승률 47% · CCP/G 1.85</div></div>
-              <div class="pcard ala"><div class="row1"><span>양승현</span><span class="jersey">—</span></div><div class="role">아라</div><div class="stats">승률 43% · CCP/G 1.76</div></div>
+              <div class="pcard fixo tap-pick"><div class="row1"><span>배철호</span><span class="jersey">12</span></div><div class="role">픽소</div><div class="stats">승률 48% · 83점</div></div>
+              <div class="pcard ala"><div class="row1"><span>송환규</span><span class="jersey">—</span></div><div class="role">아라</div><div class="stats">승률 41% · 77점</div></div>
+              <div class="pcard all"><div class="row1"><span>이호섭</span><span class="jersey">5</span></div><div class="role">올라운드</div><div class="stats">승률 45% · 86점</div></div>
+              <div class="pcard pivo"><div class="row1"><span>정세진</span><span class="jersey">—</span></div><div class="role">피보</div><div class="stats">승률 50% · 92점</div></div>
+              <div class="pcard fixo"><div class="row1"><span>김상덕</span><span class="jersey">11</span></div><div class="role">픽소</div><div class="stats">승률 47% · 74점</div></div>
+              <div class="pcard ala"><div class="row1"><span>양승현</span><span class="jersey">—</span></div><div class="role">아라</div><div class="stats">승률 43% · 70점</div></div>
               <div class="pcard all picked"><div class="row1"><span>이영중</span><span class="jersey">7</span></div><div class="role">RED ✓</div></div>
               <div class="pcard pivo picked"><div class="row1"><span>여도영</span><span class="jersey">—</span></div><div class="role">RED ✓</div></div>
               <div class="pcard fixo"><div class="row1"><span>신승진</span><span class="jersey">—</span></div><div class="role">픽소</div><div class="stats">승률 39%</div></div>
@@ -320,36 +320,39 @@
         <div class="body scroll">
           <h2>3팀 라인업</h2>
           <p class="status-line" style="color:#16a34a">미배정 0명</p>
-          <p class="formula-note">팀 승률 = Σ(승)÷Σ(승+패) · <strong>CCP/G = Σ(CCP)÷Σ(경기)</strong></p>
+          <p class="formula-note">CCP/G = Σ(CCP)÷Σ(경기) · <strong>점수 = (CCP/G ÷ 2.5) × 100</strong> — CCP/G 2.5 = 100점 (예: 2.08 → 83점)</p>
           <div class="team-stat-card">
-            <div class="head"><h4 class="t-red">RED ×8</h4><span class="ccp">CCP/G 2.21</span></div>
+            <div class="head"><h4 class="t-red">RED ×8</h4><span class="score">88점</span></div>
             <div class="ccp-bar-wrap">
-              <label><span>세션 대비</span><span>94%</span></label>
-              <div class="ccp-bar"><i class="red" style="width:94%"></i></div>
+              <label><span>팀 점수</span><span>88 / 100</span></label>
+              <div class="ccp-bar"><i class="red" style="width:88%"></i></div>
             </div>
             <div class="team-metrics">
+              <span>CCP/G<br><b style="color:var(--text)">2.21</b></span>
               <span>팀 승률<br><b style="color:var(--text)">51.2%</b></span>
             </div>
             <div class="names" style="margin-top:8px;font-size:0.7rem">김기호(C) · 이영중 · 여도영 · 송환규 · …</div>
           </div>
           <div class="team-stat-card">
-            <div class="head"><h4 class="t-blue">BLUE ×8</h4><span class="ccp">CCP/G 2.35</span></div>
+            <div class="head"><h4 class="t-blue">BLUE ×8</h4><span class="score">94점</span></div>
             <div class="ccp-bar-wrap">
-              <label><span>세션 대비</span><span>100%</span></label>
-              <div class="ccp-bar"><i class="blue" style="width:100%"></i></div>
+              <label><span>팀 점수</span><span>94 / 100</span></label>
+              <div class="ccp-bar"><i class="blue" style="width:94%"></i></div>
             </div>
             <div class="team-metrics">
+              <span>CCP/G<br><b style="color:var(--text)">2.35</b></span>
               <span>팀 승률<br><b style="color:var(--text)">54.8%</b></span>
             </div>
             <div class="names" style="margin-top:8px;font-size:0.7rem">이윤수(C) · 배철호 · 김상덕 · …</div>
           </div>
           <div class="team-stat-card">
-            <div class="head"><h4 class="t-yellow">YELLOW ×8</h4><span class="ccp">CCP/G 1.98</span></div>
+            <div class="head"><h4 class="t-yellow">YELLOW ×8</h4><span class="score">79점</span></div>
             <div class="ccp-bar-wrap">
-              <label><span>세션 대비</span><span>84%</span></label>
-              <div class="ccp-bar"><i class="yellow" style="width:84%"></i></div>
+              <label><span>팀 점수</span><span>79 / 100</span></label>
+              <div class="ccp-bar"><i class="yellow" style="width:79%"></i></div>
             </div>
             <div class="team-metrics">
+              <span>CCP/G<br><b style="color:var(--text)">1.98</b></span>
               <span>팀 승률<br><b style="color:var(--text)">47.6%</b></span>
             </div>
             <div class="names" style="margin-top:8px;font-size:0.7rem">신윤호(C) · 이장영 · …</div>
