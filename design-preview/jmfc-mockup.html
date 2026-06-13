@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v6.2</title>
+  <title>JMFC 풋살 매니저 목업 v6.3</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -14,8 +14,11 @@
       --cta: #2563eb; --cta-text: #fff;
       --green: #16a34a; --green-dark: #15803d;
       --stat-premium: #475569; --stat-premium-hi: #334155;
-      --red: #dc2626; --blue: #2563eb; --yellow: #facc15; --yellow-dark: #ca8a04;
+      --red: #dc2626; --blue: #2563eb;
+      --yellow: #eab308; --yellow-text: #92400e; --yellow-border: #ca8a04;
+      --gold: #c9a227; --gold-light: #f5e6b8;
       --neon: #a3e635; --neon-dim: #84cc16;
+      --sub: #7c3aed; --sub-dark: #6d28d9;
       --coach-c: #a3e635;
       --role-pivo: #8b5cf6; --role-fixo: #3b82f6; --role-ala: #f59e0b; --role-all: #14b8a6;
       --font-player: 1.125rem; --font-btn: 0.9375rem;
@@ -59,7 +62,7 @@
     .btn-outline { width: 100%; min-height: var(--touch-min); padding: 12px; margin-top: 6px; border: 1.5px solid var(--border-strong); border-radius: 12px; background: #fff; font-weight: 800; font-size: var(--font-btn); font-family: inherit; }
     .btn-sec { width: 100%; min-height: var(--touch-min); padding: 12px; margin-top: 6px; border-radius: 12px; border: 1.5px solid var(--border); background: #fafafa; color: var(--muted); font-weight: 700; font-size: var(--font-btn); font-family: inherit; }
     .btn-danger { width: 100%; min-height: var(--touch-min); padding: 12px; margin-top: 8px; border: none; border-radius: 12px; font-weight: 900; font-size: var(--font-btn); font-family: inherit; color: #fff; background: #991b1b; }
-    .t-red { color: var(--red); } .t-blue { color: var(--blue); } .t-yellow { color: var(--yellow); }
+    .t-red { color: var(--red); } .t-blue { color: var(--blue); } .t-yellow { color: var(--yellow-text); }
     .seg { display: flex; margin-bottom: 10px; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
     .seg button { flex: 1; min-height: 44px; border: none; background: #fafafa; font-weight: 800; font-size: 0.85rem; font-family: inherit; color: var(--muted); }
     .seg button.on { background: var(--primary); color: #fff; }
@@ -84,7 +87,6 @@
       display: flex; align-items: center; justify-content: center;
       line-height: 1; box-shadow: 0 2px 4px rgba(22,163,74,0.35);
     }
-    .pcard:not(.selected) { /* default full opacity */ }
     .grid2.attend .pcard:not(.selected) { opacity: 0.68; }
     .pcard .name { font-weight: 800; font-size: 0.95rem; text-align: center; line-height: 1.2; }
     .pcard .role { text-align: center; font-size: 0.68rem; font-weight: 700; color: var(--muted); margin-top: 3px; min-height: 1em; }
@@ -108,14 +110,27 @@
     .team-stat-card { padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 8px; background: #fafafa; }
     .team-stat-card.red { border-left: 4px solid var(--red); }
     .team-stat-card.blue { border-left: 4px solid var(--blue); }
-    .team-stat-card.yellow { border-left: 4px solid var(--yellow); background: linear-gradient(90deg, #fefce8 0%, #fafafa 28%); }
+    .team-stat-card.yellow { border-left: 4px solid var(--yellow-border); background: linear-gradient(90deg, #fffbeb 0%, #fafafa 28%); }
     .team-stat-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .team-stat-card .head h4 { font-size: 0.85rem; font-weight: 900; }
     .team-stat-card .head .val { font-size: 1.05rem; font-weight: 900; letter-spacing: -0.02em; }
     .team-stat-card .head .val-red { color: var(--red); }
     .team-stat-card .head .val-blue { color: var(--blue); }
-    .team-stat-card .head .val-yellow { color: var(--yellow-dark); }
+    .team-stat-card .head .val-yellow { color: var(--yellow-text); }
+    .team-stat-card.yellow .head h4.t-yellow { color: var(--yellow-text); }
     .team-stat-card .sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    .team-picks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .team-pick {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 14px; border-radius: 12px; border: 2px solid var(--border);
+      background: #fafafa; font-weight: 900; font-size: 1rem; cursor: default;
+    }
+    .team-pick .mark { font-size: 0.78rem; font-weight: 800; color: var(--muted); }
+    .team-pick.picked { background: #fff; }
+    .team-pick.red { border-color: var(--red); } .team-pick.red.picked { background: #fef2f2; }
+    .team-pick.blue { border-color: var(--blue); } .team-pick.blue.picked { background: #eff6ff; }
+    .team-pick.yellow { border-color: var(--yellow-border); } .team-pick.yellow.picked { background: #fffbeb; }
+    .pick-status { font-size: 0.75rem; color: var(--muted); text-align: center; font-weight: 700; margin-bottom: 8px; }
     .team-stat-card .names { font-size: 0.7rem; color: var(--muted); line-height: 1.45; margin-top: 6px; }
     .formula-note { font-size: 0.62rem; color: var(--muted); line-height: 1.45; margin: 8px 0; padding: 8px; border-radius: 8px; background: #f4f4f5; }
     .flow-note { font-size: 0.72rem; color: var(--blue); font-weight: 700; padding: 8px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 10px; line-height: 1.45; }
@@ -129,8 +144,8 @@
     .timer-box { font-family: ui-monospace, monospace; font-size: 1.2rem; font-weight: 900; padding: 8px 16px; border-radius: 12px; background: #fafafa; border: 1.5px solid var(--border); }
     .btn-sm { min-height: 40px; padding: 8px 12px; border-radius: 10px; border: none; font-size: 0.78rem; font-weight: 800; font-family: inherit; color: #fff; }
     .btn-sm.gray { background: #71717a; } .btn-sm.blue { background: var(--blue); }
-    .tabs { display: flex; justify-content: center; margin-bottom: 10px; border-bottom: 1.5px solid var(--border); }
-    .tabs span { padding: 10px 6px; font-size: 0.72rem; font-weight: 800; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1.5px; }
+    .tabs { display: flex; justify-content: space-around; gap: 16px; margin-bottom: 14px; border-bottom: 1.5px solid var(--border); padding: 0 4px; }
+    .tabs span { padding: 10px 12px; font-size: 0.78rem; font-weight: 800; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1.5px; flex: 1; text-align: center; }
     .tabs span.on { color: var(--text); border-bottom-color: var(--primary); }
     .lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .lineup-col {
@@ -160,11 +175,26 @@
     .lineup-col.team-yellow .prow .name { border-left: 3px solid var(--yellow); }
     .prow .name.tap { background: #eff6ff; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
     .prow .name .cap { font-size: 0.62rem; font-weight: 800; margin-right: 4px; background: #18181b; padding: 2px 5px; border-radius: 4px; color: var(--neon); }
-    .prow .swap { width: 36px; min-height: 46px; background: #52525b; color: #fff; font-size: 0.85rem; flex-shrink: 0; }
-    .lineup-share-hint {
-      font-size: 0.68rem; color: var(--muted); text-align: center; margin: 8px 0 10px;
-      padding: 6px; border-radius: 8px; background: #f4f4f5; font-weight: 700;
+    .btn-sub {
+      width: 100%; min-height: var(--touch-min); margin-top: 8px; padding: 12px;
+      border: none; border-radius: 12px; background: linear-gradient(135deg, var(--sub) 0%, var(--sub-dark) 100%);
+      color: #fff; font-weight: 900; font-size: var(--font-btn); font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.3);
     }
+    .btn-sub svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .sub-pick { padding: 10px; border-radius: 10px; border: 2px solid var(--border); margin-bottom: 8px; background: #fafafa; }
+    .sub-pick.out { border-color: var(--red); background: #fef2f2; }
+    .sub-pick.out .lbl { font-size: 0.68rem; color: var(--red); font-weight: 800; margin-bottom: 4px; }
+    .sub-pick.out .pname { font-size: 1.15rem; font-weight: 900; }
+    .sub-bench { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+    .sub-bench button {
+      width: 100%; min-height: 48px; padding: 12px; border-radius: 10px;
+      border: 2px solid var(--border); background: #fff; font-weight: 800;
+      font-size: var(--font-btn); font-family: inherit; text-align: left;
+    }
+    .sub-bench button.on { border-color: var(--sub); background: #f5f3ff; box-shadow: 0 0 0 3px rgba(124,58,237,0.2); }
+    .sub-bench button.on::after { content: ' ✓'; color: var(--sub); font-weight: 900; }
     .act2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0 0; }
     .act2 button { padding: 12px; min-height: var(--touch-min); border: none; border-radius: 12px; font-weight: 800; font-size: var(--font-btn); font-family: inherit; color: #fff; }
     .act2 .u { background: #71717a; } .act2 .e { background: var(--primary); }
@@ -200,10 +230,43 @@
     table.data th { color: var(--muted); font-weight: 800; }
     table.data.rank { table-layout: fixed; font-size: 0.58rem; }
     table.data.rank th, table.data.rank td { padding: 5px 1px; white-space: nowrap; font-size: 0.56rem; }
-    .mvp-box { padding: 12px; border-radius: 12px; margin-bottom: 10px; background: #fffbeb; border: 1.5px solid #fcd34d; }
-    .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .award { padding: 8px; border-radius: 10px; background: #fafafa; border: 1.5px solid var(--border); font-size: 0.75rem; font-weight: 600; }
-    .award b { display: block; color: var(--yellow); font-size: 0.68rem; margin-bottom: 2px; }
+    .result-hero {
+      padding: 16px 14px; border-radius: 16px; margin-bottom: 12px;
+      background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
+      border: 1.5px solid var(--gold); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .result-hero .eyebrow {
+      font-family: Cinzel, Georgia, serif; font-size: 0.72rem; font-weight: 900;
+      letter-spacing: 0.14em; color: var(--gold-light); text-align: center;
+    }
+    .result-hero .mvp-names {
+      text-align: center; font-size: 1.2rem; font-weight: 900; color: #fff;
+      margin-top: 10px; letter-spacing: -0.02em;
+    }
+    .result-hero .mp-tag {
+      display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 999px;
+      background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.45);
+      color: var(--gold-light); font-size: 0.72rem; font-weight: 800;
+    }
+    .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .award {
+      padding: 10px 10px; border-radius: 12px;
+      background: linear-gradient(160deg, #fafafa 0%, #f4f4f5 100%);
+      border: 1.5px solid #e4e4e7; font-size: 0.78rem; font-weight: 700;
+    }
+    .award b {
+      display: block; font-family: Cinzel, Georgia, serif;
+      color: #57534e; font-size: 0.62rem; letter-spacing: 0.06em; margin-bottom: 4px; font-weight: 900;
+    }
+    .result-card {
+      background: #fff; border-radius: 14px; padding: 12px;
+      border: 1.5px solid #e4e4e7; margin-bottom: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .result-card h3 {
+      font-family: Cinzel, Georgia, serif; font-size: 0.82rem; font-weight: 900;
+      letter-spacing: 0.06em; margin-bottom: 8px; color: #292524;
+    }
     .result-btns { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
     .warn-banner { font-size: 0.78rem; line-height: 1.5; padding: 10px; border-radius: 10px; background: #fef3c7; border: 1.5px solid #fcd34d; color: #713f12; margin-bottom: 10px; }
     table.edit-stats { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
@@ -214,9 +277,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v6.2</h1>
-    <p>팀파워 · 형광 기록 · 통일 카드 · 스샷용 라인업 · 참석 선택 ✓</p>
-    <span class="ver">v6.2 · ?v=6.2</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v6.3</h1>
+    <p>통합 경기선택 · 선수교체 · YELLOW 가독 · 럭셔리 결과</p>
+    <span class="ver">v6.3 · ?v=6.3</span>
   </div>
 
   <div class="gallery">
@@ -263,7 +326,7 @@
           <div class="coach-slots">
             <div class="coach-slot pick-target"><span>RED</span><span class="slot-name">감독?</span></div>
             <div class="coach-slot"><span>BLUE</span><span class="slot-name">빈 자리</span></div>
-            <div class="coach-slot"><span>YLW</span><span class="slot-name">빈 자리</span></div>
+            <div class="coach-slot"><span>YELLOW</span><span class="slot-name">빈 자리</span></div>
           </div>
           <p style="font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:6px">참석 선수 전원</p>
           <div class="pool-scroll"><div class="grid2">
@@ -288,7 +351,7 @@
           <div class="live-teams">
             <div class="live-team"><b class="t-red">RED 3/8</b> · 김기호(C) · 이영중 · 여도영</div>
             <div class="live-team"><b class="t-blue">BLUE 2/8</b> · 이윤수(C) · 배철호</div>
-            <div class="live-team"><b class="t-yellow">YLW 1/8</b> · 신윤호(C)</div>
+            <div class="live-team"><b class="t-yellow">YELLOW 1/8</b> · 신윤호(C)</div>
           </div>
           <p style="font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:6px">미배정 선수 · 탭하면 즉시 팀 편성</p>
           <div class="pool-scroll"><div class="grid2">
@@ -333,39 +396,28 @@
       </div>
     </div>
 
-    <!-- 05 경기 선택 #1 -->
+    <!-- 05 경기 선택 (통합 · 매 경기 동일 화면) -->
     <div class="block">
-      <div class="label">05 · 경기 선택 (매 경기 후)</div>
+      <div class="label">05 · 경기 선택 (2팀 · 전 팀 표시)</div>
       <div class="phone">
         <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>경기 선택</span></div></div>
         <div class="body">
           <h2>경기 선택</h2>
-          <div class="flow-note">경기 #1 종료 후에도 다시 이 화면 · 다음 경기 팀 2개 선택</div>
+          <div class="chip-row"><span class="chip">Match #2</span><span class="chip">완료 1경기</span></div>
+          <div class="flow-note">매 경기 후 동일 화면 · <b>3팀 모두 표시</b> · 2팀만 선택</div>
           <div class="card">
             <div style="font-size:0.78rem;color:var(--muted);margin-bottom:6px;font-weight:700">경기 시간 (7~12분)</div>
             <select class="field"><option selected>10분</option></select>
           </div>
-          <div class="card" style="border-color:var(--red)"><span class="t-red" style="font-weight:900">RED</span> ✓</div>
-          <div class="card" style="border-color:var(--blue)"><span class="t-blue" style="font-weight:900">BLUE</span> ✓</div>
+          <p class="pick-status">경기 팀 선택 · 2 / 2</p>
+          <div class="team-picks">
+            <div class="team-pick red"><span class="t-red">RED</span><span class="mark">—</span></div>
+            <div class="team-pick blue picked"><span class="t-blue">BLUE</span><span class="mark t-blue">✓ 선택</span></div>
+            <div class="team-pick yellow picked"><span class="t-yellow">YELLOW</span><span class="mark t-yellow">✓ 선택</span></div>
+          </div>
           <button type="button" class="btn-cta">경기 시작</button>
-          <button type="button" class="btn-danger">🚨 전체 세션 종료</button>
+          <button type="button" class="btn-danger">전체 세션 종료</button>
           <div class="nav-row"><button type="button">← 이전</button><button type="button" class="next">다음 →</button></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 05-B 경기 선택 #2 -->
-    <div class="block">
-      <div class="label">05-B · 경기 선택 (#2)</div>
-      <div class="phone">
-        <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>경기 선택</span></div></div>
-        <div class="body">
-          <h2>경기 선택 · Match #2</h2>
-          <div class="chip-row"><span class="chip">완료 1경기</span><span class="chip on">RED 1승 0패</span></div>
-          <div class="card" style="border-color:var(--blue)"><span class="t-blue" style="font-weight:900">BLUE</span> ✓</div>
-          <div class="card" style="border-color:var(--yellow)"><span class="t-yellow" style="font-weight:900">YELLOW</span> ✓</div>
-          <button type="button" class="btn-cta">경기 시작</button>
-          <button type="button" class="btn-danger">🚨 전체 세션 종료</button>
         </div>
       </div>
     </div>
@@ -383,25 +435,32 @@
             <button type="button" class="btn-sm blue">시작</button>
           </div>
           <div class="tabs"><span class="on">라인업</span><span>팀 순위</span><span>개인기록</span></div>
-          <p class="lineup-share-hint">📸 팀원 공유용 · 이름 탭 → 기록</p>
           <div class="lineup-grid">
             <div class="lineup-col team-red">
               <div class="team-head">RED</div>
               <div class="roster">
-                <div class="prow"><button type="button" class="name tap"><span class="cap">C</span>김기호</button><button type="button" class="swap">🔄</button></div>
-                <div class="prow"><button type="button" class="name tap">여도영</button><button type="button" class="swap">🔄</button></div>
-                <div class="prow"><button type="button" class="name">이영중</button><button type="button" class="swap">🔄</button></div>
-                <div class="prow"><button type="button" class="name">송환규</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name tap"><span class="cap">C</span>김기호</button></div>
+                <div class="prow"><button type="button" class="name tap">여도영</button></div>
+                <div class="prow"><button type="button" class="name">이영중</button></div>
+                <div class="prow"><button type="button" class="name">송환규</button></div>
               </div>
+              <button type="button" class="btn-sub" style="margin:8px 6px 10px;width:calc(100% - 12px)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 16V4M7 4L3 8M7 4l4 4"/><path d="M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+                선수교체
+              </button>
             </div>
             <div class="lineup-col team-blue">
               <div class="team-head">BLUE</div>
               <div class="roster">
-                <div class="prow"><button type="button" class="name"><span class="cap">C</span>이윤수</button><button type="button" class="swap">🔄</button></div>
-                <div class="prow"><button type="button" class="name">배철호</button><button type="button" class="swap">🔄</button></div>
-                <div class="prow"><button type="button" class="name">김상덕</button><button type="button" class="swap">🔄</button></div>
-                <div class="prow"><button type="button" class="name">정세진</button><button type="button" class="swap">🔄</button></div>
+                <div class="prow"><button type="button" class="name"><span class="cap">C</span>이윤수</button></div>
+                <div class="prow"><button type="button" class="name">배철호</button></div>
+                <div class="prow"><button type="button" class="name">김상덕</button></div>
+                <div class="prow"><button type="button" class="name">정세진</button></div>
               </div>
+              <button type="button" class="btn-sub" style="margin:8px 6px 10px;width:calc(100% - 12px)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 16V4M7 4L3 8M7 4l4 4"/><path d="M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+                선수교체
+              </button>
             </div>
           </div>
           <div class="act2"><button type="button" class="u">스탯 취소</button><button type="button" class="e">현재 경기 종료</button></div>
@@ -412,7 +471,34 @@
       </div>
     </div>
 
-    <!-- 07 기록 모달 -->
+    <!-- 06-B 선수교체 -->
+    <div class="block">
+      <div class="label">06-B · 선수교체</div>
+      <div class="phone wide-match">
+        <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>Match #1 · RED</span></div></div>
+        <div class="body scroll">
+          <h2>선수교체</h2>
+          <div class="sub-pick out">
+            <div class="lbl">교체 OUT · 현재 필드</div>
+            <div class="pname t-red">여도영</div>
+          </div>
+          <p style="font-size:0.78rem;color:var(--muted);font-weight:700;margin-bottom:6px">교체 IN · 벤치 선수 선택</p>
+          <div class="sub-bench">
+            <button type="button" class="on">이호섭</button>
+            <button type="button">정세진</button>
+            <button type="button">양승현</button>
+            <button type="button">장용호</button>
+          </div>
+          <button type="button" class="btn-sub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 16V4M7 4L3 8M7 4l4 4"/><path d="M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+            교체 확정 · 여도영 → 이호섭
+          </button>
+          <button type="button" class="btn-sec">취소 · 라인업으로</button>
+          <div class="nav-row"><button type="button">← 이전</button><button type="button" class="next">다음 →</button></div>
+        </div>
+      </div>
+    </div>
+
     <div class="block">
       <div class="label">07 · 기록 모달</div>
       <div class="phone wide-match has-modal">
@@ -461,37 +547,38 @@
         <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>세션 종료</span></div></div>
         <div class="body scroll">
           <h2>오늘의 경기 결과</h2>
-          <div class="mvp-box">
-            <div style="font-size:0.82rem;color:var(--yellow);font-weight:800">🏆 MVP · MP 4</div>
-            <div style="text-align:center;font-weight:900;margin-top:8px">여도영 · 이장영</div>
+          <div class="result-hero">
+            <div class="eyebrow">SESSION MVP</div>
+            <div class="mvp-names">여도영 · 이장영</div>
+            <div style="text-align:center"><span class="mp-tag">MP 4</span></div>
           </div>
           <div class="award-g">
-            <div class="award"><b>⚽ 최다 득점</b>여도영 2</div>
-            <div class="award"><b>👟 최다 도움</b>이영중 2</div>
-            <div class="award"><b>🛡️ 최다 수비</b>정세진 1</div>
-            <div class="award"><b>🧤 최다 선방</b>김상덕 1</div>
+            <div class="award"><b>TOP SCORER</b>여도영 2</div>
+            <div class="award"><b>TOP ASSIST</b>이영중 2</div>
+            <div class="award"><b>TOP DEFENSE</b>정세진 1</div>
+            <div class="award"><b>TOP SAVE</b>김상덕 1</div>
           </div>
-          <div class="card" style="padding:8px;overflow-x:auto">
-            <div style="font-size:0.8rem;font-weight:800;margin-bottom:6px">오늘의 팀 순위</div>
+          <div class="result-card" style="overflow-x:auto">
+            <h3>오늘의 팀 순위</h3>
             <table class="data rank">
               <thead><tr><th>순위</th><th>팀</th><th>경기수</th><th>승</th><th>무</th><th>패</th><th>득점</th><th>실점</th><th>득실차</th><th>승률</th><th>승점</th></tr></thead>
               <tbody>
                 <tr><td>1</td><td class="t-blue">BLUE</td><td>3</td><td>2</td><td>1</td><td>0</td><td>8</td><td>4</td><td>+4</td><td>83%</td><td>7</td></tr>
                 <tr><td>2</td><td class="t-red">RED</td><td>3</td><td>1</td><td>0</td><td>2</td><td>5</td><td>7</td><td>-2</td><td>33%</td><td>3</td></tr>
-                <tr><td>3</td><td class="t-yellow">YLW</td><td>2</td><td>1</td><td>0</td><td>1</td><td>4</td><td>6</td><td>-2</td><td>50%</td><td>3</td></tr>
+                <tr><td>3</td><td class="t-yellow">YELLOW</td><td>2</td><td>1</td><td>0</td><td>1</td><td>4</td><td>6</td><td>-2</td><td>50%</td><td>3</td></tr>
               </tbody>
             </table>
           </div>
-          <div class="card" style="padding:8px">
-            <div style="font-size:0.8rem;font-weight:800;margin-bottom:6px">팀별 개인 스탯 · RED</div>
+          <div class="result-card">
+            <h3>팀별 개인 스탯 · RED</h3>
             <table class="data">
               <tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr>
               <tr><td>여도영</td><td>2</td><td>1</td><td>0</td><td>0</td><td>4</td></tr>
               <tr><td>이영중</td><td>0</td><td>2</td><td>0</td><td>0</td><td>3</td></tr>
             </table>
           </div>
-          <div class="card" style="padding:8px">
-            <div style="font-size:0.8rem;font-weight:800;margin-bottom:6px">팀별 개인 스탯 · BLUE</div>
+          <div class="result-card">
+            <h3>팀별 개인 스탯 · BLUE</h3>
             <table class="data">
               <tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr>
               <tr><td>배철호</td><td>1</td><td>0</td><td>1</td><td>0</td><td>2</td></tr>
@@ -518,7 +605,7 @@
           <div class="seg" style="margin-bottom:10px">
             <button type="button" class="on t-red">RED</button>
             <button type="button" class="t-blue">BLUE</button>
-            <button type="button" class="t-yellow">YLW</button>
+            <button type="button" class="t-yellow">YELLOW</button>
           </div>
           <table class="edit-stats">
             <thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead>
