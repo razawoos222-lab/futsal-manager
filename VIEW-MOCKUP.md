@@ -4,7 +4,7 @@
 
 **[▶ JMFC 로고 미리보기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-logo-preview.html?v=2)**
 
-**[▶ 전체 프로세스 플로우 (12단계)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5.5)**
+**[▶ 전체 프로세스 플로우 (12단계)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=5.6)**
 
 1. 링크 클릭 → 2. **「Open the page」** → 3. **좌우 스크롤**로 STEP 01–12 확인
 
@@ -12,11 +12,11 @@
 
 ## 1. 가장 쉬운 방법 (크롬·사파리·폰 브라우저)
 
-**[▶ JMFC 목업 보기 (v5.5)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=5.5)**
+**[▶ JMFC 목업 보기 (v5.6)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-mockup.html?v=5.6)**
 
 1. 위 파란 링크를 누릅니다.
 2. 중간에 **「Open the page」**(페이지 열기) 버튼이 나오면 **한 번 더** 누릅니다.
-3. **v5.5** 배지 · Draft 네이밍 · 팀 파워 100 환산 · 전체 세션 종료 버튼이 보이면 성공입니다.
+3. **v5.6** 배지 · 팀 확정 **CCP/G** · Draft · 전체 세션 종료가 보이면 성공입니다.
 
 > Cursor·다운로드·Raw 저장 **필요 없음**
 
