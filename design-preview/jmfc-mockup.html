@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JMFC 풋살 매니저 목업 v6.6</title>
+  <title>JMFC 풋살 매니저 목업 v6.7</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -119,6 +119,11 @@
     .team-stat-card .head .val-yellow { color: var(--yellow-text); }
     .team-stat-card.yellow .head h4.t-yellow { color: var(--yellow-text); }
     .team-stat-card .sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    .team-stat-card .coach-line { font-weight: 700; margin-bottom: 2px; }
+    .team-stat-card.red .coach-line b.coach-name { color: var(--red); }
+    .team-stat-card.blue .coach-line b.coach-name { color: var(--blue); }
+    .team-stat-card.yellow .coach-line b.coach-name { color: var(--yellow-text); }
+    .live-team .coach-tag { font-weight: 800; color: var(--muted); }
     .team-picks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
     .team-pick {
       display: flex; align-items: center; justify-content: space-between;
@@ -285,9 +290,9 @@
 </head>
 <body>
   <div class="top-banner">
-    <h1>JMFC 풋살 매니저 — UI 목업 v6.6</h1>
-    <p>팀 순위 표 헤더 가로 · 축약 라벨</p>
-    <span class="ver">v6.6 · ?v=6.6</span>
+    <h1>JMFC 풋살 매니저 — UI 목업 v6.7</h1>
+    <p>04 팀 확정 · 감독 헤더 분리 · 선수목록에서 감독·(C) 제거</p>
+    <span class="ver">v6.7 · ?v=6.7</span>
   </div>
 
   <div class="gallery">
@@ -357,9 +362,9 @@
         <div class="body scroll">
           <div class="draft-banner">TEAM BLUE 감독 차례 · 남은 12명</div>
           <div class="live-teams">
-            <div class="live-team"><b class="t-red">TEAM RED 3/8</b> · 김기호(C) · 이영중 · 여도영</div>
-            <div class="live-team"><b class="t-blue">TEAM BLUE 2/8</b> · 이윤수(C) · 배철호</div>
-            <div class="live-team"><b class="t-yellow">TEAM YELLOW 1/8</b> · 신윤호(C)</div>
+            <div class="live-team"><b class="t-red">TEAM RED 3/7</b> · <span class="coach-tag">감독 김기호</span> · 이영중 · 여도영</div>
+            <div class="live-team"><b class="t-blue">TEAM BLUE 2/7</b> · <span class="coach-tag">감독 이윤수</span> · 배철호</div>
+            <div class="live-team"><b class="t-yellow">TEAM YELLOW 1/7</b> · <span class="coach-tag">감독 신윤호</span></div>
           </div>
           <p style="font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:6px">미배정 선수 · 탭하면 즉시 팀 편성</p>
           <div class="pool-scroll"><div class="grid2">
@@ -385,18 +390,21 @@
           <h2>3팀 라인업</h2>
           <div class="team-stat-card red">
             <div class="head"><h4 class="t-red">TEAM RED 8명</h4><span class="val val-red">팀파워 88</span></div>
+            <div class="sub coach-line">감독 <b class="coach-name">김기호</b> · 감독 승률 <b style="color:var(--text)">53.8%</b></div>
             <div class="sub">팀 승률 <b style="color:var(--text)">51.2%</b></div>
-            <div class="names">김기호(C) · 송환규 · 여도영 · 이호섭 · 이영중 · 정세진 · …</div>
+            <div class="names">송환규 · 여도영 · 이호섭 · 이영중 · 정세진 · 양승현 · …</div>
           </div>
           <div class="team-stat-card blue">
             <div class="head"><h4 class="t-blue">TEAM BLUE 8명</h4><span class="val val-blue">팀파워 94</span></div>
+            <div class="sub coach-line">감독 <b class="coach-name">이윤수</b> · 감독 승률 <b style="color:var(--text)">48.2%</b></div>
             <div class="sub">팀 승률 <b style="color:var(--text)">54.8%</b></div>
-            <div class="names">이윤수(C) · 김상덕 · 배철호 · 정세진 · 송환규 · …</div>
+            <div class="names">김상덕 · 배철호 · 정세진 · 송환규 · 이장영 · 장용호 · …</div>
           </div>
           <div class="team-stat-card yellow">
             <div class="head"><h4 class="t-yellow">TEAM YELLOW 8명</h4><span class="val val-yellow">팀파워 79</span></div>
+            <div class="sub coach-line">감독 <b class="coach-name">신윤호</b> · 감독 승률 <b style="color:var(--text)">41.5%</b></div>
             <div class="sub">팀 승률 <b style="color:var(--text)">47.6%</b></div>
-            <div class="names">신윤호(C) · 양승현 · 이장영 · 장용호 · …</div>
+            <div class="names">양승현 · 이장영 · 장용호 · 이호섭 · 김상덕 · …</div>
           </div>
           <button type="button" class="btn-cta">팀 구성 확정 → 경기 선택</button>
           <div class="nav-row"><button type="button">← 이전</button><button type="button" class="next">다음 →</button></div>
