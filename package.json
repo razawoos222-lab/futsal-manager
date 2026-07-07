@@ -1,0 +1,15 @@
+{
+  "name": "futsal-manager-harness",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "풋살 매니저 Google Apps Script 로컬 테스트 하네스",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "harness": "node harness/run.js"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

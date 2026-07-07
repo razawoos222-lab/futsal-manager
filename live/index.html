@@ -115,15 +115,14 @@
             background-color: var(--color-card-bg); /* 다크 테마에 맞게 변경 */
         }
         .edit-table input[type="number"] {
-            width: 80px;
-            min-height: 44px;
-            padding: 0.5rem;
-            background-color: var(--color-primary-bg);
-            border: 1px solid #4B5563;
+            width: 80px; /* 입력 칸 넓힘 */
+            padding: 0.5rem; /* 패딩 키움 */
+            background-color: var(--color-primary-bg); /* 다크 테마에 맞게 변경 */
+            border: 1px solid #4B5563; /* 다크 테마에 맞게 변경 */
             border-radius: 0.25rem;
-            color: var(--color-text-main);
+            color: var(--color-text-main); /* 다크 테마에 맞게 변경 */
             text-align: center;
-            font-size: 1.25rem;
+            font-size: 1.25rem; /* 폰트 키움 */
         }
         /* 특정 텍스트 색상 조정 (다크 테마에 맞춰) */
         .text-gray-700 { color: var(--color-text-secondary); }
@@ -204,6 +203,7 @@
     <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
     <!-- 선수 목록 -->
     <div id="master-player-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-left max-h-[60vh] overflow-y-auto p-2"></div>
+    <button data-action="go-to-coach-ranking" class="btn btn-secondary w-full text-3xl">🏆 명장 순위 · 감독 기록</button>
     <!-- 참석 완료 버튼 -->
     <button data-action="go-to-allocation" class="btn btn-primary w-full text-4xl">참석 완료</button>
 </div>
@@ -225,6 +225,7 @@
         </label>
         <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
     </div>
+    <div id="coach-slots-container" class="card space-y-3 text-left mb-4"></div>
     <div id="team-allocation-container" class="flex flex-col gap-6"></div>
     <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 준비 완료</button>
 </div>
@@ -263,18 +264,18 @@
     <!-- 4. 스코어 대시보드 화면 -->
     <div id="screen-match-controller" class="hidden w-full max-w-5xl mx-auto text-center"></div>
    
-    <!-- 5. 오늘의 경기 결과 (읽기 전용) -->
+    <!-- 5. 세션 요약 및 기록 수정 화면 (신규) -->
     <div id="screen-session-summary" class="hidden w-full max-w-5xl mx-auto text-center space-y-8"></div>
-
-    <!-- 5-B. 기록 수정 (편집) -->
-    <div id="screen-record-edit" class="hidden w-full max-w-5xl mx-auto text-center space-y-8"></div>
 
 
     <!-- 6. 최종 결과 화면 (단순화) -->
     <div id="screen-final-results" class="hidden w-full max-w-5xl mx-auto text-center"></div>
 
+    <!-- 7. 명장 순위 · 감독 기록 -->
+    <div id="screen-coach-ranking" class="hidden w-full max-w-5xl mx-auto text-center space-y-8"></div>
 
-    <!-- 7. 기록 모달 팝업 -->
+
+    <!-- 8. 기록 모달 팝업 -->
     <div id="record-event-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="card rounded-2xl w-full max-w-lg text-center space-y-6">
             <h3 id="record-event-title" class="text-6xl font-black"></h3>
@@ -388,7 +389,7 @@
 
 
 <script>
-    let MASTER_PLAYERS_DB = [], localState = {}, timerInterval = null, currentEventData = {};
+    let MASTER_PLAYERS_DB = [], COACH_ARCHIVE_STATS = {}, localState = {}, timerInterval = null, currentEventData = {};
     let pageLeaveTime = null, timerWasRunning = false;
     let currentGoalkeeperSelectTeam = null;
     let currentPlayerToSwapOut = null;
@@ -427,6 +428,125 @@
             return '0.0%';
         }
         return '-';
+    }
+
+    function getCoachWinRateDisplay(coachName) {
+        if (!coachName) return '-';
+        const merged = getMergedCoachStats();
+        const archive = merged[coachName];
+        if (archive && archive.games > 0 && archive.winRate) {
+            return archive.winRate;
+        }
+        const master = MASTER_PLAYERS_DB.find(p => p.name === coachName);
+        if (master && master.winRate) {
+            return (Number(master.winRate) * 100).toFixed(1) + '%';
+        }
+        return '-';
+    }
+
+    function getMergedCoachStats() {
+        const merged = {};
+        const add = (name, src) => {
+            if (!name || !src) return;
+            if (!merged[name]) {
+                merged[name] = { games: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 };
+            }
+            merged[name].games += Number(src.games) || 0;
+            merged[name].wins += Number(src.wins) || 0;
+            merged[name].draws += Number(src.draws) || 0;
+            merged[name].losses += Number(src.losses) || 0;
+            merged[name].goalsFor += Number(src.goalsFor) || 0;
+            merged[name].goalsAgainst += Number(src.goalsAgainst) || 0;
+        };
+        Object.entries(COACH_ARCHIVE_STATS || {}).forEach(([name, st]) => add(name, st));
+        Object.entries(localState.sessionStats?.coachStats || {}).forEach(([name, st]) => add(name, st));
+        Object.keys(merged).forEach(name => {
+            const st = merged[name];
+            st.goalDifference = st.goalsFor - st.goalsAgainst;
+            const decided = st.wins + st.losses;
+            st.winRate = decided > 0
+                ? ((st.wins / decided) * 100).toFixed(1) + '%'
+                : (st.games > 0 ? '0.0%' : '-');
+            st.points = (st.wins * 3) + st.draws;
+            const master = MASTER_PLAYERS_DB.find(p => p.name === name);
+            st.ccp = master ? (Number(master.ccp) || 0) : 0;
+        });
+        return merged;
+    }
+
+    function getSessionCoachStats() {
+        const session = localState.sessionStats?.coachStats || {};
+        const result = {};
+        Object.entries(session).forEach(([name, st]) => {
+            if (!st || !(st.games > 0)) return;
+            const decided = (st.wins || 0) + (st.losses || 0);
+            const master = MASTER_PLAYERS_DB.find(p => p.name === name);
+            result[name] = {
+                ...st,
+                goalsFor: Number(st.goalsFor) || 0,
+                goalsAgainst: Number(st.goalsAgainst) || 0,
+                goalDifference: (Number(st.goalsFor) || 0) - (Number(st.goalsAgainst) || 0),
+                winRate: decided > 0
+                    ? ((st.wins / decided) * 100).toFixed(1) + '%'
+                    : (st.games > 0 ? '0.0%' : '-'),
+                points: (st.wins * 3) + st.draws,
+                ccp: master ? (Number(master.ccp) || 0) : 0
+            };
+        });
+        return result;
+    }
+
+    function buildCoachRankingsTable(statsMap, title) {
+        const coaches = Object.keys(statsMap)
+            .filter(name => statsMap[name].games > 0)
+            .map(name => ({ name, ...statsMap[name] }))
+            .sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+                if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+                return b.wins - a.wins;
+            });
+
+        if (coaches.length === 0) {
+            return `
+                <div class="card mb-8 overflow-x-auto">
+                    <h2 class="text-4xl font-bold mb-4 text-gray-100">${title}</h2>
+                    <p class="text-2xl text-gray-400">아직 감독 기록이 없습니다.</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="card mb-8 overflow-x-auto">
+                <h2 class="text-4xl font-bold mb-4 text-gray-100">${title}</h2>
+                <table class="w-full text-4xl edit-table">
+                    <thead>
+                        <tr>
+                            <th>순위</th><th>감독</th><th>경기</th><th>승</th><th>무</th><th>패</th>
+                            <th>득점</th><th>실점</th><th>득실</th><th>승률</th><th>승점</th><th>CCP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${coaches.map((c, index) => `
+                            <tr>
+                                <td class="font-bold">${index + 1}</td>
+                                <td class="font-bold text-gray-100">${c.name} ${index === 0 ? '<span>🏆</span>' : ''}</td>
+                                <td>${c.games}</td>
+                                <td>${c.wins}</td>
+                                <td>${c.draws}</td>
+                                <td>${c.losses}</td>
+                                <td>${c.goalsFor}</td>
+                                <td>${c.goalsAgainst}</td>
+                                <td>${c.goalDifference > 0 ? `+${c.goalDifference}` : c.goalDifference}</td>
+                                <td>${c.winRate}</td>
+                                <td class="font-bold text-blue-400">${c.points}</td>
+                                <td>${c.ccp}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
     }
 
 
@@ -550,7 +670,8 @@ function recoverTimerIfNeeded() {
     // --- UI 렌더링 ---
     const VALID_SCREENS = [
         'screen-attendance', 'screen-team-allocation', 'screen-match-select',
-        'screen-match-controller', 'screen-session-summary', 'screen-record-edit', 'screen-final-results'
+        'screen-match-controller', 'screen-session-summary', 'screen-final-results',
+        'screen-coach-ranking'
     ];
 
     function renderUI() {
@@ -580,7 +701,7 @@ function recoverTimerIfNeeded() {
                     : 'screen-team-allocation',
                 'screen-match-controller': 'screen-match-select',
                 'screen-session-summary': 'screen-match-select',
-                'screen-record-edit': 'screen-session-summary'
+                'screen-coach-ranking': 'screen-attendance'
             };
             backBtn.dataset.targetScreen = screenFlow[currentScreen] || 'screen-attendance';
         }
@@ -591,8 +712,8 @@ function recoverTimerIfNeeded() {
             'screen-match-select': renderMatchSelectScreen,
             'screen-match-controller': renderMatchControllerScreen,
             'screen-session-summary': renderSessionSummaryScreen,
-            'screen-record-edit': renderRecordEditScreen,
-            'screen-final-results': renderFinalResultsScreen
+            'screen-final-results': renderFinalResultsScreen,
+            'screen-coach-ranking': renderCoachRankingScreen
         };
         if (renderMap[currentScreen]) renderMap[currentScreen]();
     }
@@ -620,15 +741,45 @@ function recoverTimerIfNeeded() {
     document.getElementById('attendance-count').textContent = localState.attendingPlayerNames.length;
 }
 
+    function renderCoachSlots() {
+        const el = document.getElementById('coach-slots-container');
+        if (!el) return;
+        const teamNames = getTeamNamesForMode(localState.teamMode);
+        const attending = localState.attendingPlayerNames || [];
+        el.innerHTML = `
+            <h3 class="text-3xl font-black text-gray-100 mb-2">감독 지정</h3>
+            <p class="text-xl text-gray-400 mb-3">팀별 감독 1명씩 선택하세요. (감독은 선수 편성에서 제외됩니다)</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${teamNames.map(teamName => {
+                    const currentCoach = (localState.teams[teamName] && localState.teams[teamName].coach) || '';
+                    const options = attending.map(name =>
+                        `<option value="${name}" ${name === currentCoach ? 'selected' : ''}>${name}</option>`
+                    ).join('');
+                    return `
+                        <label class="flex flex-col gap-1">
+                            <span class="text-2xl font-bold ${teamColorClasses[teamName]}">TEAM ${teamName}</span>
+                            <select data-action="set-coach-select" data-team-name="${teamName}" class="p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl border border-gray-500">
+                                <option value="">감독 선택</option>
+                                ${options}
+                            </select>
+                        </label>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
 
     function renderAllocationScreen() {
+    renderCoachSlots();
     const container = document.getElementById('team-allocation-container');
     if (!container) return;
     const playerStats = MASTER_PLAYERS_DB.reduce((acc, p) => { acc[p.name] = p; return acc; }, {});
     container.innerHTML = getTeamNamesForMode(localState.teamMode).filter(t => localState.teams[t]).map(teamName => {
         const teamData = localState.teams[teamName];
-        let players = teamData.players;
-        const goalkeeper = teamData.goalkeeper;
+        let players = (teamData.players || []).filter(p => p !== teamData.coach);
+        const goalkeeper = teamData.goalkeeper === teamData.coach ? null : teamData.goalkeeper;
+        const coachName = teamData.coach || null;
 
 
         if (teamData.viceCaptain && !players.includes(teamData.viceCaptain)) {
@@ -643,7 +794,7 @@ function recoverTimerIfNeeded() {
 
 
         const showEmptyTeam = Number(localState.teamMode) === 4;
-        if (players.length === 0 && !goalkeeper && !showEmptyTeam) return '';
+        if (players.length === 0 && !goalkeeper && !coachName && !showEmptyTeam) return '';
 
 
         // 기존 코드를 이것으로 교체:
@@ -661,15 +812,20 @@ allTeamPlayers.forEach(pName => {
 const teamTotalPlayers = new Set(allTeamPlayers).size;
 const teamAvgCCP = teamTotalPlayers > 0 ? (teamTotalCCP / teamTotalPlayers).toFixed(1) : 0;
 const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlayers) * 100).toFixed(1) : 0;
+const coachWinRate = coachName ? getCoachWinRateDisplay(coachName) : null;
+const coachLine = coachName
+    ? `<p class="text-2xl text-gray-300 mb-2">감독 <span class="font-black ${teamColorClasses[teamName]}">${coachName}</span> · 감독 승률 <span class="font-black text-gray-100">${coachWinRate}</span></p>`
+    : '';
 
 
-        const emptyHint = (players.length === 0 && !goalkeeper)
+        const emptyHint = (players.length === 0 && !goalkeeper && !coachName)
             ? '<p class="text-2xl text-gray-400">배분된 선수가 없습니다.</p>'
             : '';
 
         return `
             <div class="card space-y-4 w-full">
-                <h3 class="text-5xl font-black ${teamColorClasses[teamName] || 'text-gray-100'}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
+                <h3 class="text-5xl font-black ${teamColorClasses[teamName] || 'text-gray-100'}">TEAM ${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
+                ${coachLine}
                 ${emptyHint}
                 <div class="grid grid-cols-2 gap-2">
                     ${players.map(p => {
@@ -716,11 +872,13 @@ function renderMatchSelectScreen() {
     container.innerHTML = activeTeams.map(teamName => {
         const isSelected = localState.match.playingTeams.includes(teamName) ? 'selected' : '';
         const teamStat = localState.sessionStats.teamStats[teamName] || { wins: 0, draws: 0, losses: 0 };
+        const coachLabel = localState.teams[teamName] && localState.teams[teamName].coach
+            ? ` · 감독 ${localState.teams[teamName].coach}` : '';
         return `
             <div data-action="toggle-team-select" data-team-name="${teamName}" 
                  class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ${isSelected}">
-                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">${teamName}</h2>
-                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)</p>
+                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">TEAM ${teamName}</h2>
+                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)${coachLabel}</p>
             </div>
         `;
     }).join('');
@@ -1233,98 +1391,16 @@ function renderSessionSummaryScreen() {
     </div>
   `;
 
-  // --- 최종 렌더 (읽기 전용) ---
+  // --- 최종 렌더 ---
+  const coachRankingsHtml = buildCoachRankingsTable(getSessionCoachStats(), '오늘의 감독 순위');
+
   container.innerHTML = `
     <h1 class="text-7xl font-black mb-8 text-gray-100">오늘의 경기 결과</h1>
     ${awardsHtml}
     ${teamRankingsHtml}
+    ${coachRankingsHtml}
     ${teamStatsHtml}
     <div class="flex flex-col sm:flex-row gap-4 mt-8">
-      <button data-action="go-to-record-edit" class="btn btn-primary w-full text-3xl">✏️ 기록 수정하기</button>
-    </div>
-  `;
-}
-
-let recordEditActiveTeam = null;
-
-function renderRecordEditScreen() {
-  const container = document.getElementById('screen-record-edit');
-  const { sessionStats } = localState;
-  const playerStats = sessionStats.playerStats || {};
-  const teamNames = getTeamNamesForMode(localState.teamMode).filter(t => localState.teams[t]);
-  if (!recordEditActiveTeam || !teamNames.includes(recordEditActiveTeam)) {
-    recordEditActiveTeam = teamNames[0] || 'RED';
-  }
-
-  const calcMP = (s) => ((s.goal || 0) * 2) + ((s.assist || 0) * 2) + ((s.defense || 0) * 1) + ((s.save || 0) * 1);
-
-  function getTopMvpPreview() {
-    let maxMp = -1;
-    let names = [];
-    Object.keys(playerStats).forEach(name => {
-      const mp = calcMP(playerStats[name] || {});
-      if (mp > maxMp) {
-        maxMp = mp;
-        names = [name];
-      } else if (mp === maxMp && mp > 0) {
-        names.push(name);
-      }
-    });
-    if (maxMp <= 0) return '—';
-    return `${names.slice(0, 3).join(' · ')} (MP ${maxMp})`;
-  }
-
-  const teamTabsHtml = teamNames.map(tn => {
-    const active = tn === recordEditActiveTeam;
-    const colorClass = teamColorClasses[tn] || '';
-    return `<button type="button" data-action="record-edit-team-tab" data-team-name="${tn}" class="btn ${active ? 'btn-primary' : 'btn-secondary'} text-2xl flex-1 min-h-[48px] ${colorClass}">${tn}</button>`;
-  }).join('');
-
-  const teamData = localState.teams[recordEditActiveTeam];
-  const playersInTeam = teamData
-    ? [...new Set([...teamData.players, teamData.goalkeeper].filter(Boolean))]
-  : [];
-
-  const statRowsHtml = playersInTeam.map(pName => {
-    const stats = playerStats[pName] || { goal: 0, assist: 0, defense: 0, save: 0 };
-    const mp = calcMP(stats);
-    return `
-      <tr>
-        <td class="font-bold text-gray-100 text-left whitespace-nowrap">${pName}</td>
-        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="goal" value="${stats.goal || 0}" /></td>
-        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="assist" value="${stats.assist || 0}" /></td>
-        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="defense" value="${stats.defense || 0}" /></td>
-        <td><input type="number" min="0" class="record-stat-input" data-player-name="${pName}" data-stat-type="save" value="${stats.save || 0}" /></td>
-        <td class="font-bold text-blue-400 record-mp-cell" data-player-name="${pName}">${mp}</td>
-      </tr>
-    `;
-  }).join('');
-
-  container.innerHTML = `
-    <h1 class="text-7xl font-black mb-6 text-gray-100">기록 수정</h1>
-    <div class="card mb-6 text-left">
-      <p class="text-3xl text-yellow-200 leading-snug">
-        득점 수를 바꿔도 <strong>팀 승패·득실</strong>은 경기 기록 기준이라 자동 반영되지 않을 수 있습니다.
-      </p>
-    </div>
-    <div class="flex flex-wrap gap-3 mb-6">${teamTabsHtml}</div>
-    <div class="card mb-6 overflow-x-auto text-left">
-      <h2 class="text-5xl font-black mb-4 ${teamColorClasses[recordEditActiveTeam]}">${recordEditActiveTeam} 팀</h2>
-      <table class="w-full text-4xl edit-table">
-        <thead>
-          <tr>
-            <th class="text-left">선수명</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th>
-          </tr>
-        </thead>
-        <tbody>${statRowsHtml || '<tr><td colspan="6">선수 없음</td></tr>'}</tbody>
-      </table>
-    </div>
-    <div class="card mb-6 text-left">
-      <p class="text-3xl text-gray-300"><strong>MVP 미리보기:</strong> ${getTopMvpPreview()}</p>
-    </div>
-    <div class="flex flex-col gap-4">
-      <button data-action="restore-session-stats-snapshot" class="btn btn-secondary w-full text-3xl">↩ 세션 종료 시점으로 되돌리기</button>
-      <button data-action="back-to-session-summary" class="btn btn-secondary w-full text-3xl">수정 완료 → 결과로</button>
       <button data-action="save-and-start-new-session" class="btn btn-primary w-full text-3xl">기록 저장 & NEW 세션시작</button>
       <button data-action="discard-and-start-new-session" class="btn btn-secondary w-full text-3xl">기록 리셋 & NEW 세션시작</button>
     </div>
@@ -1345,12 +1421,27 @@ function renderRecordEditScreen() {
         `;
     }
 
+    function renderCoachRankingScreen() {
+        const container = document.getElementById('screen-coach-ranking');
+        if (!container) return;
+        const merged = getMergedCoachStats();
+        const sessionOnly = getSessionCoachStats();
+        container.innerHTML = `
+            <h1 class="text-6xl font-black mb-4 text-gray-100">🏆 명장 순위 · 감독 기록</h1>
+            <p class="text-2xl text-gray-400 mb-6">누적 기록 + 오늘 세션 · CCP는 선수별능력치 기준</p>
+            ${buildCoachRankingsTable(merged, '누적 명장 순위')}
+            ${Object.keys(sessionOnly).length > 0 ? buildCoachRankingsTable(sessionOnly, '오늘 세션 감독 기록') : ''}
+            <button data-action="go-to-attendance" class="btn btn-secondary w-full text-3xl mt-4">참석 화면으로</button>
+        `;
+    }
+
 
     // --- 이벤트 핸들러 ---
     document.addEventListener('DOMContentLoaded', async () => {
         try {
             const data = await serverCall('getInitialData');
             MASTER_PLAYERS_DB = data.masterPlayers;
+            COACH_ARCHIVE_STATS = data.coachArchiveStats || {};
             localState = data.appState;
             renderUI();
         } catch (e) {
@@ -1359,18 +1450,23 @@ function renderRecordEditScreen() {
         }
     });
 
-
     document.body.addEventListener('change', async (e) => {
-        const input = e.target;
-        if (!input.classList || !input.classList.contains('record-stat-input')) return;
-        const { playerName, statType } = input.dataset;
-        if (!playerName || !statType) return;
-        await serverCall('updateSessionPlayerStats', playerName, statType, input.value);
-        const stats = localState.sessionStats?.playerStats?.[playerName] || {};
-        const mp = ((stats.goal || 0) * 2) + ((stats.assist || 0) * 2) + ((stats.defense || 0) * 1) + ((stats.save || 0) * 1);
-        const mpCell = document.querySelector(`.record-mp-cell[data-player-name="${playerName}"]`);
-        if (mpCell) mpCell.textContent = mp;
+        const select = e.target.closest('[data-action="set-coach-select"]');
+        if (!select) return;
+        const teamNames = getTeamNamesForMode(localState.teamMode);
+        const coachNames = teamNames.map(t => {
+            const sel = document.querySelector(`[data-action="set-coach-select"][data-team-name="${t}"]`);
+            return sel ? sel.value : ((localState.teams[t] && localState.teams[t].coach) || '');
+        });
+        if (coachNames.some(c => !c)) return;
+        try {
+            await serverCall('setCoaches', coachNames);
+        } catch (err) {
+            console.error('감독 지정 오류:', err);
+            alert(err.message || '감독 지정 중 오류가 발생했습니다.');
+        }
     });
+
 
     document.body.addEventListener('click', async (e) => {
         const target = e.target.closest('[data-action]');
@@ -1397,6 +1493,12 @@ function renderRecordEditScreen() {
         }
         serverCall('changeScreen', backTarget);
         break;
+            case 'go-to-coach-ranking':
+                serverCall('changeScreen', 'screen-coach-ranking');
+                break;
+            case 'go-to-attendance':
+                serverCall('changeScreen', 'screen-attendance');
+                break;
             case 'toggle-attendance':
               const names = localState.attendingPlayerNames;
               const index = names.indexOf(playerName);
@@ -1426,7 +1528,15 @@ function renderRecordEditScreen() {
                 serverCall('performTeamAllocation', algorithm, shuffleEnabled);
                 break;
             case 'go-to-match-select':
-                serverCall('changeScreen', 'screen-match-select');
+                (async () => {
+                    const teamNames = getTeamNamesForMode(localState.teamMode);
+                    const coaches = teamNames.map(t => localState.teams[t] && localState.teams[t].coach).filter(Boolean);
+                    if (coaches.length !== teamNames.length) {
+                        alert(`감독을 ${teamNames.length}명 모두 지정해주세요.`);
+                        return;
+                    }
+                    await serverCall('changeScreen', 'screen-match-select');
+                })();
                 break;
             case 'toggle-team-select':
                 const teamToToggle = teamName;
@@ -1643,21 +1753,6 @@ function renderRecordEditScreen() {
                 document.getElementById('confirm-session-end-modal').classList.add('hidden');
                 if (isConfirmed === 'true') {
                     serverCall('finishSessionToSummary');
-                }
-                break;
-            case 'go-to-record-edit':
-                await serverCall('changeScreen', 'screen-record-edit');
-                break;
-            case 'back-to-session-summary':
-                await serverCall('changeScreen', 'screen-session-summary');
-                break;
-            case 'record-edit-team-tab':
-                recordEditActiveTeam = teamName;
-                renderRecordEditScreen();
-                break;
-            case 'restore-session-stats-snapshot':
-                if (window.confirm('세션 종료 시점의 스탯으로 되돌리시겠습니까?')) {
-                    await serverCall('restoreSessionStatsSnapshot');
                 }
                 break;
             case 'save-and-start-new-session':
