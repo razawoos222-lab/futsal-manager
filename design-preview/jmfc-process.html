@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JMFC 풋살 매니저 — 전체 프로세스 (Flow)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --canvas: #f8fafc;
+      --card: #fff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --gold: #c9a227;
+      --gold-l: #f5e6b8;
+      --accent: #5a8fad;
+      --arrow: #94a3b8;
+      --role-pivo: #8b5cf6;
+      --role-fixo: #3b82f6;
+      --role-ala: #f59e0b;
+      --role-all: #14b8a6;
+      --coach-c: #a3e635;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .top {
+      text-align: center;
+      padding: 1.25rem 1rem 0.75rem;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      background: linear-gradient(180deg, #fff, var(--bg));
+    }
+    .top h1 {
+      font-family: Cinzel, Georgia, serif;
+      font-size: 1.35rem;
+      color: #8b6914;
+    }
+    .top p { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.5; }
+    .top .tag {
+      display: inline-block; margin-top: 0.5rem;
+      padding: 0.2rem 0.55rem; background: var(--gold-l);
+      border-radius: 6px; font-size: 0.65rem; font-weight: 800; color: #5c4a0f;
+    }
+    .legend {
+      max-width: 1200px; margin: 0.75rem auto; padding: 0 1rem;
+      display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; justify-content: center;
+      font-size: 0.68rem; color: var(--muted);
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .dot { width: 10px; height: 10px; border-radius: 3px; }
+    .scroll-hint {
+      text-align: center; font-size: 0.65rem; color: var(--muted);
+      padding: 0.25rem; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+    .canvas-wrap {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 1rem 0 2rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .canvas {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      padding: 0 1.5rem;
+      min-width: min-content;
+    }
+    .step-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 200px;
+    }
+    .step-num {
+      font-size: 0.65rem; font-weight: 900; color: var(--gold);
+      letter-spacing: 0.08em; margin-bottom: 4px;
+    }
+    .step-title {
+      font-size: 0.75rem; font-weight: 800; text-align: center;
+      margin-bottom: 6px; line-height: 1.3; min-height: 2.4em;
+    }
+    .phone {
+      width: 168px;
+      border-radius: 18px;
+      border: 2px solid rgba(201,162,39,0.35);
+      background: var(--card);
+      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+      overflow: hidden;
+      font-size: 0.55rem;
+    }
+    .phone-hd {
+      padding: 6px 8px;
+      background: linear-gradient(180deg, var(--gold-l), transparent);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .phone-hd .logo {
+      width: 22px; height: 22px; border-radius: 50%;
+      flex-shrink: 0; object-fit: contain;
+    }
+    .phone-bd { padding: 8px; min-height: 200px; }
+    .arrow-col {
+      width: 36px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 4.5rem;
+    }
+    .arrow-col svg { color: var(--arrow); }
+    .note {
+      font-size: 0.58rem; color: var(--muted);
+      text-align: center; margin-top: 6px; line-height: 1.35;
+      padding: 0 4px; max-width: 180px;
+    }
+    .pcard {
+      border-radius: 8px; border: 2px solid var(--role-fixo);
+      padding: 6px; margin-bottom: 4px; position: relative;
+      background: #fafafa;
+    }
+    .pcard.pivo { border-color: var(--role-pivo); }
+    .pcard.ala { border-color: var(--role-ala); }
+    .pcard.all { border-color: var(--role-all); }
+    .pcard .row1 { display: flex; justify-content: space-between; font-weight: 800; }
+    .pcard .role { text-align: center; font-weight: 700; color: var(--muted); margin: 2px 0; }
+    .pcard .stats { font-size: 0.5rem; color: var(--accent); text-align: center; }
+    .coach-badge {
+      position: absolute; top: -4px; right: -4px;
+      width: 18px; height: 14px; background: var(--coach-c);
+      border-radius: 3px; font-size: 9px; font-weight: 900;
+      color: #000; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+    .chip {
+      padding: 4px; border-radius: 6px; background: #f1f5f9;
+      text-align: center; font-weight: 600; font-size: 0.5rem;
+    }
+    .chip.on { background: #dbeafe; border: 1px solid #3b82f6; }
+    .banner {
+      background: #1e293b; color: #a3e635; padding: 4px;
+      border-radius: 6px; text-align: center; font-weight: 800;
+      margin-bottom: 6px; font-size: 0.5rem;
+    }
+    .tabs { display: flex; gap: 2px; margin-bottom: 6px; }
+    .tabs i {
+      flex: 1; text-align: center; font-style: normal;
+      font-size: 0.45rem; padding: 3px 1px; border-bottom: 2px solid #e2e8f0;
+      color: var(--muted); font-weight: 700;
+    }
+    .tabs i.on { color: var(--accent); border-color: var(--accent); }
+    .slim { display: flex; gap: 3px; margin-bottom: 3px; }
+    .slim button {
+      flex: 1; padding: 4px; border: 1px solid #e2e8f0;
+      border-radius: 5px; background: #f8fafc; font-size: 0.48rem;
+      font-family: inherit; text-align: left;
+    }
+    .modal-mini {
+      border: 2px solid var(--accent); border-radius: 8px;
+      padding: 6px; margin-top: 6px; background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .modal-mini h4 { font-size: 0.52rem; text-align: center; margin-bottom: 4px; }
+    .mbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+    .mbtns button {
+      border: none; border-radius: 4px; padding: 5px 2px;
+      font-size: 0.48rem; font-weight: 800; color: #fff; font-family: inherit;
+    }
+    .g, .d, .s {
+      background: #18181b; color: #a3e635;
+    }
+    .og { background: #dc2626; color: #fff; }
+    .assist { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-top: 4px; }
+    .assist span {
+      padding: 3px 6px; border-radius: 999px; background: #fafafa;
+      border: 1px solid #cbd5e1; font-size: 0.45rem; font-weight: 800;
+    }
+    .assist span.on {
+      background: #f0fdf4; border-color: #16a34a; color: #15803d;
+      box-shadow: 0 0 0 1px rgba(22,163,74,0.25);
+    }
+    .assist span.on::after { content: ' ✓'; }
+    .btn-blue {
+      display: block; width: 100%; padding: 6px; margin-top: 4px;
+      border: none; border-radius: 6px; background: #2563eb; color: #fff;
+      font-weight: 800; font-size: 0.5rem; font-family: inherit;
+    }
+    .btn-green-sm {
+      display: block; width: 100%; padding: 6px; margin-top: 4px;
+      border: none; border-radius: 6px; background: #16a34a; color: #fff;
+      font-weight: 800; font-size: 0.5rem; font-family: inherit;
+    }
+    .tbl { width: 100%; font-size: 0.42rem; border-collapse: collapse; }
+    .tbl th, .tbl td { padding: 2px; border-bottom: 1px solid #e2e8f0; text-align: center; }
+    .btn-g {
+      display: block; width: 100%; padding: 6px; margin-top: 4px;
+      border: none; border-radius: 6px; background: #2563eb; color: #fff;
+      font-weight: 800; font-size: 0.5rem; font-family: inherit;
+    }
+    .footer {
+      max-width: 900px; margin: 0 auto 2rem; padding: 1rem;
+      background: var(--card); border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.06);
+      font-size: 0.75rem; line-height: 1.6; color: var(--muted);
+    }
+    .footer a { color: #8b6914; font-weight: 700; }
+    .branch {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; flex-shrink: 0; padding-top: 3rem;
+    }
+    .branch .arrow-col { padding-top: 0; width: auto; }
+    .stack-78 { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .coach-slots { display: flex; gap: 2px; margin-bottom: 4px; }
+    .coach-slot {
+      flex: 1; min-height: 28px; border-radius: 5px; border: 1px dashed #cbd5e1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.38rem; font-weight: 800; color: var(--muted); padding: 2px;
+    }
+    .coach-slot.pick { border-color: #3b82f6; border-style: solid; background: #eff6ff; }
+    .coach-slot.red { border-style: solid; border-color: #ef4444; background: #fef2f2; color: #ef4444; }
+    .coach-slot.blue { border-style: solid; border-color: #3b82f6; background: #eff6ff; color: #3b82f6; }
+    .coach-slot.ylw { border-style: solid; border-color: #eab308; background: #fffbeb; color: #ca8a04; }
+    .pool-mini { max-height: 72px; overflow: hidden; margin-bottom: 3px; }
+    .pool-mini .grid2 { gap: 2px; }
+    .pool-mini .pcard { margin-bottom: 2px; padding: 4px; }
+    .pool-mini .pcard.dim { opacity: 0.35; }
+    .pool-mini .pcard.pick { border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(37,99,235,0.4); }
+    .step-hint {
+      font-size: 0.42rem; color: var(--muted); line-height: 1.35;
+      background: #f8fafc; border-radius: 4px; padding: 3px 4px; margin-bottom: 4px;
+    }
+    .pwr-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; font-size: 0.42rem; }
+    .pwr-bar { flex: 1; height: 5px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .pwr-bar i { display: block; height: 100%; border-radius: 999px; }
+    .pwr-bar i.r { background: #ef4444; } .pwr-bar i.b { background: #3b82f6; } .pwr-bar i.y { background: #eab308; }
+    .pwr-meta { font-size: 0.4rem; color: var(--muted); text-align: center; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <h1>JMFC 풋살 매니저 — 전체 프로세스</h1>
+    <p>Figma Flow처럼 한눈에 보는 화면 흐름 (목업 · GAS 미연동)</p>
+    <span class="tag">flow v6.4 · TEAM RED/BLUE/YELLOW</span>
+  </header>
+
+  <div class="legend">
+    <span><i class="dot" style="background:var(--role-pivo)"></i> 피보</span>
+    <span><i class="dot" style="background:var(--role-fixo)"></i> 픽소</span>
+    <span><i class="dot" style="background:var(--role-ala)"></i> 아라</span>
+    <span><i class="dot" style="background:var(--role-all)"></i> 올라운드</span>
+    <span>|</span>
+    <span><b style="color:var(--coach-c)">■</b> 감독 C 뱃지</span>
+    <span>|</span>
+    <span>팀 짤 때 Draft: <b>승률만</b> · 확정: <b>평균 100점·승률</b></span>
+  </div>
+  <p class="scroll-hint">← 좌우로 스크롤하세요 →</p>
+
+  <div class="canvas-wrap">
+    <div class="canvas">
+      <!-- 1 참석 -->
+      <div class="step-col" id="step-1">
+        <div class="step-num">STEP 01</div>
+        <div class="step-title">참석 조사</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong style="font-size:0.55rem">JMFC</strong></div>
+          <div class="phone-bd">
+            <div style="font-weight:800;margin-bottom:4px">참석 조사</div>
+            <div class="chip" style="margin-bottom:4px">📅 2026-05-29</div>
+            <div style="display:flex;gap:2px;margin-bottom:4px;font-size:0.42rem;font-weight:800">
+              <span style="flex:1;padding:3px;background:#f1f5f9;border-radius:4px;text-align:center">2팀</span>
+              <span style="flex:1;padding:3px;background:#2563eb;color:#fff;border-radius:4px;text-align:center">3팀</span>
+              <span style="flex:1;padding:3px;background:#f1f5f9;border-radius:4px;text-align:center">4팀</span>
+            </div>
+            <div class="grid2">
+              <div class="pcard pivo" style="margin:0"><div class="row1"><span>김기호</span></div><div class="role">피보</div></div>
+              <div class="pcard fixo" style="margin:0"><div class="row1"><span>이영중</span></div><div class="role">픽소</div></div>
+              <div class="pcard ala" style="margin:0"><div class="row1"><span>여도영</span></div><div class="role">아라</div></div>
+              <div class="pcard all" style="margin:0"><div class="row1"><span>이장영</span></div><div class="role">올라운드</div></div>
+            </div>
+            <button class="btn-g">참석 완료 →</button>
+            <div style="display:flex;gap:2px;margin-top:4px;font-size:0.4rem"><span style="flex:1;padding:3px;border:1px solid #e2e8f0;border-radius:4px;text-align:center">← 이전</span><span style="flex:1;padding:3px;background:#18181b;color:#fff;border-radius:4px;text-align:center">다음 →</span></div>
+          </div>
+        </div>
+        <p class="note">날짜 + 2/3/4팀<br>등번호 없음</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 2 감독 -->
+      <div class="step-col" id="step-2">
+        <div class="step-num">STEP 02</div>
+        <div class="step-title">감독 지정</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>Draft</strong></div>
+          <div class="phone-bd">
+            <div style="font-weight:800;margin-bottom:4px">감독 3명 선택</div>
+            <div class="step-hint">① 감독 자리 탭 → ② 선수 카드 탭 → ③ 3팀 C 완료</div>
+            <div class="coach-slots">
+              <div class="coach-slot pick"><span>TEAM RED</span>감독?</div>
+              <div class="coach-slot"><span>BLU</span>빈자리</div>
+              <div class="coach-slot"><span>TEAM YELLOW</span>빈자리</div>
+            </div>
+            <div style="font-size:0.42rem;font-weight:700;color:var(--muted);margin-bottom:2px">참석 선수 풀</div>
+            <div class="pool-mini">
+              <div class="grid2">
+                <div class="pcard pivo pick"><div class="row1"><span>김기호</span></div><div class="role">피보</div></div>
+                <div class="pcard fixo"><div class="row1"><span>이윤수</span></div><div class="role">픽소</div></div>
+                <div class="pcard ala"><div class="row1"><span>신윤호</span></div><div class="role">아라</div></div>
+                <div class="pcard all"><div class="row1"><span>이장영</span></div><div class="role">올라운드</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note">자리 선택 후<br>풀에서 카드 탭</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 3 스네이크 -->
+      <div class="step-col" id="step-3">
+        <div class="step-num">STEP 03</div>
+        <div class="step-title">스네이크 픽</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>드래프트</strong></div>
+          <div class="phone-bd">
+            <div class="banner">TEAM BLUE 차례 · 남은 12명</div>
+            <div style="font-size:0.4rem;margin-bottom:3px;line-height:1.3;color:#ef4444">TEAM RED 3/8 · TEAM BLUE 2/8 · TEAM YELLOW 1/8</div>
+            <div class="pool-mini" style="max-height:88px">
+              <div class="grid2">
+                <div class="pcard fixo pick"><div class="row1"><span>송환규</span></div><div class="stats">승률 41%</div></div>
+                <div class="pcard ala"><div class="row1"><span>이호섭</span></div><div class="stats">승률 45%</div></div>
+                <div class="pcard pivo dim"><div class="row1"><span>이영중</span></div><div class="role">TEAM RED✓</div></div>
+                <div class="pcard fixo"><div class="row1"><span>김상덕</span></div><div class="stats">승률 47%</div></div>
+              </div>
+            </div>
+            <button class="btn-g" style="background:#64748b;color:#fff;font-size:0.45rem;padding:4px">↩ 픽 취소</button>
+          </div>
+        </div>
+        <p class="note">탭→즉시 편성<br>승률만 · 남은 풀</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 4 확정 -->
+      <div class="step-col" id="step-4">
+        <div class="step-num">STEP 04</div>
+        <div class="step-title">팀 확정</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>확정</strong></div>
+          <div class="phone-bd">
+            <div style="font-weight:800;margin-bottom:4px">3팀 라인업</div>
+            <div class="pwr-meta">팀파워 100 · 팀승률 · 감독(C) 후 랜덤</div>
+            <div style="font-size:0.45rem;color:#ef4444;font-weight:800">TEAM RED 8명 · 팀파워 88 · 51%</div>
+            <div style="font-size:0.45rem;color:#3b82f6;font-weight:800">TEAM BLUE 8명 · 팀파워 94 · 55%</div>
+            <div style="font-size:0.45rem;color:#92400e;font-weight:800;margin-bottom:6px">TEAM YELLOW 8명 · 팀파워 79 · 48%</div>
+            <button class="btn-g">팀 구성 확정 →</button>
+          </div>
+        </div>
+        <p class="note">팀파워<br>팀색 표시</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 5 경기 선택 -->
+      <div class="step-col" id="step-5">
+        <div class="step-num">STEP 05</div>
+        <div class="step-title">경기 선택</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>경기</strong></div>
+          <div class="phone-bd">
+            <div style="font-weight:800;margin-bottom:4px">경기 선택</div>
+            <div class="chip" style="margin-bottom:4px">경기 시간: 10분 ▾</div>
+            <div style="font-size:0.48rem;color:var(--muted);margin-bottom:4px">7~12분 · 구장 선택 없음</div>
+            <div class="chip on" style="margin-bottom:3px;color:#ef4444;font-weight:800">TEAM RED ✓</div>
+            <div class="chip on" style="margin-bottom:6px;color:#3b82f6;font-weight:800">TEAM BLUE ✓</div>
+            <button class="btn-g">경기 시작</button>
+          </div>
+        </div>
+        <p class="note">2팀 선택<br>구장 UI 제거</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 6 라인업 -->
+      <div class="step-col" id="step-6">
+        <div class="step-num">STEP 06</div>
+        <div class="step-title">경기 · 라인업</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>Match #1</strong></div>
+          <div class="phone-bd">
+            <div style="text-align:center;font-weight:900;margin-bottom:4px">TEAM RED 0 : 0 TEAM BLUE</div>
+            <div style="font-size:0.42rem;text-align:center;margin-bottom:3px;color:#71717a">🔄 원팀복귀 · 10:00 · 시작</div>
+            <div class="tabs">
+              <i class="on">라인업</i><i>팀순위</i><i>개인순위</i>
+            </div>
+            <div class="grid2" style="gap:4px">
+              <div>
+                <div style="font-size:0.45rem;color:#ef4444;font-weight:800;text-align:center">TEAM RED</div>
+                <div class="slim"><button>[18] 김기호</button><button style="width:20px;flex:0">🔄</button></div>
+                <div class="slim"><button>[7] 이영중</button><button style="width:20px;flex:0">🔄</button></div>
+              </div>
+              <div>
+                <div style="font-size:0.45rem;color:#3b82f6;font-weight:800;text-align:center">TEAM BLUE</div>
+                <div class="slim"><button>[9] 이윤수</button><button style="width:20px;flex:0">🔄</button></div>
+              </div>
+            </div>
+            <p style="font-size:0.45rem;color:var(--muted);text-align:center;margin-top:4px">이름 탭 → 모달</p>
+          </div>
+        </div>
+        <p class="note">slim 버튼<br>빠른 기록</p>
+      </div>
+
+      <!-- branch 7-8 modals -->
+      <div class="branch">
+        <div class="arrow-col"><svg width="20" height="28" viewBox="0 0 20 28"><path d="M10 0v20M4 14l6 8 6-8" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+        <div class="stack-78">
+          <div class="step-col" style="width:168px" id="step-7">
+            <div class="step-num">STEP 07</div>
+            <div class="step-title">기록 모달</div>
+            <div class="phone" style="width:152px">
+              <div class="phone-bd" style="min-height:auto">
+                <div class="modal-mini">
+                  <h4>여도영 (TEAM RED)</h4>
+                  <div class="mbtns">
+                    <button class="g">득점</button><button class="og">자책골</button>
+                    <button class="d">수비</button><button class="s">선방</button>
+                  </div>
+                  <button style="width:100%;margin-top:4px;padding:4px;border:none;border-radius:4px;background:#e2e8f0;font-size:0.48rem">취소</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="arrow-col" style="padding:0"><svg width="20" height="24" viewBox="0 0 20 24"><path d="M10 0v16M4 10l6 8 6-8" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+          <div class="step-col" style="width:168px" id="step-8">
+            <div class="step-num">STEP 08</div>
+            <div class="step-title">도움 모달</div>
+            <div class="phone" style="width:152px">
+              <div class="phone-bd" style="min-height:auto">
+                <div class="modal-mini">
+                  <h4>여도영 득점!</h4>
+                  <p style="font-size:0.45rem;color:var(--muted);text-align:center;margin-bottom:4px">도움 선택</p>
+                  <div class="assist">
+                    <span class="on">이영중</span><span>없음</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+      </div>
+
+      <!-- 9 순위 -->
+      <div class="step-col" id="step-9">
+        <div class="step-num">STEP 09</div>
+        <div class="step-title">팀/개인 순위</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>Match #1</strong></div>
+          <div class="phone-bd">
+            <div class="tabs">
+              <i>라인업</i><i class="on">팀순위</i><i>개인순위</i>
+            </div>
+            <table class="tbl">
+              <tr><th>#</th><th>팀</th><th>승점</th></tr>
+              <tr><td>1</td><td style="color:#3b82f6">BLU</td><td>7</td></tr>
+              <tr><td>2</td><td style="color:#ef4444">TEAM RED</td><td>3</td></tr>
+            </table>
+            <div style="margin-top:6px;font-size:0.45rem;color:var(--muted)">개인: MVP·득·도·수·선</div>
+          </div>
+        </div>
+        <p class="note">세션 중 실시간<br>3탭 전환</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 10 결과 -->
+      <div class="step-col" id="step-10">
+        <div class="step-num">STEP 10</div>
+        <div class="step-title">오늘의 결과</div>
+        <div class="phone">
+          <div class="phone-hd"><img class="logo" src="assets/jmfc-logo.png" alt="" /><strong>종료</strong></div>
+          <div class="phone-bd">
+            <div style="font-weight:800;margin-bottom:4px">오늘의 경기 결과</div>
+            <div style="background:#fffbeb;border-radius:6px;padding:4px;margin-bottom:4px;font-size:0.48rem">
+              🏆 MVP · MP 4<br><strong>김기호 · 이장영</strong>
+            </div>
+            <div class="chip" style="margin-bottom:4px">팀 순위 · 팀별 스탯</div>
+            <button class="btn-green-sm" style="font-size:0.45rem">✏️ 기록 수정</button>
+            <button class="btn-blue" style="font-size:0.45rem;margin-top:3px">💾 저장 &amp; NEW</button>
+          </div>
+        </div>
+        <p class="note">녹색 수정<br>파란 저장</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 11 기록 수정 -->
+      <div class="step-col" id="step-11">
+        <div class="step-num">STEP 11</div>
+        <div class="step-title">기록 수정</div>
+        <div class="phone">
+          <div class="phone-hd"><img src="assets/jmfc-logo.png" alt="" style="width:22px;height:22px;border-radius:50%" /><strong>수정</strong></div>
+          <div class="phone-bd">
+            <div style="background:#fef3c7;border-radius:4px;padding:3px;font-size:0.42rem;margin-bottom:4px;line-height:1.3">
+              팀 승패·득실 자동 반영 X
+            </div>
+            <div class="tabs" style="margin-bottom:4px">
+              <i class="on" style="color:#dc2626">TEAM RED</i><i style="color:#2563eb">TEAM BLUE</i><i style="color:#92400e">TEAM YELLOW</i>
+            </div>
+            <table class="tbl">
+              <tr><th>선수</th><th>득</th><th>도</th><th>MP</th></tr>
+              <tr><td style="text-align:left">여도영</td><td><input style="width:22px;font-size:0.4rem" value="2" /></td><td><input style="width:22px;font-size:0.4rem" value="1" /></td><td>6</td></tr>
+              <tr><td style="text-align:left">이영중</td><td>0</td><td>2</td><td>4</td></tr>
+            </table>
+            <div style="font-size:0.42rem;color:var(--muted);margin:4px 0">MVP 미리보기 갱신</div>
+            <button style="width:100%;padding:3px;border:1px solid #e4e4e7;border-radius:4px;background:#fff;font-size:0.45rem;margin-bottom:2px">↩ 되돌리기</button>
+            <button class="btn-blue">저장 &amp; NEW</button>
+          </div>
+        </div>
+        <p class="note">팀 탭 · 숫자 input<br>15px+ · 44px 터치</p>
+      </div>
+
+      <div class="arrow-col"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M0 10h22M18 4l8 6-8 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+
+      <!-- 12 저장 -->
+      <div class="step-col" id="step-12">
+        <div class="step-num">STEP 12</div>
+        <div class="step-title">저장 확인</div>
+        <div class="phone">
+          <div class="phone-hd"><img src="assets/jmfc-logo.png" alt="" style="width:22px;height:22px;border-radius:50%" /><strong>저장</strong></div>
+          <div class="phone-bd" style="text-align:center">
+            <div style="font-size:1.2rem;margin:8px 0">✅</div>
+            <div style="font-weight:800;margin-bottom:4px">저장할까요?</div>
+            <div style="font-size:0.45rem;color:var(--muted);margin-bottom:6px">오늘 3경기 · 24명</div>
+            <button class="btn-blue">확인 · 저장</button>
+            <button style="width:100%;margin-top:3px;padding:4px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.48rem">취소</button>
+          </div>
+        </div>
+        <p class="note">한 줄 요약 후<br>기록실 반영</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <strong>열기:</strong>
+    <a href="https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/design-preview/jmfc-process.html?v=6.4">githack 링크 (v6.4)</a>
+    → <strong>Open the page</strong> 한 번 클릭 · <strong>12단계</strong> 좌우 스크롤.<br><br>
+    화면 상세 목업: <a href="jmfc-mockup.html?v=6.4">jmfc-mockup.html</a> (v6.4 · TEAM 명칭 통일)<br>
+    계획: <code>docs/HANDOFF-JMFC-MOCKUP.md</code>
+  </footer>
+</body>
+</html>

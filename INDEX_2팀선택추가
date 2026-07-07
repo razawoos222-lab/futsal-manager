@@ -191,6 +191,7 @@
         <select id="team-mode" class="w-full max-w-xs p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl font-semibold border border-gray-500">
             <option value="3">3팀 대결 (순환)</option>
             <option value="2">2팀 대결</option>
+            <option value="4">4팀 대결 (BLACK)</option>
         </select>
     </div>
     <div class="card"><h2 class="text-4xl font-bold">참석 인원: <span id="attendance-count">0</span>명</h2></div>
@@ -217,6 +218,7 @@
         </label>
         <button data-action="re-allocate" class="btn btn-secondary text-3xl px-8">🔄 다시 배분</button>
     </div>
+    <div id="coach-slots-container" class="card space-y-3 text-left mb-4"></div>
     <div id="team-allocation-container" class="flex flex-col gap-6"></div>
     <button data-action="go-to-match-select" class="btn btn-primary w-full text-4xl">경기 준비 완료</button>
 </div>
@@ -377,12 +379,45 @@
 
 
 <script>
-    let MASTER_PLAYERS_DB = [], localState = {}, timerInterval = null, currentEventData = {};
+    let MASTER_PLAYERS_DB = [], COACH_ARCHIVE_STATS = {}, localState = {}, timerInterval = null, currentEventData = {};
     let pageLeaveTime = null, timerWasRunning = false;
     let currentGoalkeeperSelectTeam = null;
     let currentPlayerToSwapOut = null;
-    let isProcessingEvent = false; 
-    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500' };
+    let isProcessingEvent = false;
+    const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+    const teamColorClasses = { RED: 'text-red-500', BLUE: 'text-blue-500', YELLOW: 'text-yellow-500', BLACK: 'text-gray-100' };
+
+    function getTeamNamesForMode(teamMode) {
+        const mode = Number(teamMode) || 3;
+        if (mode === 2) return ['RED', 'BLUE'];
+        if (mode === 4) return TEAM_ORDER.slice();
+        return ['RED', 'BLUE', 'YELLOW'];
+    }
+
+    function getActiveTeamsInOrder() {
+        const mode = Number(localState.teamMode) || 3;
+        const names = getTeamNamesForMode(mode);
+        if (mode === 4) {
+            return names.filter(t => localState.teams && localState.teams[t]);
+        }
+        return names.filter(t => {
+            const td = localState.teams[t];
+            return td && (td.players.length > 0 || td.goalkeeper);
+        });
+    }
+
+    function getCoachWinRateDisplay(coachName) {
+        if (!coachName) return '-';
+        const archive = COACH_ARCHIVE_STATS[coachName];
+        if (archive && archive.games > 0 && archive.winRate != null) {
+            return Number(archive.winRate).toFixed(1) + '%';
+        }
+        const master = MASTER_PLAYERS_DB.find(p => p.name === coachName);
+        if (master && master.winRate) {
+            return (Number(master.winRate) * 100).toFixed(1) + '%';
+        }
+        return '-';
+    }
 
 
 // --- 서버 호출 ---
@@ -564,14 +599,45 @@ function recoverTimerIfNeeded() {
 }
 
 
+    function renderCoachSlots() {
+        const el = document.getElementById('coach-slots-container');
+        if (!el) return;
+        const teamNames = getTeamNamesForMode(localState.teamMode);
+        const attending = localState.attendingPlayerNames || [];
+        el.innerHTML = `
+            <h3 class="text-3xl font-black text-gray-100 mb-2">감독 지정</h3>
+            <p class="text-xl text-gray-400 mb-3">팀별 감독 1명씩 선택하세요.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${teamNames.map(teamName => {
+                    const currentCoach = (localState.teams[teamName] && localState.teams[teamName].coach) || '';
+                    const options = attending.map(name =>
+                        `<option value="${name}" ${name === currentCoach ? 'selected' : ''}>${name}</option>`
+                    ).join('');
+                    return `
+                        <label class="flex flex-col gap-1">
+                            <span class="text-2xl font-bold ${teamColorClasses[teamName]}">TEAM ${teamName}</span>
+                            <select data-action="set-coach-select" data-team-name="${teamName}" class="p-3 rounded-lg bg-gray-700 text-gray-100 text-2xl border border-gray-500">
+                                <option value="">감독 선택</option>
+                                ${options}
+                            </select>
+                        </label>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+
     function renderAllocationScreen() {
+    renderCoachSlots();
     const container = document.getElementById('team-allocation-container');
     if (!container) return;
     const playerStats = MASTER_PLAYERS_DB.reduce((acc, p) => { acc[p.name] = p; return acc; }, {});
-    container.innerHTML = Object.keys(localState.teams).map(teamName => {
+    container.innerHTML = getTeamNamesForMode(localState.teamMode).filter(t => localState.teams[t]).map(teamName => {
         const teamData = localState.teams[teamName];
-        let players = teamData.players;
-        const goalkeeper = teamData.goalkeeper;
+        let players = teamData.players.filter(p => p !== teamData.coach);
+        const goalkeeper = teamData.goalkeeper === teamData.coach ? null : teamData.goalkeeper;
+        const coachName = teamData.coach || null;
 
 
         if (teamData.viceCaptain && !players.includes(teamData.viceCaptain)) {
@@ -585,7 +651,8 @@ function recoverTimerIfNeeded() {
         }
 
 
-        if (players.length === 0 && !goalkeeper) return '';
+        const showEmptyTeam = Number(localState.teamMode) === 4;
+        if (players.length === 0 && !goalkeeper && !coachName && !showEmptyTeam) return '';
 
 
         // 기존 코드를 이것으로 교체:
@@ -603,11 +670,20 @@ allTeamPlayers.forEach(pName => {
 const teamTotalPlayers = new Set(allTeamPlayers).size;
 const teamAvgCCP = teamTotalPlayers > 0 ? (teamTotalCCP / teamTotalPlayers).toFixed(1) : 0;
 const teamAvgWinRate = teamTotalPlayers > 0 ? ((teamTotalWinRate / teamTotalPlayers) * 100).toFixed(1) : 0;
+const coachWinRate = coachName ? getCoachWinRateDisplay(coachName) : null;
+const coachLine = coachName
+    ? `<p class="text-2xl text-gray-300 mb-2">감독 <span class="font-black ${teamColorClasses[teamName]}">${coachName}</span> · 감독 승률 <span class="font-black text-gray-100">${coachWinRate}</span></p>`
+    : '';
+const emptyHint = (players.length === 0 && !goalkeeper && !coachName)
+    ? '<p class="text-2xl text-gray-400">배분된 선수가 없습니다.</p>'
+    : '';
 
 
         return `
             <div class="card space-y-4 w-full">
-                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">${teamName} <span class="text-2xl text-gray-400 ml-2">(총원 ${teamTotalPlayers}명 | 평균 CCP ${teamAvgCCP} | 평균승률 ${teamAvgWinRate}%)</span></h3>
+                <h3 class="text-5xl font-black ${teamColorClasses[teamName]}">TEAM ${teamName} <span class="text-2xl text-gray-400 ml-2">(${teamTotalPlayers}명 | 팀파워 CCP ${teamAvgCCP} | 팀 승률 ${teamAvgWinRate}%)</span></h3>
+                ${coachLine}
+                ${emptyHint}
                 <div class="grid grid-cols-2 gap-2">
                     ${players.map(p => {
                         const isCaptain = p === teamData.captain;
@@ -645,19 +721,19 @@ function renderMatchSelectScreen() {
         fieldSelect.value = localState.selectedField;
     }
     
-    // ★ 활성 팀만 필터링 (선수가 1명 이상)
-    const activeTeams = Object.keys(localState.teams)
-        .filter(t => localState.teams[t].players.length > 0 || localState.teams[t].goalkeeper);
+    const activeTeams = getActiveTeamsInOrder();
     
     const container = document.getElementById('team-select-container');
     container.innerHTML = activeTeams.map(teamName => {
         const isSelected = localState.match.playingTeams.includes(teamName) ? 'selected' : '';
         const teamStat = localState.sessionStats.teamStats[teamName] || { wins: 0, draws: 0, losses: 0 };
+        const coachLabel = localState.teams[teamName] && localState.teams[teamName].coach
+            ? ` · 감독 ${localState.teams[teamName].coach}` : '';
         return `
             <div data-action="toggle-team-select" data-team-name="${teamName}" 
                  class="team-card card rounded-2xl cursor-pointer border-4 border-gray-700 w-full mb-6 ${isSelected}">
-                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">${teamName}</h2>
-                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)</p>
+                <h2 class="text-6xl font-black ${teamColorClasses[teamName]}">TEAM ${teamName}</h2>
+                <p class="text-2xl text-gray-400 mt-2">(${teamStat.wins}승 ${teamStat.draws}무 ${teamStat.losses}패)${coachLabel}</p>
             </div>
         `;
     }).join('');
@@ -746,7 +822,7 @@ function renderMatchSelectScreen() {
                             if (emptySlots <= 0) return '';
                             
                             // 대기 팀 찾기 (경기 안 하는 팀)
-                            const waitingTeam = ['RED', 'BLUE', 'YELLOW'].find(t => 
+                            const waitingTeam = getTeamNamesForMode(localState.teamMode).find(t =>
                                 t !== localState.match.teamA.name && t !== localState.match.teamB.name
                             );
                             
@@ -977,7 +1053,7 @@ function renderSessionSummaryScreen() {
     const teamStatsHtml = `
         <div class="card mb-8 overflow-x-auto">
             <h2 class="text-4xl font-bold mb-4 text-gray-100">팀별 개인 스탯</h2>
-            ${Object.keys(localState.teams).map(teamName => {
+            ${getTeamNamesForMode(localState.teamMode).filter(t => localState.teams[t]).map(teamName => {
                 const teamData = localState.teams[teamName];
                 const playersInTeam = [...new Set([...teamData.players, teamData.goalkeeper].filter(Boolean))];
                 if (playersInTeam.length === 0) return '';
@@ -1046,11 +1122,28 @@ function renderSessionSummaryScreen() {
         try {
             const data = await serverCall('getInitialData');
             MASTER_PLAYERS_DB = data.masterPlayers;
+            COACH_ARCHIVE_STATS = data.coachArchiveStats || {};
             localState = data.appState;
             renderUI();
         } catch (e) {
             console.error('초기화 실패:', e);
             alert('앱을 초기화하는 데 실패했습니다. 새로고침해주세요.');
+        }
+    });
+
+    document.body.addEventListener('change', async (e) => {
+        const select = e.target.closest('[data-action="set-coach-select"]');
+        if (!select) return;
+        const teamNames = getTeamNamesForMode(localState.teamMode);
+        const coachNames = teamNames.map(t => {
+            const sel = document.querySelector(`[data-action="set-coach-select"][data-team-name="${t}"]`);
+            return sel ? sel.value : ((localState.teams[t] && localState.teams[t].coach) || '');
+        });
+        if (coachNames.some(c => !c)) return;
+        try {
+            await serverCall('setCoaches', coachNames);
+        } catch (err) {
+            console.error('감독 지정 오류:', err);
         }
     });
 
@@ -1105,7 +1198,15 @@ function renderSessionSummaryScreen() {
                 serverCall('performTeamAllocation', algorithm, shuffleEnabled);
                 break;
             case 'go-to-match-select':
-                serverCall('changeScreen', 'screen-match-select');
+                (async () => {
+                    const teamNames = getTeamNamesForMode(localState.teamMode);
+                    const coaches = teamNames.map(t => localState.teams[t] && localState.teams[t].coach).filter(Boolean);
+                    if (coaches.length !== teamNames.length) {
+                        alert(`감독을 ${teamNames.length}명 모두 지정해주세요.`);
+                        return;
+                    }
+                    await serverCall('changeScreen', 'screen-match-select');
+                })();
                 break;
             case 'toggle-team-select':
                 const teamToToggle = teamName;
@@ -1207,7 +1308,7 @@ function renderSessionSummaryScreen() {
                 currentGoalkeeperSelectTeam = teamName;
                 document.getElementById('gk-team-name').textContent = teamName;
                 const gkPlayerListEl = document.getElementById('gk-player-list');
-                const allTeamNames = ['RED', 'BLUE', 'YELLOW'];
+                const allTeamNames = getTeamNamesForMode(localState.teamMode);
                 const availablePlayers = localState.attendingPlayerNames.filter(pName => {
                     return !allTeamNames.some(tName => localState.teams[tName].players.includes(pName) || localState.teams[tName].goalkeeper === pName);
                 });
@@ -1238,7 +1339,7 @@ function renderSessionSummaryScreen() {
                 document.getElementById('swap-out-player-info').textContent = `${playerName} (${teamName}) ${currentPlayerToSwapOut.isGoalkeeper ? 'GK' : ''} ➡️`;
                 const swapInPlayerListEl = document.getElementById('swap-in-player-list');
                 let swapOptionsHtml = '';
-                const allTeamNamesForSwap = ['RED', 'BLUE', 'YELLOW'];
+                const allTeamNamesForSwap = getTeamNamesForMode(localState.teamMode);
                 allTeamNamesForSwap.forEach(otherTeamName => {
                     if (otherTeamName !== teamName) {
                         const playersAndGk = [...localState.teams[otherTeamName].players, localState.teams[otherTeamName].goalkeeper].filter(Boolean);

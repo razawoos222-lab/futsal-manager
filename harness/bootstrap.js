@@ -12,11 +12,13 @@ const ROOT = path.resolve(__dirname, '..');
 const CONFIG = {
   STATS_SHEET: '선수별능력치',
   PLAYER_ARCHIVE_SHEET: '기록실_개인기록',
+  COACH_ARCHIVE_SHEET: '기록실_감독기록',
   PAST_TEAMS_SHEET: '지난_팀_구성',
   APP_STATE_SHEET: '앱_상태_저장',
 };
 
 const CODE_CANDIDATES = [
+  path.join(ROOT, 'Code_2팀선택추가'),
   path.join(ROOT, '3팀버전_code'),
   path.join(ROOT, 'src', 'Code.gs'),
 ];
@@ -32,7 +34,7 @@ export function loadFutsalScript(options = {}) {
 
   if (!codePath || !fs.existsSync(codePath)) {
     throw new Error(
-      `서버 코드 파일을 찾을 수 없습니다. 3팀버전_code 또는 src/Code.gs 가 필요합니다.`
+      `서버 코드 파일을 찾을 수 없습니다. Code_2팀선택추가 또는 3팀버전_code 가 필요합니다.`
     );
   }
 

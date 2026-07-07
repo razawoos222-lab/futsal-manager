@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JMFC 로고 미리보기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      color: #f4f4f5;
+      background: #0a0a0a;
+      padding: 2rem 1rem 3rem;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { text-align: center; font-size: 1.35rem; letter-spacing: 0.12em; margin-bottom: 0.4rem; }
+    .sub { text-align: center; color: #a1a1aa; font-size: 0.88rem; margin-bottom: 2rem; line-height: 1.65; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    .card h2 {
+      font-size: 0.78rem; color: #d4d4d8; padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.04); font-weight: 700;
+    }
+    .card .img-wrap { padding: 1.5rem; display: flex; align-items: center; justify-content: center; min-height: 260px; }
+    .card.hero .img-wrap {
+      padding: 0;
+      background: #111 url('assets/jmfc-logo-hero.png') center/cover no-repeat;
+      min-height: 320px;
+    }
+    .card.hero img { width: 72%; max-width: 280px; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5)); }
+    .card.light { background: #f4f4f5; }
+    .card.light h2 { color: #52525b; background: #e4e4e7; }
+    .card.dark { background: #09090b; }
+    .logo-xl { width: 240px; height: 240px; object-fit: contain; }
+    .logo-md { width: 120px; height: 120px; object-fit: contain; }
+    .logo-sm { width: 38px; height: 38px; object-fit: contain; }
+    .phone-shell {
+      max-width: 360px; margin: 2rem auto 0; border-radius: 24px; overflow: hidden;
+      border: 1.5px solid #52525b; box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+    }
+    .bar {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: #fff; border-bottom: 1.5px solid #c4c4c8;
+    }
+    .bar strong { display: block; font-size: 0.82rem; letter-spacing: 0.08em; font-weight: 900; color: #18181b; }
+    .bar span { font-size: 0.68rem; color: #52525b; font-weight: 600; }
+    .note {
+      margin-top: 1.75rem; padding: 1rem 1.2rem; border-radius: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.84rem; line-height: 1.65; color: #d4d4d8;
+    }
+    a.back { display: inline-block; margin-top: 1.25rem; color: #fbbf24; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>JMFC LOGO</h1>
+    <p class="sub">제공해 주신 엠블럼 기준 · 메탈릭 원형 · 사자 문장 · <strong>EST. 2016</strong><br>앱 헤더·목업용 PNG (정사각 크롭 + 카본 배경 원본)</p>
+
+    <div class="grid">
+      <div class="card hero">
+        <h2>원본 느낌 (카본 스트라이프 배경)</h2>
+        <div class="img-wrap">
+          <img src="assets/jmfc-logo.png" alt="JMFC 로고" />
+        </div>
+      </div>
+      <div class="card light">
+        <h2>라이트 UI · 앱 헤더</h2>
+        <div class="img-wrap">
+          <img class="logo-md" src="assets/jmfc-logo.png" alt="JMFC 로고" />
+        </div>
+      </div>
+      <div class="card dark">
+        <h2>다크 배경</h2>
+        <div class="img-wrap">
+          <img class="logo-md" src="assets/jmfc-logo.png" alt="JMFC 로고" />
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-shell">
+      <div class="bar">
+        <img class="logo-sm" src="assets/jmfc-logo.png" alt="" />
+        <div>
+          <strong>JMFC FOOTBALL</strong>
+          <span>참석 조사</span>
+        </div>
+      </div>
+      <div style="background:#fff;height:100px"></div>
+    </div>
+
+    <div class="note">
+      <strong>파일</strong><br>
+      <code>assets/jmfc-logo.png</code> — 헤더·아이콘용 (1024×1024)<br>
+      <code>assets/jmfc-logo-hero.png</code> — 카본 배경 포함 원본 비율<br>
+      더 정확히 맞추려면 원본 PNG를 <code>assets/jmfc-logo-source.png</code>로 넣어 주시면 그대로 교체 가능합니다.
+    </div>
+
+    <a class="back" href="jmfc-mockup.html?v=5.7">← 전체 화면 목업으로</a>
+  </div>
+</body>
+</html>
