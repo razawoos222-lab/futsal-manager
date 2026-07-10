@@ -435,43 +435,62 @@ function serverCall(funcName, ...args) {
         return Promise.reject(new Error("Google Apps Script 환경이 아닙니다."));
     }
 
-    // 타이머 관련 서버 호출은 로딩 오버레이 표시하지 않음
     const showLoading = !['toggleTimerState'].includes(funcName);
-    
-    if (showLoading) {
-        document.getElementById('loading-overlay').style.display = 'flex';
+    const silentRetry = ['toggleTimerState'].includes(funcName);
+
+    function isLockContentionMessage(message) {
+        return /다른 작업이 진행 중|잠금|Lock/i.test(String(message || ''));
     }
-    console.log(`[Server Call] -> ${funcName}`, args);
 
-    return new Promise((resolve, reject) => {
-        google.script.run
-            .withSuccessHandler(response => {
-                if (showLoading) {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }
-                console.log(`[Server Response] <- ${funcName}`, response);
+    function attempt(retryCount) {
+        if (showLoading && retryCount === 0) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        console.log(`[Server Call] -> ${funcName}`, args, retryCount > 0 ? `(retry ${retryCount})` : '');
 
-                if (response.success) {
-                    if (response.data && response.data.currentScreen) {
-                        localState = response.data;
-                        renderUI();
+        return new Promise((resolve, reject) => {
+            google.script.run
+                .withSuccessHandler(response => {
+                    if (showLoading) {
+                        document.getElementById('loading-overlay').style.display = 'none';
                     }
-                    
-                    resolve(response.data);
-                } else {
+                    console.log(`[Server Response] <- ${funcName}`, response);
+
+                    if (response.success) {
+                        if (response.data && response.data.currentScreen) {
+                            localState = response.data;
+                            renderUI();
+                        }
+                        resolve(response.data);
+                        return;
+                    }
+
+                    if (silentRetry && isLockContentionMessage(response.message) && retryCount < 4) {
+                        setTimeout(() => attempt(retryCount + 1).then(resolve).catch(reject), 400 * (retryCount + 1));
+                        return;
+                    }
+
                     alert(`서버 오류: ${response.message}`);
                     reject(new Error(response.message));
-                }
-            })
-            .withFailureHandler(error => {
-                if (showLoading) {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }
-                alert(`통신 오류: ${error.message}`);
-                reject(error);
-            })
-            [funcName](...args);
-    });
+                })
+                .withFailureHandler(error => {
+                    if (showLoading) {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    }
+
+                    if (silentRetry && isLockContentionMessage(error.message) && retryCount < 4) {
+                        setTimeout(() => attempt(retryCount + 1).then(resolve).catch(reject), 400 * (retryCount + 1));
+                        return;
+                    }
+
+                    alert(`통신 오류: ${error.message}`);
+                    reject(error);
+                })
+                [funcName](...args);
+        });
+    }
+
+    return attempt(0);
 }
 
 // --- 타이머 로직 ---
