@@ -14,9 +14,9 @@
 
 ## 2. 팀파워 · 승률 실험실 (실시트 데이터, GAS 아님)
 
-**[▶ 팀파워 실험실 열기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/team-power-lab.html?v=1)**
+**[▶ 팀파워 실험실 열기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/team-power-lab.html?v=2)**
 
 - 시트 `1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk` 연동/스냅샷
-- 팀파워 100점 만점 (CCP/G 60% + 합산 40%)
+- 팀파워 100점: **전 선수 최고 CCP/G = 100** · 개인 `(CCP/G÷최고)×100` · 팀 = 평균
 - 라인업 승률: `용병*` 제외 평균
 - 구공식 `(CCP/G÷2.5)×100` 과 나란히 비교
