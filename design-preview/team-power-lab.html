@@ -4,17 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>JMFC 실험실 · 팀파워 풀플로우</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
+
     :root {
-      --bg: #eef2f7; --card: #fff; --text: #18181b; --muted: #52525b;
-      --red: #dc2626; --blue: #2563eb; --yellow: #ca8a04; --black: #18181b;
-      --border: #d4d4d8; --ok: #16a34a; --primary: #2563eb; --cta: #2563eb;
+      --bg: #f0f0f2; --card: #fff; --text: #18181b; --muted: #52525b;
+      --red: #dc2626; --blue: #2563eb; --yellow: #eab308; --yellow-text: #ca8a04;
+      --black: #18181b; --border: #c4c4c8; --border-strong: #a1a1aa;
+      --ok: #16a34a; --primary: #2563eb; --cta: #2563eb;
+      --gold: #c9a227; --gold-light: #f5e6b8; --neon: #a3e635;
+      --sub: #7c3aed; --sub-dark: #6d28d9; --green: #16a34a;
+      --touch-min: 48px; --font-btn: 0.9375rem;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     .top { max-width: 720px; margin: 0 auto; padding: 0.85rem 1rem 0; }
-    .top h1 { font-size: 1.15rem; }
+    .top h1 { font-family: Cinzel, Georgia, serif; font-size: 1.15rem; }
     .top .meta { font-size: 0.78rem; color: var(--muted); line-height: 1.45; margin-top: 0.25rem; }
     .formula {
       max-width: 720px; margin: 0.65rem auto 0; padding: 0.65rem 0.85rem;
@@ -27,80 +32,102 @@
     .steps span.on { background: var(--primary); color: #fff; }
     .steps span.done { background: #bbf7d0; color: #166534; }
     #app { max-width: 720px; margin: 0.75rem auto 2rem; padding: 0 1rem; }
-    .screen { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1rem; box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
-    h2 { font-size: 1.25rem; font-weight: 900; margin-bottom: 0.35rem; }
+    .screen {
+      background: var(--card); border: 1.5px solid var(--border-strong); border-radius: 20px;
+      padding: 0; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+    }
+    .screen .body { padding: 12px 14px 16px; }
+    h2 { font-size: 1.1rem; font-weight: 900; margin-bottom: 10px; }
     .hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.85rem; line-height: 1.45; }
     .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; }
     label { font-size: 0.85rem; font-weight: 700; }
     select, button {
-      font: inherit; border: 1px solid var(--border); background: #fff;
+      font: inherit; border: 1.5px solid var(--border); background: #fff;
       border-radius: 10px; padding: 0.55rem 0.75rem; cursor: pointer;
     }
-    button.cta { width: 100%; background: var(--cta); color: #fff; border-color: var(--cta); font-weight: 900; font-size: 1rem; padding: 0.85rem; margin-top: 0.75rem; }
-    button.sec { background: #f4f4f5; width: 100%; font-weight: 700; margin-top: 0.45rem; }
-    button.danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; width: 100%; font-weight: 800; margin-top: 0.45rem; }
+    button.cta, .btn-cta {
+      width: 100%; min-height: var(--touch-min); background: var(--cta); color: #fff; border: none;
+      border-radius: 12px; font-weight: 900; font-size: var(--font-btn); padding: 12px; margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+    button.sec, .btn-sec {
+      width: 100%; min-height: var(--touch-min); background: #fafafa; font-weight: 700; margin-top: 6px;
+      border-radius: 12px; color: var(--muted); border: 1.5px solid var(--border); padding: 12px;
+    }
+    button.danger, .btn-danger {
+      width: 100%; min-height: var(--touch-min); background: #991b1b; color: #fff; border: none;
+      border-radius: 12px; font-weight: 900; margin-top: 8px; padding: 12px;
+    }
+    .btn-green {
+      width: 100%; min-height: var(--touch-min); background: var(--green); color: #fff; border: none;
+      border-radius: 12px; font-weight: 900; padding: 12px; margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(22,163,74,0.25);
+    }
+    .btn-outline {
+      width: 100%; min-height: var(--touch-min); padding: 12px; margin-top: 6px;
+      border: 1.5px solid var(--border-strong); border-radius: 12px; background: #fff; font-weight: 800;
+    }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
-    .chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
-    .chip { background: #eef2ff; color: #3730a3; font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.55rem; border-radius: 999px; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .chip { background: #f4f4f5; border: 1.5px solid var(--border); color: var(--text); font-size: 0.75rem; font-weight: 700; padding: 6px 10px; border-radius: 8px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
 
     .pcard {
-      border: 2px solid var(--border); border-radius: 12px; padding: 0.55rem 0.65rem;
-      text-align: left; background: #fff; cursor: pointer;
-      display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;
+      border: 2px solid var(--border); border-radius: 10px; padding: 8px 10px;
+      text-align: left; background: #fafafa; cursor: pointer;
+      display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; min-height: 48px;
     }
-    .pcard.on { outline: 2px solid var(--primary); background: #eff6ff; border-color: #93c5fd; }
+    .pcard.on { outline: 3px solid rgba(22,163,74,0.28); background: linear-gradient(160deg,#f0fdf4,#ecfdf5); border-color: #16a34a; }
     .pcard.merc { border-style: dashed; color: #71717a; }
     .pcard .nm { font-weight: 900; font-size: 0.92rem; color: var(--text); }
-    .pcard .meta { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
-    .pcard.sm { padding: 0.4rem 0.5rem; }
+    .pcard .meta { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+    .pcard.sm { padding: 0.4rem 0.5rem; min-height: 40px; }
     .pcard.sm .nm { font-size: 0.82rem; }
     .pcard.static { cursor: default; }
     .pcard.name-only { justify-content: space-between; }
-    .pcard { position: relative; }
     .ex-btn {
       margin-left: auto; padding: 0.2rem 0.45rem !important; font-size: 0.68rem !important;
       font-weight: 800 !important; background: #fef2f2 !important; color: #991b1b !important;
       border-color: #fecaca !important; border-radius: 8px !important;
     }
 
-    .coach-slots { display: grid; gap: 0.45rem; margin-bottom: 0.75rem; }
+    .coach-slots { display: grid; gap: 6px; margin-bottom: 10px; }
     .coach-slots.m2 { grid-template-columns: 1fr 1fr; }
     .coach-slots.m3 { grid-template-columns: 1fr 1fr 1fr; }
     .coach-slots.m4 { grid-template-columns: 1fr 1fr; }
     .cslot {
-      border: 2px dashed var(--border); border-radius: 12px; padding: 0.7rem; text-align: center;
+      border: 2px dashed var(--border-strong); border-radius: 10px; padding: 0.7rem; text-align: center;
       font-size: 0.75rem; font-weight: 800; color: var(--muted); cursor: pointer; min-height: 64px;
     }
-    .cslot.active { box-shadow: 0 0 0 3px rgba(37,99,235,0.25); border-color: var(--primary); }
+    .cslot.active { box-shadow: 0 0 0 3px rgba(37,99,235,0.2); border-color: var(--primary); border-style: solid; background: #eff6ff; }
     .cslot.filled { border-style: solid; color: var(--text); }
     .cslot.RED.filled { border-color: var(--red); background: #fef2f2; }
     .cslot.BLUE.filled { border-color: var(--blue); background: #eff6ff; }
     .cslot.YELLOW.filled { border-color: #eab308; background: #fffbeb; }
     .cslot.BLACK.filled { border-color: #18181b; background: #f4f4f5; }
-    .tname-RED { color: var(--red); } .tname-BLUE { color: var(--blue); }
-    .tname-YELLOW { color: var(--yellow); } .tname-BLACK { color: var(--black); }
+    .tname-RED, .t-red { color: var(--red); } .tname-BLUE, .t-blue { color: var(--blue); }
+    .tname-YELLOW, .t-yellow { color: var(--yellow-text); } .tname-BLACK { color: var(--black); }
 
     .team-card {
-      border: 3px solid var(--border); border-radius: 14px; padding: 0.75rem; margin-bottom: 0.65rem;
-      background: #fff;
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 8px;
+      background: #fafafa; border-left: 4px solid var(--border);
     }
-    .team-card.RED { border-color: #ef4444; background: #fff7f7; }
-    .team-card.BLUE { border-color: #3b82f6; background: #f5f9ff; }
-    .team-card.YELLOW { border-color: #eab308; background: #fffbeb; }
-    .team-card.BLACK { border-color: #52525b; background: #fafafa; }
+    .team-card.RED { border-left-color: var(--red); }
+    .team-card.BLUE { border-left-color: var(--blue); }
+    .team-card.YELLOW { border-left-color: var(--yellow); background: linear-gradient(90deg,#fffbeb 0%,#fafafa 28%); }
+    .team-card.BLACK { border-left-color: #52525b; }
     .team-card.pickable { cursor: pointer; }
-    .team-card.selected { box-shadow: 0 0 0 3px rgba(37,99,235,0.35); }
+    .team-card.selected { box-shadow: 0 0 0 3px rgba(37,99,235,0.25); background: #fff; }
     .team-card .head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
-    .team-card .head h3 { font-size: 1rem; }
-    .team-card .val { font-weight: 900; font-size: 0.9rem; }
-    .team-card .sub { font-size: 0.78rem; color: var(--muted); margin: 0.25rem 0 0.55rem; line-height: 1.4; }
+    .team-card .head h3 { font-size: 0.85rem; font-weight: 900; }
+    .team-card .val { font-weight: 900; font-size: 1.05rem; letter-spacing: -0.02em; }
+    .team-card .sub { font-size: 0.72rem; color: var(--muted); margin: 4px 0 6px; line-height: 1.4; }
     .team-card .plist { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
     @media (max-width: 520px) { .team-card .plist { grid-template-columns: 1fr; } }
 
     .order-box {
-      border: 2px solid #e4e4e7; border-radius: 12px; padding: 0.65rem; margin-bottom: 0.75rem; background: #fafafa;
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 10px; background: #fafafa;
     }
     .order-box h4 { font-size: 0.82rem; margin-bottom: 0.45rem; }
     .order-seed { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.55rem; }
@@ -120,46 +147,86 @@
     }
     .order-chip.RED { color: var(--red); border-color: #fca5a5; background: #fef2f2; }
     .order-chip.BLUE { color: var(--blue); border-color: #93c5fd; background: #eff6ff; }
-    .order-chip.YELLOW { color: var(--yellow); border-color: #fde047; background: #fffbeb; }
+    .order-chip.YELLOW { color: var(--yellow-text); border-color: #fde047; background: #fffbeb; }
     .order-chip.BLACK { color: #27272a; border-color: #a1a1aa; background: #f4f4f5; }
     .order-chip.now { outline: 2px solid #18181b; }
 
-    .live-banner {
-      background: #18181b; color: #fff; border-radius: 12px; padding: 0.7rem 0.85rem;
-      font-weight: 800; margin-bottom: 0.65rem; font-size: 0.9rem;
+    .live-banner, .draft-banner {
+      background: #18181b; color: var(--neon); border-radius: 10px; padding: 10px;
+      font-weight: 800; margin-bottom: 8px; font-size: 0.8rem; text-align: center;
     }
-    .live-banner.RED { background: #991b1b; }
-    .live-banner.BLUE { background: #1d4ed8; }
-    .live-banner.YELLOW { background: #a16207; }
-    .live-banner.BLACK { background: #27272a; }
 
     .jmfc-bar {
-      display: flex; align-items: center; gap: 0.65rem; margin: -0.25rem 0 0.85rem;
-      padding: 0.55rem 0.65rem; border-radius: 12px;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #2563eb 140%);
-      color: #fff;
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: #fff; border-bottom: 1.5px solid var(--border);
     }
-    .jmfc-bar img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; background: #fff; }
-    .jmfc-bar strong { display: block; font-size: 0.82rem; letter-spacing: 0.04em; }
-    .jmfc-bar span { font-size: 0.68rem; opacity: 0.85; font-weight: 700; }
+    .jmfc-bar img, .jmfc-bar .logo { width: 38px; height: 38px; flex-shrink: 0; border-radius: 8px; object-fit: cover; }
+    .jmfc-brand strong { display: block; font-family: Cinzel, Georgia, serif; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.06em; }
+    .jmfc-brand span { display: block; font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-top: 1px; }
 
-    .scoreboard {
-      display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; align-items: center;
-      text-align: center; margin: 0.75rem 0; font-weight: 900;
-      padding: 0.75rem; border-radius: 14px; background: linear-gradient(180deg,#f8fafc,#eef2ff);
-      border: 1px solid #e2e8f0;
+    .score-big { text-align: center; font-size: 1.55rem; font-weight: 900; margin: 8px 0 12px; }
+    .score-big .sep { margin: 0 8px; }
+    .ctrl-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .timer-box {
+      font-family: ui-monospace, monospace; font-size: 1.2rem; font-weight: 900;
+      padding: 8px 16px; border-radius: 12px; background: #fafafa; border: 1.5px solid var(--border);
     }
-    .scoreboard .sc { font-size: 2.6rem; letter-spacing: -0.03em; }
-    .tabs { display: flex; gap: 0.35rem; margin-bottom: 0.65rem; }
-    .tabs button { flex: 1; font-weight: 800; background: #f4f4f5; }
-    .tabs button.on { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .lineup-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-    .lineup-cols .side { border: 3px solid var(--border); border-radius: 12px; padding: 0.5rem; }
-    .lineup-cols .side.RED { border-color: #ef4444; background: #fff7f7; }
-    .lineup-cols .side.BLUE { border-color: #3b82f6; background: #f5f9ff; }
-    .lineup-cols .side.YELLOW { border-color: #eab308; background: #fffbeb; }
-    .lineup-cols .side.BLACK { border-color: #52525b; background: #fafafa; }
-    .match-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.55rem; }
+    .btn-sm { min-height: 40px; padding: 8px 12px; border-radius: 10px; border: none; font-size: 0.78rem; font-weight: 800; color: #fff; }
+    .btn-sm.gray { background: #71717a; } .btn-sm.blue { background: var(--blue); }
+
+    .tabs {
+      display: flex; justify-content: space-around; gap: 8px; margin-bottom: 14px;
+      border-bottom: 1.5px solid var(--border); padding: 0 4px;
+    }
+    .tabs button, .tabs span {
+      flex: 1; padding: 10px 8px; font-size: 0.78rem; font-weight: 800; color: var(--muted);
+      border: none; background: transparent; border-bottom: 3px solid transparent; margin-bottom: -1.5px;
+      border-radius: 0; text-align: center;
+    }
+    .tabs button.on, .tabs span.on { color: var(--text); border-bottom-color: var(--primary); }
+
+    .lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .lineup-col {
+      border-radius: 14px; overflow: hidden; border: 1.5px solid var(--border); background: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .lineup-col .team-head {
+      padding: 10px 8px; text-align: center; font-family: Cinzel, Georgia, serif;
+      font-size: 0.95rem; font-weight: 900; letter-spacing: 0.12em; color: #fff;
+    }
+    .lineup-col.team-RED .team-head { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+    .lineup-col.team-BLUE .team-head { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+    .lineup-col.team-YELLOW .team-head { background: linear-gradient(135deg, #eab308, #facc15); color: #422006; }
+    .lineup-col.team-BLACK .team-head { background: linear-gradient(135deg, #27272a, #52525b); }
+    .lineup-col .roster { padding: 8px 6px 10px; }
+    .prow { display: flex; gap: 4px; margin-bottom: 6px; align-items: stretch; }
+    .prow:last-child { margin-bottom: 0; }
+    .prow .name {
+      flex: 1; text-align: left; padding: 11px 10px; font-size: 1.05rem; font-weight: 900;
+      background: #f8fafc; border: 1.5px solid #e4e4e7; border-radius: 10px;
+      min-height: 46px; display: flex; align-items: center; cursor: pointer; font-family: inherit;
+    }
+    .lineup-col.team-RED .prow .name { border-left: 3px solid var(--red); }
+    .lineup-col.team-BLUE .prow .name { border-left: 3px solid var(--blue); }
+    .lineup-col.team-YELLOW .prow .name { border-left: 3px solid var(--yellow); }
+    .lineup-col.team-BLACK .prow .name { border-left: 3px solid #52525b; }
+    .prow .name .cap {
+      font-size: 0.62rem; font-weight: 800; margin-right: 4px; background: #18181b;
+      padding: 2px 5px; border-radius: 4px; color: var(--neon);
+    }
+    .prow .ex-btn { align-self: center; margin-left: 0; flex-shrink: 0; }
+    .btn-sub {
+      width: calc(100% - 12px); min-height: var(--touch-min); margin: 8px 6px 10px; padding: 12px;
+      border: none; border-radius: 12px; background: linear-gradient(135deg, var(--sub), var(--sub-dark));
+      color: #fff; font-weight: 900; font-size: var(--font-btn); font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.3);
+    }
+    .act2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0 0; }
+    .act2 button { padding: 12px; min-height: var(--touch-min); border: none; border-radius: 12px; font-weight: 800; font-size: var(--font-btn); color: #fff; margin: 0; width: 100%; }
+    .act2 .u { background: #71717a; } .act2 .e { background: var(--primary); }
+    .flow-note { font-size: 0.72rem; color: var(--blue); font-weight: 700; padding: 8px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin: 8px 0; line-height: 1.45; }
+
     .timeline { font-size: 0.78rem; margin: 0.55rem 0; max-height: 120px; overflow: auto; list-style: none; }
     .timeline li { padding: 0.3rem 0.45rem; border-radius: 8px; margin-bottom: 0.25rem; font-weight: 700; }
     .timeline li.RED { background: #fee2e2; color: #991b1b; }
@@ -168,39 +235,87 @@
     .timeline li.BLACK { background: #e4e4e7; color: #27272a; }
 
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
-    .modal .box { background: #fff; border-radius: 16px; padding: 1rem; width: min(460px, 100%); max-height: 90vh; overflow: auto; }
-    .modal h3 { font-size: 1.1rem; margin-bottom: 0.65rem; }
-    .modal .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+    .modal .box, .modal-card {
+      background: #fff; border-radius: 16px; padding: 16px; width: min(420px, 100%);
+      max-height: 90vh; overflow: auto; border: 1.5px solid var(--border-strong);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal h3, .modal-card h3 { font-size: 1.05rem; font-weight: 900; text-align: center; margin-bottom: 8px; }
+    .modal .acts, .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .modal .group { margin-bottom: 0.65rem; }
     .modal .group h4 { font-size: 0.78rem; font-weight: 900; margin-bottom: 0.35rem; }
-    .btn-goal { background: #16a34a !important; color: #fff !important; border-color: #15803d !important; font-weight: 900; }
-    .btn-own { background: #dc2626 !important; color: #fff !important; border-color: #b91c1c !important; font-weight: 900; }
-    .btn-def { background: #eab308 !important; color: #111 !important; border-color: #ca8a04 !important; font-weight: 900; }
-    .btn-save { background: #7c3aed !important; color: #fff !important; border-color: #6d28d9 !important; font-weight: 900; }
-    .btn-assist { background: #2563eb !important; color: #fff !important; border-color: #1d4ed8 !important; font-weight: 900; }
+    .modal-btns button { min-height: 52px; border: none; border-radius: 10px; font-weight: 900; font-size: 0.9rem; font-family: inherit; }
+    .modal-btns .goal, .modal-btns .def, .modal-btns .save,
+    .btn-goal, .btn-def, .btn-save {
+      background: #18181b !important; color: var(--neon) !important; border: none !important;
+      letter-spacing: 0.06em; font-weight: 900 !important;
+      box-shadow: inset 0 1px 0 rgba(163,230,53,0.18), 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .modal-btns .og, .btn-own { background: #dc2626 !important; color: #fff !important; border: none !important; }
+    .btn-assist { background: #f0fdf4 !important; color: var(--green) !important; border: 2px solid var(--green) !important; font-weight: 900 !important; border-radius: 999px !important; }
     .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: #18181b; color: #fff; padding: 0.65rem 1rem; border-radius: 10px; font-weight: 700; z-index: 60; font-size: 0.85rem; }
-    table.rank { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-    table.rank th, table.rank td { border-bottom: 1px solid #e4e4e7; padding: 0.35rem 0.25rem; text-align: left; }
+    table.rank, table.data { width: 100%; border-collapse: collapse; font-size: 0.68rem; }
+    table.rank th, table.rank td, table.data th, table.data td {
+      border-bottom: 1px solid var(--border); padding: 7px 2px; text-align: center; white-space: nowrap;
+    }
+    table.rank th, table.data th { color: var(--muted); font-weight: 800; font-size: 0.65rem; }
     .status { font-size: 0.75rem; color: var(--muted); }
     .status.ok { color: var(--ok); } .status.err { color: #ea580c; }
     .nav-back { background: transparent; border: none; font-weight: 800; color: var(--muted); padding: 0.25rem 0; margin-bottom: 0.35rem; }
-    .flow-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.75rem; }
-    .flow-nav button { width: 100%; font-weight: 800; background: #f4f4f5; margin-top: 0; }
-    .result-hero {
-      text-align: center; padding: 1rem; border-radius: 14px; margin-bottom: 0.75rem;
-      background: linear-gradient(135deg, #0f172a, #1d4ed8); color: #fff;
+    .flow-nav, .nav-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+    .flow-nav button, .nav-row button {
+      width: 100%; min-height: var(--touch-min); font-weight: 800; margin-top: 0;
+      border-radius: 12px; border: 1.5px solid var(--primary); background: #eff6ff; color: var(--primary);
     }
-    .result-hero .eyebrow { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; opacity: 0.8; }
-    .result-hero .mvp-names { font-size: 1.25rem; font-weight: 900; margin: 0.25rem 0; }
-    .result-hero .mp-plain { font-size: 0.85rem; opacity: 0.9; }
-    .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.85rem; }
-    .award { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.65rem; font-size: 0.85rem; font-weight: 800; }
-    .award b { display: block; font-size: 0.65rem; color: var(--muted); margin-bottom: 0.2rem; letter-spacing: 0.04em; }
+    .flow-nav button.next, .nav-row button.next { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.2); }
+    .result-hero {
+      padding: 16px 14px; border-radius: 16px; margin-bottom: 12px;
+      background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
+      border: 1.5px solid var(--gold); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .result-hero .eyebrow {
+      font-family: Cinzel, Georgia, serif; font-size: 0.72rem; font-weight: 900;
+      letter-spacing: 0.14em; color: var(--gold-light); text-align: center;
+    }
+    .result-hero .mvp-names { text-align: center; font-size: 1.2rem; font-weight: 900; color: #fff; margin-top: 10px; }
+    .result-hero .mp-plain { text-align: center; margin-top: 8px; color: var(--gold-light); font-size: 0.82rem; font-weight: 800; }
+    .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .award {
+      padding: 10px; border-radius: 12px; background: linear-gradient(160deg,#fafafa,#f4f4f5);
+      border: 1.5px solid #e4e4e7; font-size: 0.78rem; font-weight: 700;
+    }
+    .award b { display: block; font-size: 0.68rem; color: #57534e; margin-bottom: 4px; font-weight: 800; }
+    .result-card {
+      background: #fff; border-radius: 14px; padding: 12px; border: 1.5px solid #e4e4e7;
+      margin-bottom: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .result-card.team-RED { border-left: 4px solid var(--red); }
+    .result-card.team-BLUE { border-left: 4px solid var(--blue); }
+    .result-card.team-YELLOW { border-left: 4px solid var(--yellow); }
+    .result-card.team-BLACK { border-left: 4px solid #52525b; }
+    .result-btns { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
     .rank-block { margin-bottom: 0.85rem; }
     .rank-block h3 { font-size: 0.92rem; margin-bottom: 0.35rem; }
-    .edit-row { display: grid; grid-template-columns: 1.2fr repeat(4, 1fr) auto; gap: 0.25rem; align-items: center; margin-bottom: 0.35rem; font-size: 0.75rem; }
-    .edit-row input { width: 100%; padding: 0.35rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+    .warn-banner {
+      font-size: 0.78rem; line-height: 1.5; padding: 10px; border-radius: 10px;
+      background: #fef3c7; border: 1.5px solid #fcd34d; color: #713f12; margin-bottom: 10px;
+    }
+    .seg { display: flex; margin-bottom: 10px; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .seg button { flex: 1; min-height: 44px; border: none; background: #fafafa; font-weight: 800; font-size: 0.85rem; color: var(--muted); border-radius: 0; }
+    .seg button.on { background: var(--primary); color: #fff; }
+    table.edit-stats { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
+    table.edit-stats th, table.edit-stats td { padding: 9px 4px; text-align: center; border-bottom: 1px solid var(--border); }
+    table.edit-stats .pname { text-align: left; font-weight: 700; }
+    table.edit-stats input {
+      width: 48px; min-height: 44px; text-align: center; font-weight: 700;
+      border: 1.5px solid var(--border); border-radius: 8px;
+    }
     .excluded-box { margin-top: 0.75rem; padding: 0.55rem; border-radius: 10px; background: #f4f4f5; font-size: 0.78rem; }
+    .sub-pick { padding: 10px; border-radius: 10px; border: 2px solid var(--border); margin-bottom: 8px; background: #fafafa; }
+    .sub-pick.out { border-color: var(--red); background: #fef2f2; }
+    .sub-pick.out .lbl { font-size: 0.68rem; color: var(--red); font-weight: 800; margin-bottom: 4px; }
+    .sub-pick.out .pname { font-size: 1.15rem; font-weight: 900; }
+
   </style>
 </head>
 <body>
@@ -261,6 +376,7 @@ const state = {
   secondsLeft: 480,
   timerId: null,
   excluded: [],
+  editTeam: null,
 };
 
 function emptyTeams() {
@@ -369,24 +485,24 @@ function playerCardHtml(p, opts = {}) {
 
 function jmfcBar(sub) {
   return `<div class="jmfc-bar">
-    <img src="assets/jmfc-logo.png" alt="JMFC" />
-    <div><strong>JMFC FOOTBALL</strong><span>${sub || ''}</span></div>
+    <img class="logo" src="assets/jmfc-logo.png" alt="JMFC" />
+    <div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>${sub || ''}</span></div>
   </div>`;
 }
 
 function flowNav() {
   const i = FLOW.indexOf(state.screen);
   if (i < 0) {
-    return `<div class="flow-nav">
+    return `<div class="nav-row">
       <button type="button" data-act="go" data-screen="results">← 결과</button>
       <span></span>
     </div>`;
   }
   const prev = i > 0 ? FLOW[i - 1] : null;
   const next = i < FLOW.length - 1 ? FLOW[i + 1] : null;
-  return `<div class="flow-nav">
+  return `<div class="nav-row">
     ${prev ? `<button type="button" data-act="go" data-screen="${prev}">← 이전</button>` : '<span></span>'}
-    ${next ? `<button type="button" data-act="go" data-screen="${next}">다음 →</button>` : '<span></span>'}
+    ${next ? `<button type="button" class="next" data-act="go" data-screen="${next}">다음 →</button>` : '<span></span>'}
   </div>`;
 }
 
@@ -553,6 +669,7 @@ function renderAttendance() {
   const list = [...players].sort((a, b) => personalScore(b) - personalScore(a));
   return `<div class="screen">
     ${jmfcBar('참석 조사')}
+    <div class="body">
     <h2>참석 조사</h2>
     <p class="hint">참석자 선택 · 팀 모드</p>
     <div class="row">
@@ -572,6 +689,7 @@ function renderAttendance() {
     })).join('')}</div>
     <button class="cta" data-act="to-coach" ${state.attending.length < state.teamMode ? 'disabled' : ''}>참석 완료 → 감독 선택</button>
     ${flowNav()}
+    </div>
   </div>`;
 }
 
@@ -583,6 +701,7 @@ function renderCoach() {
   if (!state.coachPickTeam) state.coachPickTeam = names.find(t => !state.coaches[t]) || names[0];
   return `<div class="screen">
     ${jmfcBar('감독 선택')}
+    <div class="body">
     <h2>감독 ${names.length}명 선택</h2>
     <p class="hint">슬롯 탭 → 선수 탭</p>
     <div class="coach-slots m${names.length}">${names.map(t => {
@@ -596,6 +715,7 @@ function renderCoach() {
     <div class="grid2">${pool.map(p => playerCardHtml(p, { act: 'set-coach', nameAttr: true })).join('') || '<p class="hint">남은 선수 없음</p>'}</div>
     <button class="cta" data-act="to-draft" ${filled < names.length ? 'disabled' : ''}>드래프트 시작</button>
     ${flowNav()}
+    </div>
   </div>`;
 }
 
@@ -617,9 +737,10 @@ function renderDraft() {
   const pool = state.draftPool.filter(n => !state.excluded.includes(n)).map(n => byName[n]).filter(Boolean).sort((a, b) => personalScore(b) - personalScore(a));
   return `<div class="screen">
     ${jmfcBar('스네이크 Draft')}
+    <div class="body">
     <h2>스네이크 Draft</h2>
     ${draftOrderHtml()}
-    <div class="live-banner ${turnTeam}">TEAM ${turnTeam} 차례 · 남은 ${pool.length}명 · 스네이크</div>
+    <div class="draft-banner">TEAM ${turnTeam} 차례 · 남은 ${pool.length}명 · 스네이크</div>
     ${live}
     <p class="hint">미배정 선수 · 탭하면 ${turnTeam}에 즉시 편성 · 개인점수 높은 순</p>
     <div class="grid2">${pool.map(p => playerCardHtml(p, { act: 'draft-pick', nameAttr: true })).join('') || '<p class="hint">전원 배정됨</p>'}</div>
@@ -627,6 +748,7 @@ function renderDraft() {
     <button class="sec" data-act="draft-autobuild">남은 인원 자동 밸런스 배분</button>
     <button class="cta" data-act="to-lineup" ${pool.length ? 'disabled' : ''}>팀 구성 확정 → 라인업</button>
     ${flowNav()}
+    </div>
   </div>`;
 }
 
@@ -646,12 +768,14 @@ function renderLineup() {
   }).join('');
   return `<div class="screen">
     ${jmfcBar('라인업 확정')}
+    <div class="body">
     <h2>라인업 확정</h2>
     <p class="hint">이름만 표시 · 팀파워/승률은 팀 헤더에만 · 제외 시 이후 경기 명단에서 빠짐</p>
     ${cards}
     ${excludedNote()}
     <button class="cta" data-act="to-match-select">팀 구성 확정 → 경기 선택</button>
     ${flowNav()}
+    </div>
   </div>`;
 }
 
@@ -681,6 +805,7 @@ function renderMatchSelect() {
   }).join('');
   return `<div class="screen">
     ${jmfcBar('경기 선택')}
+    <div class="body">
     <h2>경기 선택</h2>
     <div class="chip-row">
       <span class="chip">Match #${state.matchCount}</span>
@@ -693,6 +818,7 @@ function renderMatchSelect() {
     <button class="cta" data-act="start-match" ${state.playing.length!==2?'disabled':''}>경기 시작</button>
     <button class="danger" data-act="to-results">전체 세션 종료 → 결과</button>
     ${flowNav()}
+    </div>
   </div>`;
 }
 
@@ -712,26 +838,26 @@ function renderMatch() {
   const tab = state.matchTab;
   let body = '';
   if (tab === 'lineup') {
-    body = `<div class="lineup-cols">
-      <div class="side ${a}"><div class="tname-${a}" style="font-weight:900;margin-bottom:0.35rem">${a}</div>
-        ${rosterA.map(n => playerCardHtml(byName[n], {
-          sm: true, nameOnly: true, act: 'record', nameAttr: true, extra: `data-team="${a}"`,
-          coach: state.teams[a].coach===n, exclude: true
-        })).join('')}
+    const col = (t, roster) => `<div class="lineup-col team-${t}">
+      <div class="team-head">TEAM ${t}</div>
+      <div class="roster">
+        ${roster.map(n => {
+          const coach = state.teams[t].coach === n;
+          return `<div class="prow">
+            <button type="button" class="name" data-act="record" data-name="${n}" data-team="${t}">${coach ? '<span class="cap">C</span>' : ''}${n}</button>
+            <button type="button" class="ex-btn" data-act="exclude" data-name="${n}">제외</button>
+          </div>`;
+        }).join('')}
       </div>
-      <div class="side ${b}"><div class="tname-${b}" style="font-weight:900;margin-bottom:0.35rem">${b}</div>
-        ${rosterB.map(n => playerCardHtml(byName[n], {
-          sm: true, nameOnly: true, act: 'record', nameAttr: true, extra: `data-team="${b}"`,
-          coach: state.teams[b].coach===n, exclude: true
-        })).join('')}
+      <button type="button" class="btn-sub" data-act="open-swap" data-team="${t}">선수교체</button>
+    </div>`;
+    body = `<div class="lineup-grid">${col(a, rosterA)}${col(b, rosterB)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <button type="button" class="btn-sub" style="width:100%;margin:0" data-act="open-add">선수추가</button>
+        <button type="button" class="btn-sec" style="margin:0" data-act="restore-lineup">🔄 원팀복귀</button>
       </div>
-    </div>
-    <div class="match-actions">
-      <button type="button" data-act="open-swap">선수교체</button>
-      <button type="button" data-act="open-add">선수추가</button>
-    </div>
-    <p class="hint">선수 탭 → 득점/수비/선방 · 제외 = 이후 경기 명단 제외</p>
-    ${excludedNote()}`;
+      <p class="hint" style="margin-top:8px">선수 탭 → 득점/수비/선방 · 제외 = 이후 경기 제외</p>
+      ${excludedNote()}`;
   } else if (tab === 'table') {
     ensureTeamStats();
     const rows = teamNames().map(t => {
@@ -739,10 +865,10 @@ function renderMatch() {
       const gd = s.goalsFor - s.goalsAgainst;
       return { t, ...s, gd, pts: s.wins*3+s.draws, wr: (s.wins+s.losses)>0?((s.wins/(s.wins+s.losses))*100).toFixed(0)+'%':'-' };
     }).sort((x,y)=>y.pts-x.pts||y.gd-x.gd);
-    body = `<table class="rank"><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
-      <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="tname-${r.t}">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wr}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table>`;
+    body = `<div class="result-card" style="overflow-x:auto"><table class="data rank"><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="tname-${r.t} col-team">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wr}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table></div>`;
   } else {
-    const blocks = [
+    body = [
       ['MVP 순위', 'mp', 'MP'],
       ['득점 순위', 'goal', '득'],
       ['도움 순위', 'assist', '도'],
@@ -750,38 +876,43 @@ function renderMatch() {
     ].map(([title, key, unit]) => {
       const rows = topList(key, 10);
       return `<div class="rank-block"><h3>${title}</h3>
-        <table class="rank"><thead><tr><th>#</th><th>선수</th><th>${unit}</th></tr></thead>
-        <tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.v}</td></tr>`).join('') || '<tr><td colspan="3">기록 없음</td></tr>'}</tbody></table>
+        <div class="result-card"><table class="data rank"><thead><tr><th>#</th><th>선수</th><th>${unit}</th></tr></thead>
+        <tbody>${rows.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.v}</td></tr>`).join('') || '<tr><td colspan="3">기록 없음</td></tr>'}</tbody></table></div>
       </div>`;
     }).join('');
-    body = blocks;
   }
   const mm = String(Math.floor(state.secondsLeft/60)).padStart(2,'0');
   const ss = String(state.secondsLeft%60).padStart(2,'0');
   return `<div class="screen">
     ${jmfcBar(`Match #${state.matchCount}`)}
-    <div class="scoreboard">
-      <div><div class="tname-${a}" style="font-size:1.05rem">${a}</div><div style="font-size:0.72rem;color:var(--muted)">팀파워 ${calcTeamPower(rosterA)}</div></div>
-      <div class="sc">${state.score.A} : ${state.score.B}</div>
-      <div><div class="tname-${b}" style="font-size:1.05rem">${b}</div><div style="font-size:0.72rem;color:var(--muted)">팀파워 ${calcTeamPower(rosterB)}</div></div>
+    <div class="body">
+      <div class="score-big">
+        <span class="tname-${a}">TEAM ${a}</span>
+        <span class="sep">${state.score.A} : ${state.score.B}</span>
+        <span class="tname-${b}">TEAM ${b}</span>
+      </div>
+      <div class="ctrl-row">
+        <button type="button" class="btn-sm gray" data-act="restore-lineup">🔄 원팀복귀</button>
+        <div class="timer-box">${mm}:${ss}</div>
+        <button type="button" class="btn-sm blue" data-act="toggle-timer">${state.timerOn?'일시정지':'시작'}</button>
+      </div>
+      <div class="tabs">
+        <button type="button" class="${tab==='lineup'?'on':''}" data-act="tab" data-tab="lineup">라인업</button>
+        <button type="button" class="${tab==='table'?'on':''}" data-act="tab" data-tab="table">팀 순위</button>
+        <button type="button" class="${tab==='stats'?'on':''}" data-act="tab" data-tab="stats">개인기록</button>
+      </div>
+      ${body}
+      <ul class="timeline">${state.timeline.map(e =>
+        `<li class="${e.team}">[${e.time}] ${e.team} ${e.player}: ${e.stat}</li>`
+      ).join('') || '<li style="background:#f4f4f5;color:#71717a">타임라인 없음</li>'}</ul>
+      <div class="act2">
+        <button type="button" class="u" data-act="undo-record" ${!state.recordStack.length?'disabled':''}>스탯 취소</button>
+        <button type="button" class="e" data-act="end-match">현재 경기 종료</button>
+      </div>
+      <p class="flow-note">현재 경기 종료 → <b>경기 선택</b> 화면으로</p>
+      <button class="btn-danger" data-act="to-results">🚨 전체 세션 종료</button>
+      ${flowNav()}
     </div>
-    <div class="row" style="justify-content:center">
-      <b style="font-size:1.4rem">${mm}:${ss}</b>
-      <button type="button" data-act="toggle-timer">${state.timerOn?'일시정지':'시작'}</button>
-    </div>
-    <div class="tabs">
-      <button type="button" class="${tab==='lineup'?'on':''}" data-act="tab" data-tab="lineup">라인업</button>
-      <button type="button" class="${tab==='table'?'on':''}" data-act="tab" data-tab="table">팀 순위</button>
-      <button type="button" class="${tab==='stats'?'on':''}" data-act="tab" data-tab="stats">개인기록</button>
-    </div>
-    ${body}
-    <ul class="timeline">${state.timeline.map(e =>
-      `<li class="${e.team}">[${e.time}] ${e.team} ${e.player}: ${e.stat}</li>`
-    ).join('') || '<li style="background:#f4f4f5;color:#71717a">타임라인 없음</li>'}</ul>
-    <button class="sec" data-act="undo-record" ${!state.recordStack.length?'disabled':''}>기록취소</button>
-    <button class="cta" data-act="end-match">현재 경기 종료 → 경기 선택</button>
-    <button class="danger" data-act="to-results">전체 세션 종료</button>
-    ${flowNav()}
   </div>`;
 }
 
@@ -811,75 +942,89 @@ function renderResults() {
   ].map(([title, key, unit]) => {
     const list = topList(key, 10);
     return `<div class="rank-block"><h3>${title}</h3>
-      <table class="rank"><thead><tr><th>#</th><th>선수</th><th>${unit}</th></tr></thead>
-      <tbody>${list.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.v}</td></tr>`).join('') || '<tr><td colspan="3">없음</td></tr>'}</tbody></table>
+      <div class="result-card"><table class="data rank"><thead><tr><th>#</th><th>선수</th><th>${unit}</th></tr></thead>
+      <tbody>${list.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.v}</td></tr>`).join('') || '<tr><td colspan="3">없음</td></tr>'}</tbody></table></div>
     </div>`;
   }).join('');
-
-  // per-team MP tables (mockup style)
   const teamMp = teamNames().map(t => {
     const names = teamRoster(t);
     const list = names.map(n => {
       const s = ensurePlayerStat(n);
       return { name: n, ...s, mp: mpOf(s) };
-    }).filter(x => x.mp > 0 || names.includes(x.name)).sort((a,b)=>b.mp-a.mp);
-    return `<div class="rank-block"><h3 class="tname-${t}">TEAM ${t} 개인기록</h3>
-      <table class="rank"><thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead>
-      <tbody>${list.map(p=>`<tr><td>${p.name}</td><td>${p.goal}</td><td>${p.assist}</td><td>${p.defense}</td><td>${p.save}</td><td>${p.mp}</td></tr>`).join('') || '<tr><td colspan="6">없음</td></tr>'}</tbody></table>
+    }).sort((a,b)=>b.mp-a.mp);
+    return `<div class="result-card team-${t}">
+      <table class="data">
+        <tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr>
+        ${list.map(p=>`<tr><td>${p.name}</td><td>${p.goal}</td><td>${p.assist}</td><td>${p.defense}</td><td>${p.save}</td><td>${p.mp}</td></tr>`).join('') || '<tr><td colspan="6">없음</td></tr>'}
+      </table>
     </div>`;
   }).join('');
 
   return `<div class="screen">
     ${jmfcBar('세션 종료')}
-    <h2>오늘의 경기 결과</h2>
-    <div class="result-hero">
-      <div class="eyebrow">SESSION MVP</div>
-      <div class="mvp-names">${mvpNames}</div>
-      <div class="mp-plain">MP ${mvpMp}</div>
+    <div class="body">
+      <h2>오늘의 경기 결과</h2>
+      <div class="result-hero">
+        <div class="eyebrow">SESSION MVP</div>
+        <div class="mvp-names">${mvpNames}</div>
+        <div class="mp-plain">MP ${mvpMp}</div>
+      </div>
+      <div class="award-g">
+        <div class="award"><b>TOP SCORER</b>${topScorer ? `${topScorer.name} ${topScorer.v}` : '-'}</div>
+        <div class="award"><b>TOP ASSIST</b>${topAssist ? `${topAssist.name} ${topAssist.v}` : '-'}</div>
+        <div class="award"><b>TOP DEFENSE</b>${topDef ? `${topDef.name} ${topDef.v}` : '-'}</div>
+        <div class="award"><b>TOP SAVE</b>${topSave ? `${topSave.name} ${topSave.v}` : '-'}</div>
+      </div>
+      <div class="result-card" style="overflow-x:auto">
+        <table class="data rank">
+          <thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
+          <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="tname-${r.t} col-team">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wrSession}</td><td>${r.pts}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <p class="hint">팀파워 ${rows.map(r=>`${r.t} ${r.power}`).join(' · ')} · 시트승률 ${rows.map(r=>`${r.t} ${r.wrSheet}`).join(' · ')}</p>
+      ${rankedBlocks}
+      ${teamMp}
+      <div class="result-btns">
+        <button type="button" class="btn-green" data-act="go" data-screen="recordEdit">기록 수정하기</button>
+        <button type="button" class="btn-cta" style="margin-top:0" data-act="reset-session">기록 저장 & NEW 세션</button>
+        <button type="button" class="btn-danger" style="margin-top:0" data-act="reset-session">기록 리셋 & NEW 세션</button>
+      </div>
+      ${flowNav()}
     </div>
-    <div class="award-g">
-      <div class="award"><b>TOP SCORER</b>${topScorer ? `${topScorer.name} ${topScorer.v}` : '-'}</div>
-      <div class="award"><b>TOP ASSIST</b>${topAssist ? `${topAssist.name} ${topAssist.v}` : '-'}</div>
-      <div class="award"><b>TOP DEFENSE</b>${topDef ? `${topDef.name} ${topDef.v}` : '-'}</div>
-      <div class="award"><b>TOP SAVE</b>${topSave ? `${topSave.name} ${topSave.v}` : '-'}</div>
-    </div>
-    <table class="rank"><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
-      <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="tname-${r.t}">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wrSession}</td><td>${r.pts}</td></tr>`).join('')}</tbody>
-    </table>
-    <p class="hint" style="margin-top:0.55rem">팀파워 ${rows.map(r=>`${r.t} ${r.power}`).join(' · ')} · 시트승률 ${rows.map(r=>`${r.t} ${r.wrSheet}`).join(' · ')}</p>
-    ${rankedBlocks}
-    ${teamMp}
-    <button class="cta" data-act="go" data-screen="recordEdit">기록 수정하기</button>
-    <button class="cta" data-act="reset-session" style="background:#0f172a;border-color:#0f172a">기록 리셋 & NEW 세션</button>
-    <button class="sec" data-act="go" data-screen="matchSelect">← 경기 선택으로</button>
-    ${flowNav()}
   </div>`;
 }
 
 function renderRecordEdit() {
-  const names = Object.keys(state.playerStats).sort((a,b)=>mpOf(state.playerStats[b])-mpOf(state.playerStats[a]));
-  // also include roster players with 0
-  teamNames().forEach(t => teamRoster(t).forEach(n => { if (!names.includes(n)) names.push(n); }));
+  if (!state.editTeam) state.editTeam = teamNames()[0];
+  const t = state.editTeam;
+  const names = teamRoster(t);
+  // include anyone with stats on this team from original
   const rows = names.map(n => {
     const s = ensurePlayerStat(n);
-    return `<div class="edit-row" data-edit-name="${n}">
-      <b>${n}</b>
-      <input type="number" min="0" data-field="goal" value="${s.goal}" />
-      <input type="number" min="0" data-field="assist" value="${s.assist}" />
-      <input type="number" min="0" data-field="defense" value="${s.defense}" />
-      <input type="number" min="0" data-field="save" value="${s.save}" />
-      <span>MP ${mpOf(s)}</span>
-    </div>`;
-  }).join('') || '<p class="hint">수정할 기록 없음</p>';
+    return `<tr data-edit-name="${n}">
+      <td class="pname tname-${t}">${n}</td>
+      <td><input type="number" min="0" data-field="goal" value="${s.goal}" /></td>
+      <td><input type="number" min="0" data-field="assist" value="${s.assist}" /></td>
+      <td><input type="number" min="0" data-field="defense" value="${s.defense}" /></td>
+      <td><input type="number" min="0" data-field="save" value="${s.save}" /></td>
+      <td>${mpOf(s)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6">선수 없음</td></tr>';
   return `<div class="screen">
     ${jmfcBar('기록 수정')}
-    <h2>기록 수정</h2>
-    <p class="hint">득 / 도 / 수 / 선 값을 직접 수정 후 저장</p>
-    <div class="edit-row" style="font-weight:900;color:var(--muted)"><span>선수</span><span>득</span><span>도</span><span>수</span><span>선</span><span>MP</span></div>
-    ${rows}
-    <button class="cta" data-act="save-record-edit">저장 후 결과로</button>
-    <button class="sec" data-act="go" data-screen="results">← 결과</button>
-    ${flowNav()}
+    <div class="body">
+      <h2>기록 수정</h2>
+      <div class="warn-banner">득점 수를 바꿔도 <strong>팀 승패·득실</strong>은 자동 반영되지 않을 수 있습니다.</div>
+      <div class="seg">
+        ${teamNames().map(x => `<button type="button" class="${x===t?'on':''} tname-${x}" data-act="edit-team" data-team="${x}">TEAM ${x}</button>`).join('')}
+      </div>
+      <table class="edit-stats">
+        <thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <button class="btn-outline" data-act="save-record-edit">수정 완료 → 결과로</button>
+      ${flowNav()}
+    </div>
   </div>`;
 }
 
@@ -961,16 +1106,16 @@ function endMatch() {
 
 function openRecordModal(team, player) {
   const root = document.getElementById('modal-root');
-  root.innerHTML = `<div class="modal"><div class="box">
-    <h3>${player} <span class="tname-${team}">(${team})</span></h3>
-    <p class="hint">기록 선택</p>
-    <div class="acts">
-      <button class="btn-goal" data-rec="goal">득점</button>
-      <button class="btn-own" data-rec="ownGoal">자책골</button>
-      <button class="btn-def" data-rec="defense">수비</button>
-      <button class="btn-save" data-rec="save">선방</button>
+  root.innerHTML = `<div class="modal"><div class="modal-card">
+    <h3>${player} (TEAM ${team})</h3>
+    <p class="hint" style="text-align:center">기록을 선택하세요</p>
+    <div class="modal-btns">
+      <button class="goal" data-rec="goal">득점</button>
+      <button class="og" data-rec="ownGoal">자책골</button>
+      <button class="def" data-rec="defense">수비</button>
+      <button class="save" data-rec="save">선방</button>
+      <button class="cancel" id="modal-cancel" style="grid-column:1/-1">취소</button>
     </div>
-    <button class="sec" id="modal-cancel">취소</button>
   </div></div>`;
   root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
   root.querySelectorAll('[data-rec]').forEach(btn => {
@@ -986,14 +1131,14 @@ function openRecordModal(team, player) {
 function openAssistModal(team, player) {
   const mates = teamRoster(team).filter(n => n !== player);
   const root = document.getElementById('modal-root');
-  root.innerHTML = `<div class="modal"><div class="box">
-    <h3>${player} 득점!</h3>
-    <p class="hint">도움을 준 선수를 선택하세요</p>
-    <div class="grid2" style="margin-bottom:0.5rem">
+  root.innerHTML = `<div class="modal"><div class="modal-card">
+    <h3>${player} 선수 득점!</h3>
+    <p class="hint" style="text-align:center">도움을 준 선수를 선택하세요</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0">
       ${mates.map(n => `<button class="btn-assist" data-assist="${n}">${n}</button>`).join('') || '<p class="hint">후보 없음</p>'}
+      <button class="btn-assist" data-assist="">없음</button>
     </div>
-    <button class="sec" data-assist="">도움 없음</button>
-    <button class="sec" id="modal-cancel">취소(득점 취소)</button>
+    <button class="btn-sec" id="modal-cancel">취소</button>
   </div></div>`;
   root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
   root.querySelectorAll('[data-assist]').forEach(btn => {
@@ -1196,7 +1341,7 @@ function toggleTimer() {
     if (state.secondsLeft <= 0) { stopTimer(); toast('시간 종료'); render(); return; }
     state.secondsLeft--;
     if (state.screen === 'match') {
-      const clock = document.querySelector('[data-act="toggle-timer"]')?.previousElementSibling;
+      const clock = document.querySelector('.timer-box');
       if (clock) {
         const mm = String(Math.floor(state.secondsLeft/60)).padStart(2,'0');
         const ss = String(state.secondsLeft%60).padStart(2,'0');
@@ -1216,13 +1361,14 @@ function resetSession() {
     playing: [], matchCount: 1, score: { A: 0, B: 0 }, timeline: [], recordStack: [],
     teamStats: {}, playerStats: {}, matchTab: 'lineup', secondsLeft: state.duration,
     excluded: [],
+  editTeam: null,
   });
   toast('새 세션');
   render();
 }
 
 function saveRecordEdit() {
-  document.querySelectorAll('.edit-row[data-edit-name]').forEach(row => {
+  document.querySelectorAll('tr[data-edit-name]').forEach(row => {
     const name = row.dataset.editName;
     const s = ensurePlayerStat(name);
     row.querySelectorAll('input[data-field]').forEach(inp => {
@@ -1318,10 +1464,12 @@ function bind() {
     else if (act === 'toggle-timer') toggleTimer();
     else if (act === 'end-match') endMatch();
     else if (act === 'undo-record') undoRecord();
+    else if (act === 'restore-lineup') { restoreOriginalLineup(); toast('원팀 복귀'); render(); }
     else if (act === 'open-swap') openSwapModal();
     else if (act === 'open-add') openAddModal();
     else if (act === 'to-results') { stopTimer(); go('results'); }
     else if (act === 'reset-session') resetSession();
+    else if (act === 'edit-team') { state.editTeam = t.dataset.team; render(); }
     else if (act === 'save-record-edit') saveRecordEdit();
     else if (act === 'go') go(t.dataset.screen);
   };
