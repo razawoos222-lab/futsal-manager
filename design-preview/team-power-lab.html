@@ -81,9 +81,10 @@
       데이터를 불러와 팀파워(100점) / 용병 제외 승률을 바로 테스트합니다.
     </p>
     <div class="banner">
-      <b>기준</b>: 고정 2.5가 아니라 <b>전 선수 중 CCP/G가 가장 높은 사람 = 100점</b>.<br />
-      <b>개인점수</b> = <code>(본인 CCP/G ÷ 전선수 최고 CCP/G) × 100</code><br />
-      <b>팀파워</b> = 팀원 개인점수 평균 (0~100) · <b>팀 승률</b> = <code>용병*</code> 제외 평균
+      <b>개인점수(순수 비율)</b> = <code>(본인 CCP/G ÷ 전선수 최고 CCP/G) × 100</code><br />
+      예: 여도영 3.68 → <b>100</b>, 이윤수 2.66 → <b>2.66÷3.68×100 = 72.3</b>
+      (예전에 보이던 82.4는 합산 40% 혼합식이었음 → 폐기)<br />
+      <b>팀파워</b> = 팀원 개인점수 평균 · <b>팀 승률</b> = <code>용병*</code> 제외 평균
       <span id="max-player-label"></span>
     </div>
   </div>
@@ -318,8 +319,9 @@ function renderPool() {
     const merc = p.isMercenary ? ' merc' : '';
     return `<button type="button" class="pchip${on}${merc}" data-name="${p.name}">
       <b>${p.name}${p.isMercenary ? ' · 용병' : ''}</b>
-      ${p.position} · 점수 ${playerPowerScore(p).toFixed(0)}
-      <br/>CCP/G ${p.ccpPerGame || '-'} · 승률 ${p.isMercenary ? '-' : (p.winRatePct.toFixed(1) + '%')}
+      ${p.position} · 점수 ${playerPowerScore(p).toFixed(1)}
+      <br/>CCP/G ${p.ccpPerGame || '-'} (=${p.ccpPerGame && refs.maxCcpG ? (p.ccpPerGame/refs.maxCcpG).toFixed(4) : '-'}×최고)
+      <br/>승률 ${p.isMercenary ? '-' : (p.winRatePct.toFixed(1) + '%')}
     </button>`;
   }).join('');
   document.getElementById('sel-count').textContent = `선택 ${selected.size}명`;
@@ -362,7 +364,7 @@ function renderTable() {
       const isMax = p.name === refs.maxPlayerName;
       return `<tr>
         <td>${i + 1}</td><td>${p.name}${isMax ? ' ★' : ''}</td><td>${p.position}</td>
-        <td><b>${score.toFixed(1)}</b></td>
+        <td><b>${score.toFixed(1)}</b> <span style="color:#71717a">(${p.ccpPerGame}÷${refs.maxCcpG})</span></td>
         <td>${p.ccpPerGame}</td>
         <td>${p.winRatePct.toFixed(1)}%</td>
         <td>${old}</td><td>${p.tier}</td>
