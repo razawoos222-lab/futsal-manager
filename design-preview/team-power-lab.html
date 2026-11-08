@@ -541,6 +541,41 @@ function flowNav() {
   </div>`;
 }
 
+
+const LAST_ATT_KEY = 'jmfc_lab_last_attending_v1';
+
+function saveLastAttending(names) {
+  try {
+    const list = [...new Set((names || []).filter(Boolean))];
+    localStorage.setItem(LAST_ATT_KEY, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      names: list,
+    }));
+  } catch (e) { /* ignore */ }
+}
+
+function loadLastAttending() {
+  try {
+    const raw = localStorage.getItem(LAST_ATT_KEY);
+    if (!raw) {
+      toast('저장된 저번주 참석자가 없습니다. 참석 완료를 한 번 하면 저장됩니다.');
+      return;
+    }
+    const data = JSON.parse(raw);
+    const names = (data.names || []).filter(n => byName[n]);
+    if (!names.length) {
+      toast('저번주 명단이 현재 시트에 없습니다.');
+      return;
+    }
+    state.attending = names;
+    const when = data.savedAt ? new Date(data.savedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '';
+    toast(`저번주 참석 ${names.length}명 불러옴${when ? ' · ' + when : ''}`);
+    render();
+  } catch (e) {
+    toast('저번주 참석자 불러오기 실패');
+  }
+}
+
 function toast(msg) {
   const el = document.createElement('div');
   el.className = 'toast'; el.textContent = msg;
@@ -720,7 +755,7 @@ function renderAttendance() {
     ${jmfcBar('참석 조사')}
     <div class="body">
     <h2>참석 조사</h2>
-    <p class="hint">이름만 선택 · 경기수(참석) 많은 순</p>
+    <p class="hint">이름만 선택 · 저번주 명단은 직전 세션 참석 완료 시 저장됨</p>
     <div class="row">
       <label>팀 구성
         <select id="team-mode">
@@ -729,7 +764,7 @@ function renderAttendance() {
           <option value="4" ${state.teamMode===4?'selected':''}>4팀</option>
         </select>
       </label>
-      <button type="button" data-act="select-top18">참석률 상위 18명</button>
+      <button type="button" data-act="load-last-attending">저번주 참석자 불러오기</button>
       <button type="button" data-act="select-all">전체 선택(용병제외)</button>
       <button type="button" data-act="clear-att">해제</button>
     </div>
@@ -1510,13 +1545,8 @@ function bind() {
       const i = state.attending.indexOf(n);
       if (i >= 0) state.attending.splice(i, 1); else state.attending.push(n);
       render();
-    } else if (act === 'select-top18') {
-      state.attending = [...players]
-        .filter(p => !p.isMercenary)
-        .sort((a,b)=>(b.games||0)-(a.games||0)||personalScore(b)-personalScore(a))
-        .slice(0, 18)
-        .map(p => p.name);
-      render();
+    } else if (act === 'load-last-attending') {
+      loadLastAttending();
     } else if (act === 'select-all') {
       state.attending = players.filter(p => !p.isMercenary).map(p => p.name); render();
     } else if (act === 'clear-att') {
@@ -1524,6 +1554,7 @@ function bind() {
     } else if (act === 'to-coach') {
       state.teamMode = Number(document.getElementById('team-mode')?.value || state.teamMode);
       if (state.attending.length < state.teamMode) return toast('인원 부족');
+      saveLastAttending(state.attending);
       state.coaches = {}; state.coachPickTeam = teamNames()[0]; state.snakeSeed = [...teamNames()]; go('coach');
     } else if (act === 'pick-slot') {
       state.coachPickTeam = t.dataset.team; render();
@@ -1573,7 +1604,7 @@ function bind() {
     else if (act === 'open-swap') openSwapModal();
     else if (act === 'open-add') openAddModal();
     else if (act === 'to-results') { stopTimer(); go('results'); }
-    else if (act === 'save-session') { toast('기록 저장(실험실 로컬) · 새 세션'); resetSession(); }
+    else if (act === 'save-session') { saveLastAttending(state.attending); toast('기록 저장(실험실 로컬) · 새 세션'); resetSession(); }
     else if (act === 'reset-session') resetSession();
     else if (act === 'edit-team') { state.editTeam = t.dataset.team; render(); }
     else if (act === 'save-record-edit') saveRecordEdit();

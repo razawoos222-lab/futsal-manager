@@ -14,7 +14,7 @@
 
 ## 2. 팀파워 · 승률 실험실 (실시트 데이터, GAS 아님)
 
-**[▶ 팀파워 풀플로우 실험실](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/team-power-lab.html?v=8)**
+**[▶ 팀파워 풀플로우 실험실](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/team-power-lab.html?v=9)**
 
 - 시트 `1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk` 연동/스냅샷
 - 플로우: 참석 → 감독 → 드래프트 → 라인업 → 경기선택 → 경기 → 결과
