@@ -268,17 +268,18 @@
       border-radius: 12px; border: 1.5px solid var(--primary); background: #eff6ff; color: var(--primary);
     }
     .flow-nav button.next, .nav-row button.next { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.2); }
+    .mvp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
     .result-hero {
-      padding: 16px 14px; border-radius: 16px; margin-bottom: 12px;
+      padding: 12px 8px; border-radius: 16px; margin-bottom: 0;
       background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
       border: 1.5px solid var(--gold); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     }
     .result-hero .eyebrow {
-      font-family: Cinzel, Georgia, serif; font-size: 0.72rem; font-weight: 900;
-      letter-spacing: 0.14em; color: var(--gold-light); text-align: center;
+      font-family: Cinzel, Georgia, serif; font-size: 0.58rem; font-weight: 900;
+      letter-spacing: 0.1em; color: var(--gold-light); text-align: center;
     }
-    .result-hero .mvp-names { text-align: center; font-size: 1.2rem; font-weight: 900; color: #fff; margin-top: 10px; }
-    .result-hero .mp-plain { text-align: center; margin-top: 8px; color: var(--gold-light); font-size: 0.82rem; font-weight: 800; }
+    .result-hero .mvp-names { text-align: center; font-size: 1.05rem; font-weight: 900; color: #fff; margin-top: 8px; }
+    .result-hero .mp-plain { text-align: center; margin-top: 6px; color: var(--gold-light); font-size: 0.72rem; font-weight: 800; line-height: 1.35; }
     .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
     .award {
       padding: 10px; border-radius: 12px; background: linear-gradient(160deg,#fafafa,#f4f4f5);
@@ -1054,28 +1055,36 @@ function renderResults() {
     return `<div class="result-card team-${t}">
       <div style="font-weight:900;margin-bottom:6px" class="tname-${t}">TEAM ${t}</div>
       <table class="data">
-        <tr><th>선수</th><th>승/무/패</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr>
+        <tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr>
         ${list.map(p => {
-          const wdl = `${p.wins||0}/${p.draws||0}/${p.losses||0}`;
-          return `<tr><td>${p.name}</td><td>${wdl}</td><td>${p.goal}</td><td>${p.assist}</td><td>${p.defense}</td><td>${p.save}</td><td style="font-variant-numeric:tabular-nums;font-weight:800">${p.mp}</td></tr>`;
-        }).join('') || '<tr><td colspan="7">없음</td></tr>'}
+          return `<tr><td>${p.name}</td><td>${p.goal}</td><td>${p.assist}</td><td>${p.defense}</td><td>${p.save}</td><td style="font-variant-numeric:tabular-nums;font-weight:800">${p.mp}</td></tr>`;
+        }).join('') || '<tr><td colspan="6">없음</td></tr>'}
       </table>
     </div>`;
   }).join('');
+
+  const atkDetail = atkMvps[0]
+    ? `${atkMvps[0].goal||0}골${atkMvps[0].assist||0}도움`
+    : '';
+  const defDetail = defMvps[0]
+    ? `${defMvps[0].defense||0}수비${defMvps[0].save||0}선방`
+    : '';
 
   return `<div class="screen">
     ${jmfcBar(sessionLabel)}
     <div class="body">
       <h2>오늘의 경기 결과</h2>
-      <div class="result-hero">
-        <div class="eyebrow">ATTACK MVP</div>
-        <div class="mvp-names">${atkNames}</div>
-        <div class="mp-plain">공격P ${atkPts}</div>
-      </div>
-      <div class="result-hero">
-        <div class="eyebrow">DEFENSE MVP</div>
-        <div class="mvp-names">${defNames}</div>
-        <div class="mp-plain">수비P ${defPts}</div>
+      <div class="mvp-row">
+        <div class="result-hero">
+          <div class="eyebrow">ATTACK MVP</div>
+          <div class="mvp-names">${atkNames}</div>
+          <div class="mp-plain">공격P ${atkPts}${atkDetail ? `<br>${atkDetail}` : ''}</div>
+        </div>
+        <div class="result-hero">
+          <div class="eyebrow">DEFENSE MVP</div>
+          <div class="mvp-names">${defNames}</div>
+          <div class="mp-plain">수비P ${defPts}${defDetail ? `<br>${defDetail}` : ''}</div>
+        </div>
       </div>
       <div class="award-g">
         <div class="award"><b>TOP SCORER</b>${topScorer ? `${topScorer.name} ${topScorer.v}` : '-'}</div>
