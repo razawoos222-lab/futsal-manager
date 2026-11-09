@@ -349,28 +349,41 @@
       </div>
     </div>
 
-    <!-- 03 스네이크 -->
+    <!-- 03 팀 나누기 -->
     <div class="block">
-      <div class="label">03 · 스네이크 Draft (실시간 편성)</div>
+      <div class="label">03 · 팀 나누기 (스네이크 / 직접 선택)</div>
       <div class="phone">
-        <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>Draft</span></div></div>
+        <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>팀 나누기</span></div></div>
         <div class="body scroll">
-          <div class="draft-banner">TEAM BLUE 감독 차례 · 남은 12명</div>
-          <div class="live-teams">
-            <div class="live-team"><b class="t-red">TEAM RED 3/8</b> · 김기호(C) · 이영중 · 여도영</div>
-            <div class="live-team"><b class="t-blue">TEAM BLUE 2/8</b> · 이윤수(C) · 배철호</div>
-            <div class="live-team"><b class="t-yellow">TEAM YELLOW 1/8</b> · 신윤호(C)</div>
+          <h2>팀 나누기</h2>
+          <p style="font-size:0.78rem;font-weight:800;margin-bottom:6px">팀 구성 방식</p>
+          <div class="seg" style="margin-bottom:8px">
+            <button type="button" class="on">스네이크 방식</button>
+            <button type="button">직접 선택</button>
           </div>
-          <p style="font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:6px">미배정 선수 · 탭하면 즉시 팀 편성</p>
-          <div class="pool-scroll"><div class="grid2">
-            <div class="pcard fixo tap-pick"><div class="name">송환규</div><div class="role">아라</div><div class="stats">승률 41%</div></div>
-            <div class="pcard all"><div class="name">이호섭</div><div class="role">올라운드</div><div class="stats">승률 45%</div></div>
-            <div class="pcard pivo"><div class="name">정세진</div><div class="role">피보</div><div class="stats">승률 50%</div></div>
-            <div class="pcard fixo"><div class="name">김상덕</div><div class="role">픽소</div><div class="stats">승률 47%</div></div>
-            <div class="pcard ala"><div class="name">양승현</div><div class="role">아라</div><div class="stats">승률 43%</div></div>
-            <div class="pcard all"><div class="name">장용호</div><div class="role">올라운드</div><div class="stats">승률 38%</div></div>
-          </div></div>
-          <button type="button" class="btn-sec">↩ 마지막 픽 취소</button>
+          <p class="status-line" style="text-align:left">스네이크 순서 · RED→BLUE→YELLOW→YELLOW→BLUE→RED…</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+            <div style="display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center"><span style="width:28px;height:28px;border-radius:8px;background:#fecaca;border:2px solid #dc2626"></span><div class="field" style="margin:0;display:flex;align-items:center;min-height:44px">선수 선택</div></div>
+            <div style="display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center"><span style="width:28px;height:28px;border-radius:8px;background:#bfdbfe;border:2px solid #2563eb"></span><div class="field" style="margin:0;display:flex;align-items:center;min-height:44px">선수 선택</div></div>
+            <div style="display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center"><span style="width:28px;height:28px;border-radius:8px;background:#fef08a;border:2px solid #fde047"></span><div class="field" style="margin:0;display:flex;align-items:center;min-height:44px">선수 선택</div></div>
+            <div style="display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center"><span style="width:28px;height:28px;border-radius:8px;background:#fef08a;border:2px solid #fde047"></span><div class="field" style="margin:0;display:flex;align-items:center;min-height:44px">선수 선택</div></div>
+          </div>
+          <div class="team-stat-card red" style="min-height:96px;margin-bottom:12px">
+            <div class="head"><h4 class="t-red">TEAM RED</h4><span class="val val-red">팀파워 88</span></div>
+            <div class="sub">인원: 3명 · 팀승률 <b style="color:var(--text)">51.2%</b></div>
+            <div class="names">김기호(C) · 이영중 · 여도영</div>
+          </div>
+          <div class="team-stat-card blue" style="min-height:96px;margin-bottom:12px">
+            <div class="head"><h4 class="t-blue">TEAM BLUE</h4><span class="val val-blue">팀파워 94</span></div>
+            <div class="sub">인원: 2명 · 팀승률 <b style="color:var(--text)">54.8%</b></div>
+            <div class="names">이윤수(C) · 배철호</div>
+          </div>
+          <div class="team-stat-card yellow" style="min-height:96px;margin-bottom:12px">
+            <div class="head"><h4 class="t-yellow">TEAM YELLOW</h4><span class="val val-yellow">팀파워 79</span></div>
+            <div class="sub">인원: 1명 · 팀승률 <b style="color:var(--text)">47.6%</b></div>
+            <div class="names">신윤호(C)</div>
+          </div>
+          <button type="button" class="btn-cta">팀 구성 완료</button>
           <div class="nav-row"><button type="button">← 이전</button><button type="button" class="next">다음 →</button></div>
         </div>
       </div>
@@ -383,19 +396,19 @@
         <div class="jmfc-bar"><img class="logo" src="assets/jmfc-logo.png" alt="" /><div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>확정</span></div></div>
         <div class="body scroll">
           <h2>3팀 라인업</h2>
-          <div class="team-stat-card red">
-            <div class="head"><h4 class="t-red">TEAM RED 8명</h4><span class="val val-red">팀파워 88</span></div>
-            <div class="sub">팀 승률 <b style="color:var(--text)">51.2%</b></div>
+          <div class="team-stat-card red" style="min-height:110px;margin-bottom:14px">
+            <div class="head"><h4 class="t-red">TEAM RED</h4><span class="val val-red">팀파워 88</span></div>
+            <div class="sub">인원: 8명 · 팀승률 <b style="color:var(--text)">51.2%</b> <span style="color:var(--muted)">(용병 제외)</span></div>
             <div class="names">김기호(C) · 송환규 · 여도영 · 이호섭 · 이영중 · 정세진 · …</div>
           </div>
-          <div class="team-stat-card blue">
-            <div class="head"><h4 class="t-blue">TEAM BLUE 8명</h4><span class="val val-blue">팀파워 94</span></div>
-            <div class="sub">팀 승률 <b style="color:var(--text)">54.8%</b></div>
+          <div class="team-stat-card blue" style="min-height:110px;margin-bottom:14px">
+            <div class="head"><h4 class="t-blue">TEAM BLUE</h4><span class="val val-blue">팀파워 94</span></div>
+            <div class="sub">인원: 8명 · 팀승률 <b style="color:var(--text)">54.8%</b> <span style="color:var(--muted)">(용병 제외)</span></div>
             <div class="names">이윤수(C) · 김상덕 · 배철호 · 정세진 · 송환규 · …</div>
           </div>
-          <div class="team-stat-card yellow">
-            <div class="head"><h4 class="t-yellow">TEAM YELLOW 8명</h4><span class="val val-yellow">팀파워 79</span></div>
-            <div class="sub">팀 승률 <b style="color:var(--text)">47.6%</b></div>
+          <div class="team-stat-card yellow" style="min-height:110px;margin-bottom:14px">
+            <div class="head"><h4 class="t-yellow">TEAM YELLOW</h4><span class="val val-yellow">팀파워 79</span></div>
+            <div class="sub">인원: 8명 · 팀승률 <b style="color:var(--text)">47.6%</b> <span style="color:var(--muted)">(용병 제외)</span></div>
             <div class="names">신윤호(C) · 양승현 · 이장영 · 장용호 · …</div>
           </div>
           <button type="button" class="btn-cta">팀 구성 확정 → 경기 선택</button>
