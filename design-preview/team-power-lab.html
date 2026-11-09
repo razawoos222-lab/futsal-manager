@@ -365,6 +365,7 @@
   <div class="row top" style="max-width:720px;padding:0.5rem 1rem 0;gap:0.4rem">
     <button id="btn-load" style="background:var(--primary);color:#fff;border-color:var(--primary);font-weight:800">시트 새로고침</button>
     <button id="btn-snap" title="구글 시트 fetch가 실패하거나 오프라인일 때 쓰는 로컬 players-snapshot.json 선수 명단을 불러옵니다. 경기 기록 저장이 아닙니다.">오프라인 스냅샷</button>
+    <button id="btn-nov7" style="background:#18181b;color:#f5e6b8;border-color:#c9a227;font-weight:800" title="2026-11-07 실기록으로 결과 화면 미리보기">11/7 실결과</button>
     <span class="status" id="load-status">대기</span>
   </div>
   <div id="app"></div>
@@ -411,6 +412,7 @@ const state = {
   timerId: null,
   excluded: [],
   editTeam: null,
+  sessionDateLabel: '세션 종료',
 };
 
 function emptyTeams() {
@@ -917,10 +919,16 @@ function renderMatchSelect() {
 }
 
 function mpOf(s) { return (s.goal||0)*2 + (s.assist||0)*2 + (s.defense||0) + (s.save||0); }
+function atkOf(s) { return (s.goal||0)*2 + (s.assist||0)*2; }
+function defOf(s) { return (s.defense||0) + (s.save||0); }
 
 function topList(key, n=10) {
   return Object.entries(state.playerStats)
-    .map(([name, s]) => ({ name, v: key === 'mp' ? mpOf(s) : (s[key] || 0), ...s }))
+    .map(([name, s]) => ({
+      name,
+      v: key === 'mp' ? mpOf(s) : key === 'atk' ? atkOf(s) : key === 'dfn' ? defOf(s) : (s[key] || 0),
+      ...s,
+    }))
     .filter(x => x.v > 0)
     .sort((a,b) => b.v - a.v)
     .slice(0, n);
@@ -1025,13 +1033,17 @@ function renderResults() {
       wrSession: (s.wins+s.losses)>0 ? ((s.wins/(s.wins+s.losses))*100).toFixed(0)+'%' : '-',
     };
   }).sort((a,b)=>b.pts-a.pts||b.gd-a.gd);
-  const mvps = topList('mp', 5);
+  const atkMvps = topList('atk', 5);
+  const defMvps = topList('dfn', 5);
   const topScorer = topList('goal', 1)[0];
   const topAssist = topList('assist', 1)[0];
   const topDef = topList('defense', 1)[0];
   const topSave = topList('save', 1)[0];
-  const mvpNames = mvps.slice(0, 2).map(x => x.name).join(' · ') || '-';
-  const mvpMp = mvps[0] ? mvps[0].v : 0;
+  const atkNames = atkMvps.slice(0, 2).map(x => x.name).join(' · ') || '-';
+  const defNames = defMvps.slice(0, 2).map(x => x.name).join(' · ') || '-';
+  const atkPts = atkMvps[0] ? atkMvps[0].v : 0;
+  const defPts = defMvps[0] ? defMvps[0].v : 0;
+  const sessionLabel = state.sessionDateLabel || '세션 종료';
   const teamMp = teamNames().map(t => {
     const names = originalRoster(t);
     const list = names.map(n => {
@@ -1052,13 +1064,18 @@ function renderResults() {
   }).join('');
 
   return `<div class="screen">
-    ${jmfcBar('세션 종료')}
+    ${jmfcBar(sessionLabel)}
     <div class="body">
       <h2>오늘의 경기 결과</h2>
       <div class="result-hero">
-        <div class="eyebrow">SESSION MVP</div>
-        <div class="mvp-names">${mvpNames}</div>
-        <div class="mp-plain">MP ${mvpMp}</div>
+        <div class="eyebrow">ATTACK MVP</div>
+        <div class="mvp-names">${atkNames}</div>
+        <div class="mp-plain">공격P ${atkPts}</div>
+      </div>
+      <div class="result-hero">
+        <div class="eyebrow">DEFENSE MVP</div>
+        <div class="mvp-names">${defNames}</div>
+        <div class="mp-plain">수비P ${defPts}</div>
       </div>
       <div class="award-g">
         <div class="award"><b>TOP SCORER</b>${topScorer ? `${topScorer.name} ${topScorer.v}` : '-'}</div>
@@ -1485,6 +1502,68 @@ function toggleTimer() {
   render();
 }
 
+/** 2026-11-07 실기록(시트) → 결과 화면 미리보기. 공격MVP=공격P, 수비MVP=수비+선방 */
+function loadNov7Session() {
+  stopTimer();
+  const RED = ['이호준','신용주','장용호','배철호','양승현','황민구'];
+  const YELLOW = ['김기호','이영중','정세진','이호섭','이광일'];
+  const BLUE = ['김민수','안재욱','최한호','권성민','조덕기','배수천'];
+  const stats = {
+    이호준:{goal:3,assist:2,defense:0,save:0,wins:5,draws:3,losses:1,homeTeam:'RED'},
+    신용주:{goal:1,assist:3,defense:0,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    장용호:{goal:3,assist:1,defense:0,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    배철호:{goal:0,assist:3,defense:1,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    양승현:{goal:3,assist:0,defense:0,save:0,wins:6,draws:3,losses:0,homeTeam:'RED'},
+    황민구:{goal:0,assist:0,defense:0,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    김기호:{goal:4,assist:3,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    이영중:{goal:2,assist:2,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    정세진:{goal:2,assist:2,defense:0,save:0,wins:2,draws:1,losses:3,homeTeam:'YELLOW'},
+    이호섭:{goal:1,assist:1,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    이광일:{goal:0,assist:1,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    김민수:{goal:3,assist:0,defense:1,save:0,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    안재욱:{goal:0,assist:1,defense:2,save:2,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    최한호:{goal:2,assist:0,defense:0,save:1,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    권성민:{goal:0,assist:1,defense:0,save:0,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    조덕기:{goal:0,assist:0,defense:1,save:1,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    배수천:{goal:0,assist:0,defense:0,save:0,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+  };
+  const teams = emptyTeams();
+  teams.RED = { players: [...RED], coach: null };
+  teams.YELLOW = { players: [...YELLOW], coach: null };
+  teams.BLUE = { players: [...BLUE], coach: null };
+  teams.BLACK = { players: [], coach: null };
+  const playerStats = {};
+  Object.entries(stats).forEach(([name, s]) => {
+    playerStats[name] = { ownGoal: 0, matches: s.wins + s.draws + s.losses, ...s };
+  });
+  Object.assign(state, {
+    screen: 'results',
+    teamMode: 3,
+    attending: [...RED, ...YELLOW, ...BLUE],
+    coaches: {},
+    teams,
+    originalTeams: cloneTeams(teams),
+    snakeSeed: ['RED','BLUE','YELLOW'],
+    draftPool: [], draftTurn: 0, draftHistory: [],
+    playing: [], matchCount: 12, score: { A: 0, B: 0 }, timeline: [], recordStack: [],
+    teamStats: {
+      RED: { matchesPlayed: 8, wins: 5, draws: 3, losses: 0, goalsFor: 10, goalsAgainst: 4 },
+      YELLOW: { matchesPlayed: 8, wins: 3, draws: 1, losses: 4, goalsFor: 9, goalsAgainst: 9 },
+      BLUE: { matchesPlayed: 8, wins: 1, draws: 2, losses: 5, goalsFor: 5, goalsAgainst: 11 },
+      BLACK: { matchesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 },
+    },
+    playerStats,
+    matchTab: 'lineup',
+    secondsLeft: state.duration,
+    excluded: [],
+    editTeam: null,
+    sessionDateLabel: '2026.11.07 · 세션 종료',
+  });
+  setStatus('11/7 실기록 로드 · 공격MVP 김기호 · 수비MVP 안재욱', 'ok');
+  toast('2026.11.07 실결과 · 공격MVP 김기호 / 수비MVP 안재욱');
+  render();
+}
+
 function resetSession() {
   stopTimer();
   Object.assign(state, {
@@ -1494,7 +1573,8 @@ function resetSession() {
     playing: [], matchCount: 1, score: { A: 0, B: 0 }, timeline: [], recordStack: [],
     teamStats: {}, playerStats: {}, matchTab: 'lineup', secondsLeft: state.duration,
     excluded: [],
-  editTeam: null,
+    editTeam: null,
+    sessionDateLabel: '세션 종료',
   });
   toast('새 세션');
   render();
@@ -1661,6 +1741,7 @@ function bindLiveMp() {
 
 document.getElementById('btn-load').onclick = loadLive;
 document.getElementById('btn-snap').onclick = loadSnapshot;
+document.getElementById('btn-nov7').onclick = loadNov7Session;
 loadLive();
 </script>
 </body>
