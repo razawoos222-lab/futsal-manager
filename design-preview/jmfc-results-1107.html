@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>JMFC 2026.11.07 결과</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f0f0f2; --card: #fff; --text: #18181b; --muted: #52525b;
+      --border: #e4e4e7; --border-strong: #a1a1aa;
+      --red: #dc2626; --blue: #2563eb; --yellow: #eab308; --yellow-text: #ca8a04;
+      --gold: #c9a227; --gold-light: #f5e6b8;
+      --green: #16a34a; --primary: #2563eb;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text);
+      min-height: 100dvh; display: flex; justify-content: center;
+      padding: 12px 10px calc(16px + var(--safe-b));
+    }
+    .phone {
+      width: 100%; max-width: 420px; background: var(--card);
+      border-radius: 24px; border: 1.5px solid var(--border-strong);
+      box-shadow: 0 16px 48px rgba(0,0,0,.12); overflow: hidden;
+      display: flex; flex-direction: column; min-height: min(100dvh - 24px, 900px);
+    }
+    .jmfc-bar {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      border-bottom: 1.5px solid #c4c4c8; background: #fff; flex-shrink: 0;
+    }
+    .logo {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: radial-gradient(circle at 30% 30%, #f5e6b8, #c9a227 55%, #1a1a22);
+      display: grid; place-items: center; color: #111; font-family: Cinzel, serif;
+      font-weight: 900; font-size: 0.55rem; letter-spacing: 0.04em;
+    }
+    .jmfc-brand strong {
+      display: block; font-family: Cinzel, Georgia, serif; font-size: 0.82rem;
+      font-weight: 900; letter-spacing: 0.06em;
+    }
+    .jmfc-brand span { display: block; font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-top: 1px; }
+    .body { padding: 12px 14px 18px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; }
+    h2 { font-size: 1.1rem; font-weight: 900; margin-bottom: 10px; }
+
+    .mvp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .result-hero {
+      padding: 12px 8px; border-radius: 16px;
+      background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
+      border: 1.5px solid var(--gold);
+    }
+    .eyebrow {
+      font-family: Cinzel, Georgia, serif; font-size: 0.58rem; font-weight: 900;
+      letter-spacing: 0.1em; color: var(--gold-light); text-align: center;
+    }
+    .mvp-names { text-align: center; font-size: 1.05rem; font-weight: 900; color: #fff; margin-top: 8px; }
+    .mp-plain {
+      text-align: center; margin-top: 6px; color: var(--gold-light);
+      font-size: 0.72rem; font-weight: 800; line-height: 1.4;
+    }
+
+    .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .award {
+      padding: 10px; border-radius: 12px; background: linear-gradient(160deg,#fafafa,#f4f4f5);
+      border: 1.5px solid var(--border); font-size: 0.76rem; font-weight: 700;
+    }
+    .award b { display: block; font-size: 0.66rem; color: #57534e; margin-bottom: 4px; font-weight: 800; }
+
+    .result-card {
+      background: #fff; border-radius: 14px; padding: 12px; border: 1.5px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .team-RED { border-left: 4px solid var(--red); }
+    .team-YELLOW { border-left: 4px solid var(--yellow); }
+    .team-BLUE { border-left: 4px solid var(--blue); }
+    .t-RED { color: var(--red); } .t-BLUE { color: var(--blue); } .t-YELLOW { color: var(--yellow-text); }
+    .team-title { font-weight: 900; margin-bottom: 6px; font-size: 0.85rem; }
+
+    table.data { width: 100%; border-collapse: collapse; font-size: 0.68rem; }
+    table.data th, table.data td {
+      border-bottom: 1px solid var(--border); padding: 7px 2px; text-align: center; white-space: nowrap;
+    }
+    table.data th { color: var(--muted); font-weight: 800; font-size: 0.62rem; }
+    table.data td:first-child, table.data th:first-child { text-align: left; padding-left: 4px; }
+    table.data .mp { font-variant-numeric: tabular-nums; font-weight: 800; }
+
+    .seg {
+      display: flex; margin-bottom: 10px; border: 1.5px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .seg button {
+      flex: 1; min-height: 44px; border: none; background: #fafafa;
+      font-weight: 800; font-size: 0.82rem; font-family: inherit; color: var(--muted);
+    }
+    .seg button.on { background: var(--primary); color: #fff; }
+    .seg button.t-RED.on { background: var(--red); }
+    .seg button.t-YELLOW.on { background: #ca8a04; }
+    .seg button.t-BLUE.on { background: var(--blue); }
+
+    .hint { font-size: 0.68rem; color: var(--muted); text-align: center; margin: 8px 0 4px; line-height: 1.45; }
+    .result-btns { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .btn {
+      width: 100%; min-height: 48px; border: none; border-radius: 12px;
+      font-weight: 900; font-size: 0.94rem; font-family: inherit; cursor: pointer;
+    }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-cta { background: var(--primary); color: #fff; }
+    .btn-danger { background: #991b1b; color: #fff; }
+    .toast {
+      position: fixed; left: 50%; bottom: calc(24px + var(--safe-b)); transform: translateX(-50%);
+      background: #18181b; color: #fff; padding: 10px 14px; border-radius: 10px;
+      font-weight: 700; font-size: 0.85rem; z-index: 40; opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .toast.show { opacity: 1; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="phone" id="app">
+    <div class="jmfc-bar">
+      <div class="logo">JMFC</div>
+      <div class="jmfc-brand">
+        <strong>JMFC FOOTBALL</strong>
+        <span>2026.11.07 · 세션 종료</span>
+      </div>
+    </div>
+    <div class="body" id="main"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+const SESSION = {
+  date: '2026.11.07',
+  attackMvp: { names: ['김기호'], points: 14, detail: '4득점3도움' },
+  defenseMvp: { names: ['안재욱'], points: 4, detail: '2수비2선방' },
+  awards: {
+    scorer: '김기호 4',
+    assist: '김기호 · 신용주 · 배철호 3',
+    defense: '안재욱 2',
+    save: '안재욱 2',
+  },
+  standings: [
+    { rank: 1, team: 'RED', played: 8, w: 5, d: 3, l: 0, gf: 10, ga: 4, gd: 6, wr: '100%', pts: 18 },
+    { rank: 2, team: 'YELLOW', played: 8, w: 3, d: 1, l: 4, gf: 9, ga: 9, gd: 0, wr: '43%', pts: 10 },
+    { rank: 3, team: 'BLUE', played: 8, w: 1, d: 2, l: 5, gf: 5, ga: 11, gd: -6, wr: '17%', pts: 5 },
+  ],
+  teams: {
+    RED: [
+      { name: '이호준', goal: 3, assist: 2, defense: 0, save: 0, mp: 10 },
+      { name: '신용주', goal: 1, assist: 3, defense: 0, save: 0, mp: 8 },
+      { name: '장용호', goal: 3, assist: 1, defense: 0, save: 0, mp: 8 },
+      { name: '배철호', goal: 0, assist: 3, defense: 1, save: 0, mp: 7 },
+      { name: '양승현', goal: 3, assist: 0, defense: 0, save: 0, mp: 6 },
+      { name: '황민구', goal: 0, assist: 0, defense: 0, save: 0, mp: 0 },
+    ],
+    YELLOW: [
+      { name: '김기호', goal: 4, assist: 3, defense: 0, save: 0, mp: 14 },
+      { name: '이영중', goal: 2, assist: 2, defense: 0, save: 0, mp: 8 },
+      { name: '정세진', goal: 2, assist: 2, defense: 0, save: 0, mp: 8 },
+      { name: '이호섭', goal: 1, assist: 1, defense: 0, save: 0, mp: 4 },
+      { name: '이광일', goal: 0, assist: 1, defense: 0, save: 0, mp: 2 },
+    ],
+    BLUE: [
+      { name: '김민수', goal: 3, assist: 0, defense: 1, save: 0, mp: 7 },
+      { name: '안재욱', goal: 0, assist: 1, defense: 2, save: 2, mp: 6 },
+      { name: '최한호', goal: 2, assist: 0, defense: 0, save: 1, mp: 5 },
+      { name: '권성민', goal: 0, assist: 1, defense: 0, save: 0, mp: 2 },
+      { name: '조덕기', goal: 0, assist: 0, defense: 1, save: 1, mp: 2 },
+      { name: '배수천', goal: 0, assist: 0, defense: 0, save: 0, mp: 0 },
+    ],
+  },
+};
+
+const state = { team: 'RED', screen: 'results' };
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function mpOf(p) { return (p.goal||0)*2 + (p.assist||0)*2 + (p.defense||0) + (p.save||0); }
+
+function teamTable(team) {
+  const rows = SESSION.teams[team] || [];
+  return `
+    <div class="result-card team-${team}">
+      <div class="team-title t-${team}">TEAM ${team}</div>
+      <table class="data">
+        <thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr></thead>
+        <tbody>
+          ${rows.map(p => `
+            <tr>
+              <td>${p.name}</td>
+              <td>${p.goal}</td><td>${p.assist}</td><td>${p.defense}</td><td>${p.save}</td>
+              <td class="mp">${p.mp ?? mpOf(p)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderResults() {
+  const a = SESSION.attackMvp;
+  const d = SESSION.defenseMvp;
+  const st = SESSION.standings;
+  return `
+    <h2>오늘의 경기 결과</h2>
+    <div class="mvp-row">
+      <div class="result-hero">
+        <div class="eyebrow">ATTACK MVP</div>
+        <div class="mvp-names">${a.names.join(' · ')}</div>
+        <div class="mp-plain">공격P ${a.points}<br>${a.detail}</div>
+      </div>
+      <div class="result-hero">
+        <div class="eyebrow">DEFENSE MVP</div>
+        <div class="mvp-names">${d.names.join(' · ')}</div>
+        <div class="mp-plain">수비P ${d.points}<br>${d.detail}</div>
+      </div>
+    </div>
+    <div class="award-g">
+      <div class="award"><b>TOP SCORER</b>${SESSION.awards.scorer}</div>
+      <div class="award"><b>TOP ASSIST</b>${SESSION.awards.assist}</div>
+      <div class="award"><b>TOP DEFENSE</b>${SESSION.awards.defense}</div>
+      <div class="award"><b>TOP SAVE</b>${SESSION.awards.save}</div>
+    </div>
+    <div class="result-card" style="overflow-x:auto">
+      <table class="data">
+        <thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
+        <tbody>
+          ${st.map(r => `
+            <tr>
+              <td>${r.rank}</td>
+              <td class="t-${r.team}" style="font-weight:900">${r.team}</td>
+              <td>${r.played}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+              <td>${r.gf}</td><td>${r.ga}</td>
+              <td>${r.gd>0?'+':''}${r.gd}</td>
+              <td>${r.wr}</td><td>${r.pts}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="seg" id="team-seg">
+      ${['RED','YELLOW','BLUE'].map(t =>
+        `<button type="button" class="${t===state.team?'on':''} t-${t}" data-team="${t}">TEAM ${t}</button>`
+      ).join('')}
+    </div>
+    <div id="team-panel">${teamTable(state.team)}</div>
+    <p class="hint">실기록 ${SESSION.date}<br>공격P=득점×2+도움×2 · 수비P=수비+선방 · MP=공격P+수비P</p>
+    <div class="result-btns">
+      <button type="button" class="btn btn-green" id="btn-edit">기록 수정하기</button>
+      <button type="button" class="btn btn-cta" id="btn-save">기록 저장 & NEW 세션</button>
+      <button type="button" class="btn btn-danger" id="btn-reset">기록 리셋 & NEW 세션</button>
+    </div>
+  `;
+}
+
+function renderEdit() {
+  const team = state.team;
+  const rows = SESSION.teams[team];
+  return `
+    <h2>기록 수정</h2>
+    <div class="seg" id="team-seg">
+      ${['RED','YELLOW','BLUE'].map(t =>
+        `<button type="button" class="${t===team?'on':''} t-${t}" data-team="${t}">TEAM ${t}</button>`
+      ).join('')}
+    </div>
+    <div class="result-card team-${team}">
+      <table class="data" id="edit-table">
+        <thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr></thead>
+        <tbody>
+          ${rows.map((p,i) => `
+            <tr data-idx="${i}">
+              <td>${p.name}</td>
+              <td><input type="number" min="0" data-f="goal" value="${p.goal}" style="width:2.4rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td>
+              <td><input type="number" min="0" data-f="assist" value="${p.assist}" style="width:2.4rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td>
+              <td><input type="number" min="0" data-f="defense" value="${p.defense}" style="width:2.4rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td>
+              <td><input type="number" min="0" data-f="save" value="${p.save}" style="width:2.4rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td>
+              <td class="mp" data-mp>${mpOf(p)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="result-btns">
+      <button type="button" class="btn btn-cta" id="btn-done">수정 완료 → 결과로</button>
+    </div>
+  `;
+}
+
+function recomputeAwards() {
+  const all = Object.values(SESSION.teams).flat();
+  const atk = (p) => p.goal*2 + p.assist*2;
+  const dfn = (p) => p.defense + p.save;
+  all.forEach(p => { p.mp = mpOf(p); });
+  const bestAtk = Math.max(...all.map(atk));
+  const bestDef = Math.max(...all.map(dfn));
+  const atkW = all.filter(p => atk(p) === bestAtk).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  const defW = all.filter(p => dfn(p) === bestDef).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  const top = (key) => {
+    const m = Math.max(...all.map(p => p[key]));
+    const ws = all.filter(p => p[key] === m && m > 0).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+    return ws.length ? `${ws.map(p=>p.name).join(' · ')} ${m}` : '-';
+  };
+  SESSION.attackMvp = {
+    names: atkW.map(p => p.name),
+    points: bestAtk,
+    detail: `${atkW[0].goal}득점${atkW[0].assist}도움`,
+  };
+  SESSION.defenseMvp = {
+    names: defW.map(p => p.name),
+    points: bestDef,
+    detail: `${defW[0].defense}수비${defW[0].save}선방`,
+  };
+  SESSION.awards = {
+    scorer: top('goal'),
+    assist: top('assist'),
+    defense: top('defense'),
+    save: top('save'),
+  };
+}
+
+function render() {
+  const main = document.getElementById('main');
+  main.innerHTML = state.screen === 'edit' ? renderEdit() : renderResults();
+  bind();
+}
+
+function bind() {
+  document.querySelectorAll('#team-seg button').forEach(btn => {
+    btn.onclick = () => {
+      state.team = btn.dataset.team;
+      render();
+    };
+  });
+
+  const edit = document.getElementById('btn-edit');
+  if (edit) edit.onclick = () => { state.screen = 'edit'; render(); };
+
+  const save = document.getElementById('btn-save');
+  if (save) save.onclick = () => toast('기록 저장(로컬 미리보기)');
+
+  const reset = document.getElementById('btn-reset');
+  if (reset) reset.onclick = () => toast('리셋은 미리보기에서 비활성');
+
+  const done = document.getElementById('btn-done');
+  if (done) {
+    done.onclick = () => {
+      document.querySelectorAll('#edit-table tr[data-idx]').forEach(row => {
+        const idx = Number(row.dataset.idx);
+        const p = SESSION.teams[state.team][idx];
+        row.querySelectorAll('input[data-f]').forEach(inp => {
+          p[inp.dataset.f] = Math.max(0, Number(inp.value) || 0);
+        });
+        p.mp = mpOf(p);
+      });
+      recomputeAwards();
+      state.screen = 'results';
+      toast('수정 반영 · MVP 재계산');
+      render();
+    };
+  }
+
+  document.querySelectorAll('#edit-table tr[data-idx]').forEach(row => {
+    row.querySelectorAll('input[data-f]').forEach(inp => {
+      inp.oninput = () => {
+        const idx = Number(row.dataset.idx);
+        const p = { ...SESSION.teams[state.team][idx] };
+        row.querySelectorAll('input[data-f]').forEach(el => {
+          p[el.dataset.f] = Math.max(0, Number(el.value) || 0);
+        });
+        const cell = row.querySelector('[data-mp]');
+        if (cell) cell.textContent = mpOf(p);
+      };
+    });
+  });
+}
+
+recomputeAwards();
+render();
+</script>
+</body>
+</html>
