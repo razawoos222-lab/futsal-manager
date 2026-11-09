@@ -239,7 +239,55 @@ function saveLastAttending(names){try{localStorage.setItem(LAST_ATT_KEY,JSON.str
 function loadLastAttending(){try{const raw=localStorage.getItem(LAST_ATT_KEY);if(!raw){toast('지난 경기 참석자가 없습니다');return;}const data=JSON.parse(raw);const names=(data.names||[]).filter(n=>byName[n]);if(!names.length){toast('불러올 참석자가 없습니다');return;}state.attending=names;toast(`지난 경기 참석 ${names.length}명 불러옴`);render();}catch(_){toast('불러오기 실패');}}
 function saveSession(andNew){localStorage.setItem(STORAGE_KEY,JSON.stringify({savedAt:new Date().toISOString(),sessionDate:state.sessionDate,teamMode:state.teamMode,attending:state.attending,coaches:state.coaches,teams:state.teams,playerStats:state.playerStats,teamStats:state.teamStats,matchCount:state.matchCount}));saveLastAttending(state.attending);toast(andNew?'기록 저장 완료 · 새 세션':'기록 저장 완료');if(andNew)softNewSession(false);}
 function softNewSession(clearStorage){stopTimer();if(clearStorage)localStorage.removeItem(STORAGE_KEY);Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftMode:'snake',draftSlots:[],playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],modal:null,assistFor:null,sessionLabel:'세션 진행중'});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');render();}
-function loadNov7(){Object.assign(state,{teamMode:NOV7.teamMode,sessionDate:NOV7.sessionDate,attending:[...NOV7.attending],coaches:{...NOV7.coaches},teams:{RED:[...NOV7.teams.RED],BLUE:[...NOV7.teams.BLUE],YELLOW:[...NOV7.teams.YELLOW],BLACK:[]},teamStats:JSON.parse(JSON.stringify(NOV7.teamStats)),playerStats:Object.fromEntries(Object.entries(NOV7.playerStats).map(([k,v])=>[k,{...v}])),matchCount:12,sessionLabel:'2026.11.07 · 세션 종료',screen:'results'});toast('11/7 실기록 로드');render();}
+function loadNov7(silent){Object.assign(state,{teamMode:NOV7.teamMode,sessionDate:NOV7.sessionDate,attending:[...NOV7.attending],coaches:{...NOV7.coaches},teams:{RED:[...NOV7.teams.RED],BLUE:[...NOV7.teams.BLUE],YELLOW:[...NOV7.teams.YELLOW],BLACK:[]},teamStats:JSON.parse(JSON.stringify(NOV7.teamStats)),playerStats:Object.fromEntries(Object.entries(NOV7.playerStats).map(([k,v])=>[k,{...v}])),matchCount:12,sessionLabel:'2026.11.07 · 세션 종료',screen:'results',playing:[],modal:null});if(!silent)toast('11/7 실기록 로드');render();}
+
+function seedNov7Base(){
+  state.teamMode=NOV7.teamMode;
+  state.sessionDate=NOV7.sessionDate;
+  state.attending=[...NOV7.attending];
+  state.coaches={...NOV7.coaches};
+  state.teams={RED:[...NOV7.teams.RED],BLUE:[...NOV7.teams.BLUE],YELLOW:[...NOV7.teams.YELLOW],BLACK:[]};
+  state.teamStats=JSON.parse(JSON.stringify(NOV7.teamStats));
+  state.playerStats=Object.fromEntries(Object.entries(NOV7.playerStats).map(([k,v])=>[k,{...v}]));
+  state.matchCount=2;
+  state.sessionLabel=formatDateLabel(state.sessionDate)+' · 세션 진행중';
+}
+
+function loadDemo(name){
+  const screen=name||'attendance';
+  if(screen==='results'||screen==='edit'){
+    loadNov7(true);
+    if(screen==='edit'){state.screen='edit';render();}
+    return;
+  }
+  seedNov7Base();
+  if(screen==='attendance'){
+    state.screen='attendance';
+    state.coaches={}; state.teams=emptyTeams(); state.teamStats=emptyTeamStats(); state.playerStats={};
+  } else if(screen==='coach'){
+    state.screen='coach'; state.coaches={}; state.coachPickTeam='RED';
+    state.teams=emptyTeams(); state.teamStats=emptyTeamStats(); state.playerStats={};
+  } else if(screen==='draft'){
+    state.screen='draft'; state.draftMode='snake';
+    state.teams=emptyTeams();
+    teamNames().forEach(t=>{ if(state.coaches[t]) state.teams[t].push(state.coaches[t]); });
+    rebuildSnakeSlots();
+    // fill a few slots so mockup looks mid-draft
+    const pool=remainingPool();
+    [0,1,2,3].forEach((i)=>{ if(state.draftSlots[i]&&pool[i]) state.draftSlots[i].name=pool[i]; });
+    applyDraftSlotsToTeams();
+  } else if(screen==='lineup'){
+    state.screen='lineup';
+  } else if(screen==='matchSelect'){
+    state.screen='matchSelect'; state.playing=['BLUE','YELLOW']; state.duration=600;
+  } else if(screen==='match'){
+    state.screen='match'; state.playing=['RED','BLUE']; state.score={A:0,B:0};
+    state.secondsLeft=600; state.duration=600; state.matchTab='lineup'; state.matchCount=1;
+  } else {
+    state.screen='attendance';
+  }
+  render();
+}
 
 function getSnakeSeed(){return [...teamNames()];}
 function snakeTeamAt(i){const names=getSnakeSeed();const n=names.length;const round=Math.floor(i/n);const pos=i%n;return round%2===0?names[pos]:names[n-1-pos];}
@@ -358,7 +406,13 @@ else if(act==='save-edit'){document.querySelectorAll('tr[data-edit-name]').forEa
 document.querySelectorAll('tr[data-edit-name] input[data-f]').forEach(inp=>{inp.oninput=()=>{const row=inp.closest('tr');const tmp={goal:0,assist:0,defense:0,save:0};row.querySelectorAll('input[data-f]').forEach(el=>{tmp[el.dataset.f]=Math.max(0,Number(el.value)||0);});const cell=row.querySelector('[data-mp]');if(cell)cell.textContent=mpOf(tmp);};});}
 
 function render(){renderSteps();const map={attendance:renderAttendance,coach:renderCoach,draft:renderDraft,lineup:renderLineup,matchSelect:renderMatchSelect,match:renderMatch,results:renderResults,edit:renderEdit};document.getElementById('main').innerHTML=(map[state.screen]||renderAttendance)();bind();}
-if(new URLSearchParams(location.search).get('nov7')==='1')loadNov7();else render();
+(function boot(){
+  const q=new URLSearchParams(location.search);
+  if(q.get('embed')==='1'){ document.body.style.padding='0'; document.body.style.background='#fff'; const phone=document.getElementById('phone'); if(phone){ phone.style.borderRadius='0'; phone.style.border='none'; phone.style.boxShadow='none'; phone.style.minHeight='100dvh'; phone.style.maxWidth='100%'; } }
+  if(q.get('nov7')==='1') loadNov7(q.get('embed')==='1');
+  else if(q.get('demo')) loadDemo(q.get('demo'));
+  else render();
+})();
 </script>
 </body>
 </html>
