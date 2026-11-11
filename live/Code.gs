@@ -543,9 +543,28 @@ function getPlayerStatsFromArchive() {
 }
 
 
+function quarterKeyFromDate_(d) {
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  return `${dt.getFullYear()}-Q${Math.floor(dt.getMonth() / 3) + 1}`;
+}
+
+function finalizeCoachAgg_(coachStats) {
+  Object.keys(coachStats).forEach(name => {
+    const st = coachStats[name];
+    const decided = st.wins + st.losses;
+    st.goalDifference = st.goalsFor - st.goalsAgainst;
+    st.points = (st.wins * 3) + st.draws;
+    st.winRate = decided > 0 ? (st.wins / decided) * 100 : (st.games > 0 ? 0 : null);
+  });
+  return coachStats;
+}
+
 function getCoachStatsFromArchive() {
   const sheet = getSheet(CONFIG.COACH_ARCHIVE_SHEET);
-  if (sheet.getLastRow() < 2) return {};
+  if (sheet.getLastRow() < 2) {
+    return { all: {}, byPeriod: {}, periods: ['all'] };
+  }
 
   if (sheet.getRange(1, 1).getValue() === "") {
     sheet.appendRow(["경기일", "감독명", "팀명", "경기수", "승", "무", "패", "득점", "실점"]);
@@ -554,28 +573,41 @@ function getCoachStatsFromArchive() {
 
   const lastCol = Math.max(sheet.getLastColumn(), 9);
   const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
-  const coachStats = {};
+  const all = {};
+  const byPeriod = {};
+  const periodSet = {};
+
   data.forEach(row => {
     const coachName = row[1];
     if (!coachName) return;
-    if (!coachStats[coachName]) {
-      coachStats[coachName] = { games: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 };
+    const q = quarterKeyFromDate_(row[0]);
+    if (q) periodSet[q] = true;
+
+    const bump = (bucket) => {
+      if (!bucket[coachName]) {
+        bucket[coachName] = { games: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, sessions: 0 };
+      }
+      bucket[coachName].sessions += 1;
+      bucket[coachName].games += Number(row[3]) || 0;
+      bucket[coachName].wins += Number(row[4]) || 0;
+      bucket[coachName].draws += Number(row[5]) || 0;
+      bucket[coachName].losses += Number(row[6]) || 0;
+      bucket[coachName].goalsFor += Number(row[7]) || 0;
+      bucket[coachName].goalsAgainst += Number(row[8]) || 0;
+    };
+
+    bump(all);
+    if (q) {
+      if (!byPeriod[q]) byPeriod[q] = {};
+      bump(byPeriod[q]);
     }
-    coachStats[coachName].games += Number(row[3]) || 0;
-    coachStats[coachName].wins += Number(row[4]) || 0;
-    coachStats[coachName].draws += Number(row[5]) || 0;
-    coachStats[coachName].losses += Number(row[6]) || 0;
-    coachStats[coachName].goalsFor += Number(row[7]) || 0;
-    coachStats[coachName].goalsAgainst += Number(row[8]) || 0;
   });
 
-  Object.keys(coachStats).forEach(name => {
-    const st = coachStats[name];
-    const decided = st.wins + st.losses;
-    st.goalDifference = st.goalsFor - st.goalsAgainst;
-    st.winRate = decided > 0 ? (st.wins / decided) * 100 : (st.games > 0 ? 0 : null);
-  });
-  return coachStats;
+  finalizeCoachAgg_(all);
+  Object.keys(byPeriod).forEach(q => finalizeCoachAgg_(byPeriod[q]));
+
+  const periods = ['all'].concat(Object.keys(periodSet).sort());
+  return { all, byPeriod, periods };
 }
 
 

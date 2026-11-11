@@ -880,21 +880,55 @@ function renderSessionSummaryScreen(showBack) {
     document.getElementById('screen-session-summary').innerHTML = jmfcBar('세션 종료', showBack) + `<div class="body scroll"><h2>오늘의 경기 결과</h2>${body}</div>`;
 }
 
+let coachRankPeriod = 'all';
+
+function normalizeCoachArchiveStats(raw) {
+    if (!raw || typeof raw !== 'object') return { all: {}, byPeriod: {}, periods: ['all'] };
+    if (raw.all && typeof raw.all === 'object') {
+        return {
+            all: raw.all || {},
+            byPeriod: raw.byPeriod || {},
+            periods: Array.isArray(raw.periods) && raw.periods.length ? raw.periods : ['all'].concat(Object.keys(raw.byPeriod || {}).sort())
+        };
+    }
+    // legacy flat map { name: stats }
+    const reserved = new Set(['all', 'byPeriod', 'periods']);
+    const all = {};
+    Object.keys(raw).forEach(k => { if (!reserved.has(k) && raw[k] && typeof raw[k] === 'object') all[k] = raw[k]; });
+    return { all, byPeriod: {}, periods: ['all'] };
+}
+
+function coachPeriodLabel(key) {
+    if (key === 'all') return '전체기간';
+    const m = String(key).match(/^(\d{4})-Q([1-4])$/);
+    return m ? `${m[1]}년 ${m[2]}분기` : key;
+}
+
 function renderCoachRankingScreen(showBack) {
-    const stats = COACH_ARCHIVE_STATS || {};
+    const archive = normalizeCoachArchiveStats(COACH_ARCHIVE_STATS);
+    COACH_ARCHIVE_STATS = archive;
+    const periods = archive.periods || ['all'];
+    if (!periods.includes(coachRankPeriod)) coachRankPeriod = 'all';
+    const stats = coachRankPeriod === 'all' ? (archive.all || {}) : ((archive.byPeriod || {})[coachRankPeriod] || {});
     const arr = Object.keys(stats).map(name => ({ name, ...stats[name] })).sort((a,b) => {
+        const ptsA = (a.points != null) ? a.points : ((a.wins||0)*3 + (a.draws||0));
+        const ptsB = (b.points != null) ? b.points : ((b.wins||0)*3 + (b.draws||0));
         const wrA = (a.wins||0)+ (a.losses||0) > 0 ? a.wins/(a.wins+a.losses) : 0;
         const wrB = (b.wins||0)+ (b.losses||0) > 0 ? b.wins/(b.wins+b.losses) : 0;
-        return (b.wins||0)-(a.wins||0) || wrB-wrA || (b.goalsFor||0)-(a.goalsFor||0);
+        const gdA = (a.goalsFor||0)-(a.goalsAgainst||0);
+        const gdB = (b.goalsFor||0)-(b.goalsAgainst||0);
+        return ptsB-ptsA || gdB-gdA || wrB-wrA || String(a.name).localeCompare(String(b.name), 'ko');
     });
     document.getElementById('screen-coach-ranking').innerHTML = jmfcBar('감독 랭킹', showBack) + `<div class="body scroll">
-        <h2>누적 감독 랭킹</h2>
-        <div class="result-card"><table class="data rank"><thead><tr><th>순위</th><th>감독</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th></tr></thead><tbody>
+        <h2>감독 랭킹</h2>
+        <div class="seg" style="margin-bottom:12px">${periods.map(p => `<button type="button" data-action="coach-rank-period" data-period="${p}" class="${coachRankPeriod===p?'on':''}">${coachPeriodLabel(p)}</button>`).join('')}</div>
+        <div class="result-card"><table class="data rank"><thead><tr><th>순위</th><th>감독</th><th>세션</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승점</th><th>승률</th></tr></thead><tbody>
             ${arr.map((c,i) => {
                 const gd = (c.goalsFor||0)-(c.goalsAgainst||0);
+                const pts = (c.points != null) ? c.points : ((c.wins||0)*3 + (c.draws||0));
                 const wr = (c.wins||0)+(c.losses||0)>0 ? ((c.wins/(c.wins+c.losses))*100).toFixed(1)+'%' : '-';
-                return `<tr><td>${i+1}</td><td style="font-weight:900">${c.name}</td><td>${c.games||0}</td><td>${c.wins||0}</td><td>${c.draws||0}</td><td>${c.losses||0}</td><td>${c.goalsFor||0}</td><td>${c.goalsAgainst||0}</td><td>${gd>0?'+':''}${gd}</td><td>${wr}</td></tr>`;
-            }).join('') || '<tr><td colspan="10">기록 없음</td></tr>'}
+                return `<tr><td>${i+1}</td><td style="font-weight:900">${c.name}</td><td>${c.sessions||'-'}</td><td>${c.games||0}</td><td>${c.wins||0}</td><td>${c.draws||0}</td><td>${c.losses||0}</td><td>${c.goalsFor||0}</td><td>${c.goalsAgainst||0}</td><td>${gd>0?'+':''}${gd}</td><td>${pts}</td><td>${wr}</td></tr>`;
+            }).join('') || '<tr><td colspan="12">기록 없음 · 시트에 기록실_감독기록 반영 필요</td></tr>'}
         </tbody></table></div>
         <button data-action="go-final-results" class="btn-cta">확인 · 새 세션 준비</button>
     </div>`;
@@ -925,7 +959,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         MASTER_PLAYERS_DB = data.masterPlayers;
         localState = data.appState;
         PLAYER_ARCHIVE_STATS = data.playerArchiveStats || {};
-        COACH_ARCHIVE_STATS = data.coachArchiveStats || {};
+        COACH_ARCHIVE_STATS = normalizeCoachArchiveStats(data.coachArchiveStats || {});
         renderUI();
     } catch (e) {
         console.error(e);
@@ -1198,7 +1232,7 @@ document.body.addEventListener('click', async e => {
                 await serverCall('updateAndArchiveSession');
                 const fresh = await serverCall('getInitialData');
                 MASTER_PLAYERS_DB = fresh.masterPlayers || MASTER_PLAYERS_DB;
-                COACH_ARCHIVE_STATS = fresh.coachArchiveStats || {};
+                COACH_ARCHIVE_STATS = normalizeCoachArchiveStats(fresh.coachArchiveStats || {});
                 PLAYER_ARCHIVE_STATS = fresh.playerArchiveStats || {};
                 localState = fresh.appState;
                 localState.currentScreen = 'screen-coach-ranking';
@@ -1214,6 +1248,10 @@ document.body.addEventListener('click', async e => {
         case 'confirm-reset-session':
             document.getElementById('confirm-reset-modal').classList.add('hidden');
             serverCall('resetSession');
+            break;
+        case 'coach-rank-period':
+            coachRankPeriod = target.dataset.period || 'all';
+            renderCoachRankingScreen(true);
             break;
         case 'go-final-results':
             localState.currentScreen = 'screen-final-results';
