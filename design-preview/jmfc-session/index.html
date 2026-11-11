@@ -474,7 +474,7 @@ ${topAward('save','TOP SAVE')}
 </div>
 <h3 style="font-size:calc(0.88rem + 1pt);font-weight:900;margin:2px 0 8px">팀 순위</h3>
 ${standingsTableHtml()}
-${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','class="result-card stats-card')).join('')}
+${standingsRows().map(r=>teamPlayerTable(r.t).replace('class="result-card','class="result-card stats-card')).join('')}
 <p class="hint">공격P=득점×2+도움×2 · 수비P=수비+선방 · MP=공격P+수비P</p>
 <div class="result-btns"><button class="btn btn-green" data-act="go" data-screen="edit">기록 수정하기</button><button class="btn btn-cta" data-act="save-new">기록 저장 & NEW 세션</button><button class="btn btn-danger" data-act="reset-new">기록 리셋 & NEW 세션</button></div>
 ${navRow('matchSelect','edit',false,null,'기록 수정 →')}`;
