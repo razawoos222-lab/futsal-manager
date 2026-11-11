@@ -1,6 +1,6 @@
 # JMFC 목업 — 여기만 누르세요
 
-## 최종 목업 (v7.5)
+## 최종 목업 (v7.6)
 
 **[▶ JMFC 최종 목업 갤러리](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-mockup.html?v=7.4)**
 

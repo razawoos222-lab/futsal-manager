@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC Session · v7.5</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
+  <title>JMFC Session · v7.6</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg:#eef0f4; --surf:#eef0f4; --text:#1f2937; --muted:#6b7280;
@@ -19,18 +19,20 @@
       --touch-min:48px; --font-btn:0.92rem;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;padding:12px 10px calc(16px + var(--safe-b))}
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Apple SD Gothic Neo','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;justify-content:center;padding:12px 10px calc(16px + var(--safe-b));-webkit-font-smoothing:antialiased}
     .phone{width:100%;max-width:420px;background:var(--surf);border-radius:28px;border:none;box-shadow:var(--raise);overflow:hidden;display:flex;flex-direction:column;min-height:min(100dvh - 24px,920px);position:relative}
     .jmfc-bar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;background:transparent;flex-shrink:0}
     .jmfc-bar img.logo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:var(--raise-sm)}
     .jmfc-brand strong{display:block;font-family:Cinzel,Georgia,serif;font-size:0.82rem;font-weight:900;letter-spacing:0.06em;color:#111827}
     .jmfc-brand span{display:block;font-size:0.68rem;color:var(--muted);font-weight:600;margin-top:1px}
-    /* soft pill steps — sample style */
-    .steps{display:flex;gap:6px;margin:0 12px 8px;padding:8px;overflow-x:auto;border-radius:999px;background:var(--surf);box-shadow:var(--press);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    /* iOS segmented steps + scroll */
+    .steps-wrap{display:grid;grid-template-columns:36px 1fr 36px;align-items:center;gap:4px;margin:0 10px 10px;flex-shrink:0}
+    .steps-nav{width:36px;height:36px;border:none;border-radius:999px;background:var(--surf);box-shadow:var(--raise-sm);color:#4b5563;font-size:1.1rem;font-weight:900;cursor:pointer;font-family:inherit}
+    .steps{display:flex;gap:4px;padding:6px;overflow-x:auto;border-radius:999px;background:#e8eaef;box-shadow:var(--press);-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-behavior:smooth}
     .steps::-webkit-scrollbar{display:none}
-    .steps button{flex:0 0 auto;padding:8px 14px;border-radius:999px;font-size:0.72rem;font-weight:800;font-family:inherit;color:#6b7280;background:var(--surf);border:none;cursor:pointer;box-shadow:var(--raise-sm)}
-    .steps button.on{background:var(--accent);color:#fff;box-shadow:0 8px 16px rgba(37,99,235,.28)}
-    .steps button.done{color:#4b5563;box-shadow:var(--raise-sm)}
+    .steps button{flex:0 0 auto;padding:8px 12px;border-radius:999px;font-size:0.72rem;font-weight:700;font-family:inherit;color:#6b7280;background:transparent;border:none;cursor:pointer}
+    .steps button.on{background:#fff;color:#111827;box-shadow:0 2px 8px rgba(15,23,42,.12)}
+    .steps button.done{color:#374151}
     .body{padding:8px 14px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
     h2{font-size:1.1rem;font-weight:900;margin-bottom:8px;color:#111827}
     .sub{font-size:0.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45}
@@ -44,8 +46,8 @@
     .mini.on{box-shadow:var(--press);color:var(--accent)}
     /* player buttons — sample soft chips */
     .chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
-    .chip{min-height:54px;border-radius:18px;border:none;background:var(--surf);font-weight:800;font-size:0.95rem;font-family:inherit;color:#111827;cursor:pointer;padding:14px 8px;line-height:1.2;box-shadow:var(--raise)}
-    .chip.on{color:#111827;box-shadow:var(--press)}
+    .chip{min-height:54px;border-radius:999px;border:1px solid #eceff3;background:#fff;font-weight:700;font-size:0.95rem;font-family:inherit;color:#111827;cursor:pointer;padding:14px 8px;line-height:1.2;box-shadow:0 4px 12px rgba(15,23,42,.06)}
+    .chip.on{color:#111827;box-shadow:var(--press);border-color:transparent}
     .chip.off{opacity:1}
     .chip.merc{opacity:.85}
     .chip.taken{opacity:.35;pointer-events:none;box-shadow:none}
@@ -86,46 +88,50 @@
     .hist-item b{font-size:0.9rem}
     .hist-item span{display:block;font-size:0.78rem;color:var(--muted);margin-top:4px;font-weight:700}
     .flow-note{font-size:0.72rem;color:var(--muted);font-weight:700;padding:10px 12px;background:var(--surf);border-radius:16px;border:none;margin-bottom:10px;line-height:1.45;box-shadow:var(--press)}
-    .score-big{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:16px;border-radius:22px;border:none;margin-bottom:12px;text-align:center;font-weight:900;background:var(--surf);box-shadow:var(--raise)}
-    .score-big .sep{font-size:1.35rem;color:#9ca3af}
-    .score-big .side{font-size:0.85rem}
+    .score-big{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:18px 14px;border-radius:20px;border:1px solid #e5e7eb;margin-bottom:14px;text-align:center;font-weight:900;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+    .score-big .sep{font-size:1.4rem;color:#9ca3af}
+    .score-big .side{font-size:0.82rem}
+    .score-big .side .sc{font-size:1.7rem;margin-top:6px;font-variant-numeric:tabular-nums}
     .score-big .pwr{display:none}
-    .ctrl-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-    .timer-ring-wrap{width:118px;height:118px;position:relative;flex:0 0 auto;border-radius:50%;background:var(--surf);box-shadow:var(--raise);display:grid;place-items:center}
-    .timer-ring-wrap svg{width:104px;height:104px;transform:rotate(-90deg)}
-    .timer-ring-wrap .track{fill:none;stroke:#d9dee7;stroke-width:7}
-    .timer-ring-wrap .prog{fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .2s linear}
+    .ctrl-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-bottom:14px}
+    .timer-ring-wrap{width:108px;height:108px;position:relative;justify-self:center;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(15,23,42,.08);display:grid;place-items:center}
+    .timer-ring-wrap svg{width:96px;height:96px;transform:rotate(-90deg)}
+    .timer-ring-wrap .track{fill:none;stroke:#e5e7eb;stroke-width:6}
+    .timer-ring-wrap .prog{fill:none;stroke:#2563eb;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .2s linear}
     .timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-    .timer-center .t{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.3rem;font-weight:900;color:#111827;letter-spacing:.02em}
-    .timer-center .l{font-size:0.66rem;font-weight:700;color:#9ca3af;margin-top:2px}
-    .btn-sm{min-height:46px;padding:12px 16px;border-radius:999px;border:none;font-size:0.82rem;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:var(--raise)}
-    .btn-sm.gray{background:var(--surf);color:#4b5563}
-    .btn-sm.blue{background:var(--surf);color:var(--accent);min-width:160px;padding:14px 32px;font-size:0.95rem;flex:1 1 160px}
-    .btn-sm.blue:active,.btn-sm.gray:active{box-shadow:var(--press)}
+    .timer-center .t{font-family:-apple-system,BlinkMacSystemFont,ui-monospace,monospace;font-size:1.25rem;font-weight:800;color:#111827;letter-spacing:.02em}
+    .timer-center .l{font-size:0.62rem;font-weight:600;color:#9ca3af;margin-top:2px}
+    .btn-sm{width:100%;min-height:48px;padding:12px 10px;border-radius:999px;border:none;font-size:0.86rem;font-weight:800;font-family:inherit;cursor:pointer}
+    .btn-sm.gray{background:#e8eaef;color:#4b5563;box-shadow:none}
+    .btn-sm.blue{background:#111111;color:#b8ff3c;box-shadow:0 8px 16px rgba(0,0,0,.18)}
+    .btn-sm.blue:active{transform:scale(.98)}
+    .btn-sm.gray:active{background:#dde1e8;box-shadow:var(--press)}
     .tabs{display:flex;gap:6px;margin-bottom:12px;padding:6px;border-radius:999px;background:var(--surf);box-shadow:var(--press);border:none}
     .tabs button{flex:1;padding:10px 6px;font-size:0.76rem;font-weight:800;color:var(--muted);border:none;background:transparent;border-radius:999px;font-family:inherit;cursor:pointer}
     .tabs button.on{color:var(--accent);background:var(--surf);box-shadow:var(--raise-sm)}
     .lineup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .lineup-col{border-radius:20px;overflow:hidden;border:none;background:var(--surf);box-shadow:var(--raise)}
-    .lineup-col .team-head{padding:12px 8px;text-align:center;font-family:Cinzel,Georgia,serif;font-size:0.82rem;font-weight:900;letter-spacing:0.08em;color:#111827;background:transparent}
-    .lineup-col.team-RED .team-head,.lineup-col.team-BLUE .team-head,.lineup-col.team-YELLOW .team-head,.lineup-col.team-BLACK .team-head{background:transparent;color:#111827}
-    .lineup-col .roster{padding:4px 8px 10px}
+    .lineup-col{border-radius:20px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;box-shadow:0 6px 18px rgba(15,23,42,.05)}
+    .lineup-col .team-head{padding:12px 8px;text-align:center;font-family:Cinzel,Georgia,serif;font-size:0.82rem;font-weight:900;letter-spacing:0.08em;background:#fafafa;border-bottom:1px solid #f0f0f2}
+    .lineup-col.team-RED .team-head{color:var(--red)}
+    .lineup-col.team-BLUE .team-head{color:var(--blue)}
+    .lineup-col.team-YELLOW .team-head{color:var(--yellow-text)}
+    .lineup-col.team-BLACK .team-head{color:var(--black)}
+    .lineup-col .roster{padding:8px}
     .prow{margin-bottom:8px}
-    .prow button{width:100%;font-family:inherit;border-radius:999px;text-align:left;padding:12px 14px;font-size:0.98rem;font-weight:800;background:var(--surf);border:none;min-height:46px;cursor:pointer;box-shadow:var(--raise-sm);color:#111827}
-    .prow button.tap{box-shadow:var(--press);color:var(--accent)}
-    .prow .cap{font-size:0.62rem;font-weight:800;margin-right:6px;background:#111827;padding:2px 6px;border-radius:999px;color:#fff}
-    .btn-sub,.btn-add{width:calc(100% - 16px);margin:6px 8px;min-height:var(--touch-min);padding:12px;border:none;border-radius:999px;background:var(--surf);color:#374151;font-weight:900;font-size:var(--font-btn);font-family:inherit;cursor:pointer;box-shadow:var(--raise-sm)}
-    .btn-add{margin-bottom:12px}
+    .prow button{width:100%;font-family:inherit;border-radius:999px;text-align:left;padding:12px 14px;font-size:0.95rem;font-weight:700;background:#fff;border:1px solid #eceff3;min-height:46px;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.05);color:#111827}
+    .prow button.tap{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+    .prow .cap{font-size:0.62rem;font-weight:800;margin-right:6px;background:#111827;padding:2px 6px;border-radius:999px;color:#b8ff3c}
+    .lineup-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 8px 10px}
+    .btn-sub,.btn-add{width:100%;margin:0;min-height:44px;padding:10px 6px;border:none;border-radius:999px;background:#111;color:#b8ff3c;font-weight:800;font-size:0.8rem;font-family:inherit;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.18)}
     .act2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 0}
-    .act2 button{padding:12px;min-height:var(--touch-min);border:none;border-radius:999px;font-weight:800;font-size:var(--font-btn);font-family:inherit;cursor:pointer;background:var(--surf);color:#374151;box-shadow:var(--raise)}
-    .act2 .u{color:#4b5563}
-    .act2 .e{color:var(--accent)}
-    .act2 .s{grid-column:1/-1;color:var(--danger)}
-    .btn{width:100%;min-height:50px;border:none;border-radius:999px;font-weight:900;font-size:0.94rem;font-family:inherit;cursor:pointer;box-shadow:var(--raise);background:var(--surf);color:#111827}
-    .btn-cta{color:var(--accent)}
-    .btn-green{color:#047857}
-    .btn-danger{color:var(--danger)}
-    .btn-sec{color:var(--muted)}
+    .act2 button{padding:12px;min-height:var(--touch-min);border:none;border-radius:999px;font-weight:800;font-size:0.86rem;font-family:inherit;cursor:pointer;background:#111;color:#b8ff3c;box-shadow:0 6px 14px rgba(0,0,0,.16)}
+    .act2 .u,.act2 .e,.act2 .s{color:#b8ff3c}
+    .act2 .s{grid-column:1/-1}
+    .btn{width:100%;min-height:50px;border:none;border-radius:999px;font-weight:800;font-size:0.94rem;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.08);background:#fff;color:#111827;border:1px solid #e5e7eb}
+    .btn-cta{background:#111;color:#b8ff3c;border:none;box-shadow:0 8px 16px rgba(0,0,0,.18)}
+    .btn-green{background:#111;color:#b8ff3c;border:none}
+    .btn-danger{background:#111;color:#ff7a7a;border:none}
+    .btn-sec{background:#f3f4f6;color:#4b5563;border:none;box-shadow:0 2px 8px rgba(15,23,42,.06)}
     .btn:active{box-shadow:var(--press)}
     .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
     .result-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -154,11 +160,13 @@
     table.data th{color:#52525b;font-weight:800;font-size:calc(0.86rem + 1pt)}
     table.data td:first-child,table.data th:first-child{text-align:left;padding-left:2px;font-weight:700}
     table.data .mp{font-variant-numeric:tabular-nums;font-weight:700}
-    table.standings{min-width:100%}
-    table.standings th, table.standings td{font-size:0.86rem !important;padding:9px 3px !important;font-weight:700}
-    table.standings th{font-size:calc(0.86rem + 1pt) !important}
-    table.standings th:nth-child(1), table.standings td:nth-child(1){width:2.2rem}
-    table.standings th:nth-child(2), table.standings td:nth-child(2){width:4.2rem;text-align:left;font-weight:700}
+    table.standings{min-width:100%;table-layout:fixed}
+    table.standings th, table.standings td{font-size:0.78rem !important;padding:8px 1px !important;font-weight:700}
+    table.standings th{font-size:calc(0.78rem + 1pt) !important}
+    table.standings th:nth-child(1), table.standings td:nth-child(1){width:1.8rem}
+    table.standings th:nth-child(2), table.standings td:nth-child(2){width:3.1rem;text-align:left;font-weight:700;overflow:hidden;text-overflow:ellipsis}
+    table.standings th:nth-child(10), table.standings td:nth-child(10){width:2.6rem}
+    table.standings th:nth-child(11), table.standings td:nth-child(11){width:2.2rem}
     .mvp-mini{margin-bottom:12px}
     .mvp-mini h3{font-size:0.88rem;font-weight:900;margin-bottom:8px}
     .mvp-mini .row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;margin-bottom:8px;border-radius:999px;background:var(--surf);border:none;font-size:0.9rem;font-weight:700;box-shadow:var(--raise-sm)}
@@ -193,7 +201,11 @@
       <img class="logo" src="../assets/jmfc-logo.png" alt="JMFC" />
       <div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span id="bar-sub">참석 조사 · 동작판</span></div>
     </div>
-    <div class="steps" id="steps"></div>
+    <div class="steps-wrap">
+      <button type="button" class="steps-nav" data-act="steps-scroll" data-dir="-1" aria-label="이전 단계">‹</button>
+      <div class="steps" id="steps"></div>
+      <button type="button" class="steps-nav" data-act="steps-scroll" data-dir="1" aria-label="다음 단계">›</button>
+    </div>
     <div class="body" id="main"></div>
   </div>
   <div class="toast" id="toast"></div>
@@ -308,7 +320,7 @@ function currentDraftIdx(){return state.draftSlots.findIndex(s=>!s.name);}
 function cycleSlotTeam(idx,dir){const names=teamNames();const cur=state.draftSlots[idx].team;const i=Math.max(0,names.indexOf(cur));state.draftSlots[idx].team=names[(i+dir+names.length)%names.length];applyDraftSlotsToTeams();}
 function moveSlot(idx,dir){const j=idx+dir;if(j<0||j>=state.draftSlots.length)return;const arr=state.draftSlots;const tmp=arr[idx];arr[idx]=arr[j];arr[j]=tmp;applyDraftSlotsToTeams();}
 
-function renderSteps(){const idx=FLOW.indexOf(state.screen);document.getElementById('steps').innerHTML=FLOW.map((k,i)=>`<button type="button" class="${i===idx?'on':(i<idx?'done':'')}" data-act="go-step" data-screen="${k}">${FLOW_LABEL[k]}</button>`).join('');const sub={attendance:'참석 조사',coach:'감독 선정',draft:'팀 나누기',lineup:`${state.teamMode}팀 라인업`,matchSelect:'경기 선택',match:state.editingMatchId?`경기 수정 #${state.editingMatchId}`:`Match #${state.matchCount}`,results:state.sessionLabel||formatDateLabel(state.sessionDate),edit:'기록 수정'}[state.screen]||'';document.getElementById('bar-sub').textContent=sub;}
+function renderSteps(){const idx=FLOW.indexOf(state.screen);const box=document.getElementById('steps'); box.innerHTML=FLOW.map((k,i)=>`<button type="button" class="${i===idx?'on':(i<idx?'done':'')}" data-act="go-step" data-screen="${k}">${FLOW_LABEL[k]}</button>`).join('');const on=box.querySelector('button.on'); if(on) on.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});const sub={attendance:'참석 조사',coach:'감독 선정',draft:'팀 나누기',lineup:`${state.teamMode}팀 라인업`,matchSelect:'경기 선택',match:state.editingMatchId?`경기 수정 #${state.editingMatchId}`:`Match #${state.matchCount}`,results:state.sessionLabel||formatDateLabel(state.sessionDate),edit:'기록 수정'}[state.screen]||'';document.getElementById('bar-sub').textContent=sub;}
 function navRow(prev,next,nextDisabled,nextAct,nextLabel){const na=nextAct||(next?`data-act="go" data-screen="${next}"`:'');return `<div class="nav-row"><button class="btn btn-sec" ${prev?`data-act="go" data-screen="${prev}"`:'disabled'}>← 이전</button><button class="btn btn-cta" ${nextDisabled?'disabled':''} ${na}>${nextLabel||'다음 →'}</button></div>`;}
 
 function rosterOrdered(t){const coach=state.coaches[t]; const names=[...(state.teams[t]||[])]; if(!coach) return names; return [coach,...names.filter(n=>n!==coach)];}
@@ -422,11 +434,10 @@ function renderMatch(){
   const tab=state.matchTab; let body='';
   if(tab==='lineup'){
     body=`<div class="lineup-grid">${[a,b].map(t=>`<div class="lineup-col team-${t}"><div class="team-head">TEAM ${t}</div><div class="roster">${rosterOrdered(t).map(n=>`<div class="prow"><button type="button" class="${state.selectedPlayer===n?'tap':''}" data-act="open-record" data-name="${n}" data-team="${t}">${state.coaches[t]===n?'<span class="cap">C</span>':''}${n}</button></div>`).join('')}</div>
-      <button class="btn-sub" data-act="open-sub" data-team="${t}">선수교체</button>
-      <button class="btn-add" data-act="open-add" data-team="${t}">선수추가</button>
+      <div class="lineup-actions"><button class="btn-sub" data-act="open-sub" data-team="${t}">선수교체</button><button class="btn-add" data-act="open-add" data-team="${t}">선수추가</button></div>
     </div>`).join('')}</div>
     <div class="section-card"><h3>타임라인</h3><ul class="timeline">${(state.timeline||[]).map(e=>`<li>[${e.time}] <span class="t-${e.team}">${e.player}</span> · ${statLabel(e.stat)}${e.assist?` (도움:${e.assist})`:''}</li>`).join('')||'<li style="color:var(--muted)">기록 없음</li>'}</ul></div>
-    <div class="act2"><button class="u" data-act="undo-rec">스탯 취소</button><button class="e" data-act="ask-end-match">현재 경기 종료</button><button class="s" data-act="ask-end-session">전체 세션 종료</button></div>`;
+    <div class="act2"><button class="u" data-act="undo-rec">이전 스탯 취소</button><button class="e" data-act="ask-end-match">현재 경기 종료</button><button class="s" data-act="ask-end-session">전체 세션 종료</button></div>`;
   } else if(tab==='standings'){
     body=standingsTableHtml();
   } else {
@@ -438,14 +449,13 @@ function renderMatch(){
   const ratio=state.duration>0?Math.max(0,Math.min(1,state.secondsLeft/state.duration)):0;
   const circ=2*Math.PI*46;
   const dash=circ*(1-ratio);
-  return `<div class="score-big"><div class="side t-${a}">TEAM ${a}<div style="font-size:1.5rem;margin-top:4px">${state.score.A}</div></div><div class="sep">:</div><div class="side t-${b}">TEAM ${b}<div style="font-size:1.5rem;margin-top:4px">${state.score.B}</div></div></div>
-<div class="ctrl-row"><button type="button" class="btn-sm gray" data-act="reset-prev">이전기록리셋</button>
+  return `<div class="score-big"><div class="side t-${a}">TEAM ${a}<div class="sc">${state.score.A}</div></div><div class="sep">:</div><div class="side t-${b}">TEAM ${b}<div class="sc">${state.score.B}</div></div></div>
+<div class="ctrl-row"><button type="button" class="btn-sm gray" data-act="reset-prev">리셋</button>
 <div class="timer-ring-wrap"><svg viewBox="0 0 112 112" aria-hidden="true"><circle class="track" cx="56" cy="56" r="46"></circle><circle class="prog" id="timer-prog" cx="56" cy="56" r="46" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}"></circle></svg><div class="timer-center"><div class="t" id="timer-text">${fmtTime(state.secondsLeft)}</div><div class="l">남은 시간</div></div></div>
 <button type="button" class="btn-sm blue" data-act="toggle-timer">${state.timerRunning?'일시정지':'시작'}</button></div>
 <div class="tabs"><button type="button" class="${tab==='lineup'?'on':''}" data-act="match-tab" data-tab="lineup">라인업</button><button type="button" class="${tab==='standings'?'on':''}" data-act="match-tab" data-tab="standings">팀 순위</button><button type="button" class="${tab==='stats'?'on':''}" data-act="match-tab" data-tab="stats">개인기록</button></div>
 ${body}
-<button class="btn btn-danger" style="margin-top:10px" data-act="ask-end-session">전체 세션 종료</button>
-${navRow('matchSelect',null,false,'data-act="ask-end-match"', state.editingMatchId?'수정 저장 →':'경기 종료 →')}
+${navRow('matchSelect',null,false, state.editingMatchId?'data-act="ask-end-match"':'data-act="go" data-screen="results"', state.editingMatchId?'수정 저장 →':'다음 →')}
 ${modalHtml()}`;}
 
 function renderResults(){
@@ -557,7 +567,7 @@ function bind(){
     else if(act==='do-sub'){const out=state.modal.out; const inn=el.dataset.name; const from=el.dataset.from; const team=state.modal.team; if(!out) return; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); if(from) state.teams[from]=(state.teams[from]||[]).filter(n=>n!==inn); Object.keys(state.teams).forEach(t=>{state.teams[t]=(state.teams[t]||[]).filter(n=>n!==inn);}); if(!state.teams[team].includes(inn)) state.teams[team].push(inn); // put out to waiting first team if any
       const wait=waitingTeams()[0]; if(wait&&!state.teams[wait].includes(out)) state.teams[wait].push(out); ensureStat(inn,team); state.modal=null; toast(`${out} ↔ ${inn}`); render();}
     else if(act==='do-sub-remove'){const out=state.modal.out; const team=state.modal.team; if(!out) return; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); const wait=waitingTeams()[0]; if(wait) state.teams[wait].push(out); state.modal=null; toast(`${out} 코트 아웃`); render();}
-    else if(act==='go-step'){const s=el.dataset.screen; if(!FLOW.includes(s)&&s!=='edit') return; stopTimer(); go(s);} else if(act==='go') go(el.dataset.screen);
+    else if(act==='steps-scroll'){const box=document.getElementById('steps'); if(box) box.scrollBy({left:Number(el.dataset.dir)*140,behavior:'smooth'});} else if(act==='go-step'){const s=el.dataset.screen; if(!FLOW.includes(s)&&s!=='edit') return; stopTimer(); go(s);} else if(act==='go') go(el.dataset.screen);
     else if(act==='save-new') saveSession(true);
     else if(act==='reset-new') softNewSession(true);
     else if(act==='save-edit'){document.querySelectorAll('tr[data-edit-name]').forEach(row=>{const n=row.dataset.editName; const s=ensureStat(n); row.querySelectorAll('input[data-f]').forEach(inp=>{s[inp.dataset.f]=Math.max(0,Number(inp.value)||0);});}); toast('수정 반영'); go('results');}
