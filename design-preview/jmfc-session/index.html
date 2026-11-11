@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC Session · v7.4</title>
+  <title>JMFC Session · v7.5</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -130,23 +130,28 @@
     .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
     .result-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
     .nav-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-    .mvp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-    .result-hero{padding:14px 10px;border-radius:18px;background:var(--surf);border:none;box-shadow:var(--raise)}
-    .eyebrow{font-family:Cinzel,Georgia,serif;font-size:0.62rem;font-weight:900;letter-spacing:0.1em;color:var(--muted);text-align:center}
-    .mvp-names{text-align:center;font-size:1.02rem;font-weight:900;color:#111827;margin-top:10px;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}
-    .award-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-    .award{padding:12px;border-radius:16px;background:var(--surf);border:none;font-size:0.84rem;font-weight:700;line-height:1.4;box-shadow:var(--raise-sm)}
-    .award b{display:block;font-size:0.72rem;color:#6b7280;margin-bottom:6px;font-weight:800}
-    .result-card{background:var(--surf);border-radius:20px;padding:14px;border:none;margin-bottom:12px;box-shadow:var(--raise-sm)}
+    .mvp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .result-hero{padding:16px 12px;border-radius:16px;background:linear-gradient(160deg,#0c0c0e,#1a1a22 55%,#121218);border:1px solid #c9a22755;box-shadow:none;min-height:118px}
+    .eyebrow{font-family:Cinzel,Georgia,serif;font-size:0.62rem;font-weight:900;letter-spacing:0.12em;color:#f5e6b8;text-align:center}
+    .mvp-names{text-align:center;font-size:1.15rem;font-weight:900;color:#fff;margin-top:10px;line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}
+    .mvp-meta{text-align:center;margin-top:8px;font-size:0.78rem;font-weight:800;color:#e7c56a;line-height:1.45}
+    .award-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .award{padding:12px;border-radius:12px;background:#f4f4f5;border:1px solid #e4e4e7;font-size:0.84rem;font-weight:700;line-height:1.4;box-shadow:none;color:#18181b}
+    .award b{display:block;font-size:0.7rem;color:#57534e;margin-bottom:6px;font-weight:800;letter-spacing:.02em}
+    .result-card{background:#fff;border-radius:14px;padding:14px;border:1px solid #e4e4e7;margin-bottom:12px;box-shadow:none}
     .result-card h3{font-size:0.95rem;font-weight:900;margin-bottom:10px}
     .result-card.stats-card table.data td:first-child{font-weight:800}
     .result-card.stats-card tr:hover td{background:transparent}
+    .result-card.team-RED{border-left:4px solid var(--red)}
+    .result-card.team-BLUE{border-left:4px solid var(--blue)}
+    .result-card.team-YELLOW{border-left:4px solid #ca8a04}
+    .result-card.team-BLACK{border-left:4px solid #4b5563}
     .team-RED,.team-BLUE,.team-YELLOW,.team-BLACK{border-left:none}
     .t-RED{color:var(--red)}.t-BLUE{color:var(--blue)}.t-YELLOW{color:var(--yellow-text)}.t-BLACK{color:var(--black)}
     .team-title{font-weight:900;margin-bottom:8px;font-size:0.95rem;color:#111827}
     table.data{width:100%;border-collapse:collapse;font-size:0.86rem;table-layout:fixed}
-    table.data th,table.data td{border-bottom:1px solid #e5e7eb;padding:9px 2px;text-align:center;white-space:nowrap;font-size:0.86rem;font-weight:700;color:#374151}
-    table.data th{color:#6b7280;font-weight:800;font-size:calc(0.86rem + 1pt)}
+    table.data th,table.data td{border-bottom:1px solid #e5e7eb;padding:10px 2px;text-align:center;white-space:nowrap;font-size:0.86rem;font-weight:700;color:#18181b}
+    table.data th{color:#52525b;font-weight:800;font-size:calc(0.86rem + 1pt)}
     table.data td:first-child,table.data th:first-child{text-align:left;padding-left:2px;font-weight:700}
     table.data .mp{font-variant-numeric:tabular-nums;font-weight:700}
     table.standings{min-width:100%}
@@ -313,7 +318,7 @@ function standingsRows(){const active=teamNames();return active.map(t=>{const s=
 function standingsTableHtml(){const rows=standingsRows();return `<div class="result-card" style="overflow-x:auto"><table class="data standings"><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.rank}</td><td class="t-${r.t}">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wr}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table></div>`;}
 function topList(kind){return Object.entries(state.playerStats).map(([name,s])=>{let v=0;if(kind==='atk')v=atkOf(s);else if(kind==='dfn')v=defOf(s);else v=s[kind]||0;return {name,v,...s};}).filter(x=>x.v>0).sort((a,b)=>b.v-a.v||a.name.localeCompare(b.name,'ko'));}
 function mvpNamesOnly(list){if(!list.length)return '-';const top=list[0].v;return list.filter(x=>x.v===top).map(x=>x.name).join(' · ');}
-function teamPlayerTable(t){const names=state.teams[t]||[];const list=names.map(n=>{const s=ensureStat(n,t);return {name:n,...s,mp:mpOf(s)};}).sort((a,b)=>b.mp-a.mp||a.name.localeCompare(b.name,'ko'));return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr></thead><tbody>${list.map(p=>`<tr><td>${p.name}</td><td>${p.goal||0}</td><td>${p.assist||0}</td><td>${p.defense||0}</td><td>${p.save||0}</td><td class="mp">${p.mp}</td></tr>`).join('')||'<tr><td colspan="6">없음</td></tr>'}</tbody></table></div>`;}
+function teamPlayerTable(t){const names=rosterOrdered(t);const list=names.map(n=>{const s=ensureStat(n,t);return {name:n,...s,mp:mpOf(s)};}).sort((a,b)=>b.mp-a.mp||a.name.localeCompare(b.name,'ko'));return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr></thead><tbody>${list.map(p=>`<tr><td>${p.name}</td><td>${p.goal||0}</td><td>${p.assist||0}</td><td>${p.defense||0}</td><td>${p.save||0}</td><td class="mp">${p.mp}</td></tr>`).join('')||'<tr><td colspan="6">없음</td></tr>'}</tbody></table></div>`;}
 
 function renderAttendance(){const list=[...PLAYERS].sort((a,b)=>(b.games||0)-(a.games||0)||a.name.localeCompare(b.name,'ko'));return `<h2>참석 조사</h2>
 <label class="label-sm">경기 날짜</label>
@@ -443,17 +448,37 @@ ${body}
 ${navRow('matchSelect',null,false,'data-act="ask-end-match"', state.editingMatchId?'수정 저장 →':'경기 종료 →')}
 ${modalHtml()}`;}
 
-function renderResults(){const atk=topList('atk'),dfn=topList('dfn');
-const rk5=(list,title,unit)=>{const rows=list.slice(0,5);return `<h3 style="margin-top:14px">${title}</h3>${rows.map((p,i)=>`<div class="row"><span class="rk r${Math.min(i+1,3)}">${i+1}</span><span class="nm">${p.name}</span><span>${p.v}${unit}</span></div>`).join('')||'<p class="sub">기록 없음</p>'}`;}
-return `<h2>오늘의 경기 결과</h2><p class="sub">${formatDateLabel(state.sessionDate)} · ${state.teamMode}팀</p>
-<div class="result-card mvp-mini"><h3>Attack MVP TOP5</h3>${atk.slice(0,5).map((p,i)=>`<div class="row"><span class="rk r${Math.min(i+1,3)}">${i+1}</span><span class="nm">${p.name}</span><span>${p.v}P</span></div>`).join('')||'<p class="sub">기록 없음</p>'}
-${rk5(dfn,'Defense MVP TOP5','P')}
-${rk5(topList('goal'),'득점 순위','골')}${rk5(topList('assist'),'도움 순위','')}${rk5(topList('defense'),'수비 순위','')}${rk5(topList('save'),'선방 순위','')}</div>
-<h3 style="font-size:calc(0.88rem + 1pt);font-weight:900;margin:4px 0 8px">팀 순위</h3>${standingsTableHtml()}
+function renderResults(){
+  const atk=topList('atk'), dfn=topList('dfn');
+  const mvpCard=(list,eyebrow,metaFn)=>{
+    if(!list.length) return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names">-</div><div class="mvp-meta">기록 없음</div></div>`;
+    const top=list[0].v; const names=list.filter(x=>x.v===top).map(x=>x.name).join(' · ');
+    return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names">${names}</div><div class="mvp-meta">${metaFn(list[0])}</div></div>`;
+  };
+  const topAward=(kind,label)=>{
+    const t=topList(kind); if(!t.length) return `<div class="award"><b>${label}</b>-</div>`;
+    const names=t.filter(x=>x.v===t[0].v).map(x=>x.name).join(' · ');
+    return `<div class="award"><b>${label}</b>${names} ${t[0].v}</div>`;
+  };
+  return `<h2>오늘의 경기 결과</h2>
+<p class="sub">${formatDateLabel(state.sessionDate)} · ${state.teamMode}팀</p>
+<div class="mvp-row">
+${mvpCard(atk,'ATTACK MVP',p=>`공격P ${p.v}<br>${p.goal||0}골 ${p.assist||0}도움`)}
+${mvpCard(dfn,'DEFENSE MVP',p=>`수비P ${p.v}<br>${p.defense||0}수비 ${p.save||0}선방`)}
+</div>
+<div class="award-g">
+${topAward('goal','TOP SCORER')}
+${topAward('assist','TOP ASSIST')}
+${topAward('defense','TOP DEFENSE')}
+${topAward('save','TOP SAVE')}
+</div>
+<h3 style="font-size:calc(0.88rem + 1pt);font-weight:900;margin:2px 0 8px">팀 순위</h3>
+${standingsTableHtml()}
 ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','class="result-card stats-card')).join('')}
 <p class="hint">공격P=득점×2+도움×2 · 수비P=수비+선방 · MP=공격P+수비P</p>
 <div class="result-btns"><button class="btn btn-green" data-act="go" data-screen="edit">기록 수정하기</button><button class="btn btn-cta" data-act="save-new">기록 저장 & NEW 세션</button><button class="btn btn-danger" data-act="reset-new">기록 리셋 & NEW 세션</button></div>
-${navRow('matchSelect','edit',false,null,'기록 수정 →')}`;}
+${navRow('matchSelect','edit',false,null,'기록 수정 →')}`;
+}
 function renderEdit(){return `<h2>기록 수정</h2><p class="sub">숫자 변경 시 MP 재계산</p>${activeDetailOrder().map(t=>{const names=state.teams[t]||[];return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr></thead><tbody>${names.map(n=>{const s=ensureStat(n,t);return `<tr data-edit-name="${n}"><td>${n}</td><td><input type="number" min="0" data-f="goal" value="${s.goal||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="assist" value="${s.assist||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="defense" value="${s.defense||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="save" value="${s.save||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td class="mp" data-mp>${mpOf(s)}</td></tr>`;}).join('')}</tbody></table></div>`;}).join('')}<div class="result-btns"><button class="btn btn-cta" data-act="save-edit">수정 완료 → 결과로</button></div>${navRow('results',null,false,'data-act="save-edit"','수정 완료 →')}`;}
 
 function stopTimer(){state.timerRunning=false;if(timerId){clearInterval(timerId);timerId=null;}}
