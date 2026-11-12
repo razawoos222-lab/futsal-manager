@@ -1,10 +1,10 @@
 # JMFC 목업 — 여기만 누르세요
 
-## 최종 목업 (v7.8)
+## 최종 목업 (v7.9)
 
-**[▶ JMFC 최종 목업 갤러리](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-mockup.html?v=7.8)**
+**[▶ JMFC 최종 목업 갤러리](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-mockup.html?v=7.9)**
 
-**[▶ JMFC 세션 HTML (직접 조작)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-session/index.html?v=7.8)**
+**[▶ JMFC 세션 HTML (직접 조작)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-session/index.html?v=7.9)**
 
 1. 링크 클릭 → **「Open the page」** → 확인
 
