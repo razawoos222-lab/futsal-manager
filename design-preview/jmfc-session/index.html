@@ -81,14 +81,14 @@
     .draft-list{max-height:380px;overflow:auto;padding-right:2px}
     .draft-row{display:grid;grid-template-columns:16px 1fr auto;gap:3px;align-items:center;margin-bottom:4px}
     .draft-row .num{font-size:0.65rem;font-weight:800;color:#374151;text-align:center}
-    .draft-team{display:flex;align-items:center;gap:6px;min-height:34px;border-radius:999px;border:var(--glass-border);padding:4px 10px;background:var(--glass-strong);box-shadow:var(--raise-sm);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
-    .draft-team .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#9ca3af}
+    .draft-team{display:grid;grid-template-columns:8px auto minmax(0,1fr) auto;align-items:center;column-gap:6px;min-height:34px;border-radius:999px;border:var(--glass-border);padding:4px 8px 4px 10px;background:var(--glass-strong);box-shadow:var(--raise-sm);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+    .draft-team .dot{width:8px;height:8px;border-radius:50%;background:#9ca3af}
     .draft-team .dot.RED{background:var(--red)} .draft-team .dot.BLUE{background:var(--blue)}
     .draft-team .dot.YELLOW{background:var(--yellow-fill)} .draft-team .dot.BLACK{background:#4b5563}
-    .draft-team .tname{font-size:0.7rem;font-weight:900;min-width:3.4rem;flex-shrink:0}
-    .draft-team .pname{flex:1 1 auto;font-size:0.78rem;font-weight:800;color:#111827;text-align:right;margin-left:auto;min-width:0;padding-right:2px}
-    .draft-team .pname.empty{color:#6b7280;font-weight:700;text-align:right}
-    .draft-team .clear-x{flex:0 0 auto;margin-left:6px}
+    .draft-team .tname{font-size:0.68rem;font-weight:900;justify-self:start}
+    .draft-team .pname{font-size:0.78rem;font-weight:800;color:#111827;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .draft-team .pname.empty{color:#6b7280;font-weight:700}
+    .draft-team .clear-x{justify-self:end}
     .draft-team.current{border-color:#1d4ed8;background:rgba(147,197,253,.55);box-shadow:0 0 0 2px rgba(37,99,235,.25)}
     .icon-btns{display:flex;gap:2px}
     .icon-btns button{width:24px;height:24px;border-radius:7px;border:var(--glass-border);background:var(--glass-strong);font-weight:900;font-family:inherit;cursor:pointer;font-size:0.58rem;color:#111827;box-shadow:none;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
@@ -177,9 +177,9 @@
     .team-RED,.team-BLUE,.team-YELLOW,.team-BLACK{border-left:none}
     .t-RED,.t-BLUE,.t-YELLOW,.t-BLACK{font-weight:900!important;letter-spacing:0}
     .t-RED{color:var(--red)!important}.t-BLUE{color:var(--blue)!important}
-    .t-YELLOW{color:#713F12!important;background:var(--yellow-fill);padding:1px 7px;border-radius:999px;display:inline-block;line-height:1.35;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+    .t-YELLOW{color:#422006!important;background:#FDE047;padding:1px 7px;border-radius:999px;display:inline-block;line-height:1.35;box-shadow:0 1px 0 rgba(0,0,0,.12);border:1px solid #CA8A04}
     .t-BLACK{color:var(--black)!important}
-    .lineup-col.team-YELLOW .team-head,.score-big .side.t-YELLOW,.draft-team .tname.t-YELLOW{color:#713F12!important;background:var(--yellow-fill);padding:2px 8px;border-radius:999px}
+    .lineup-col.team-YELLOW .team-head,.score-big .side.t-YELLOW,.draft-team .tname.t-YELLOW,.team-title.t-YELLOW,.team-stat-card .head h4.t-YELLOW{color:#422006!important;background:#FDE047;padding:2px 8px;border-radius:999px;border:1px solid #CA8A04}
     table.data td.t-RED,table.data td.t-BLUE,table.data td.t-YELLOW,table.data td.t-BLACK{font-weight:900}
     .team-title{font-weight:900;margin-bottom:8px;font-size:0.95rem;line-height:1.2;width:fit-content;letter-spacing:0}
     table.data{width:100%;border-collapse:collapse;font-size:0.72rem;table-layout:fixed;letter-spacing:0}
@@ -583,7 +583,7 @@ function bind(){
     else if(act==='reset-prev'||act==='reset-score'){while(state.recordStack.length){const last=state.recordStack.pop(); const s=ensureStat(last.name,last.team); s[last.stat]=Math.max(0,(s[last.stat]||0)-1); if(last.stat==='goal'){const [xa,xb]=state.playing; if(last.team===xa) state.score.A=Math.max(0,state.score.A-1); if(last.team===xb) state.score.B=Math.max(0,state.score.B-1);}} state.score={A:0,B:0}; state.timeline=[]; state.recordStack=[]; toast('이전기록 리셋'); render();}
     else if(act==='open-record'){state.selectedPlayer=el.dataset.name; state.modal={type:'record',name:el.dataset.name,team:el.dataset.team}; render();}
     else if(act==='close-modal'){state.modal=null; render();}
-    else if(act==='rec'){const stat=el.dataset.stat; const n=state.modal.name; const t=state.modal.team; const s=ensureStat(n,t); const time=elapsedClock(); const [xa,xb]=state.playing; if(stat==='own'){ if(t===xa) state.score.B++; if(t===xb) state.score.A++; state.recordStack.push({name:n,stat:'own',team:t}); state.timeline.push({time,player:n,team:t,stat:'own'}); state.modal=null; toast(`${n} · 자책골 기록`,2600);} else { s[stat]=(s[stat]||0)+1; state.recordStack.push({name:n,stat,team:t}); if(stat==='goal'){ if(t===xa) state.score.A++; if(t===xb) state.score.B++; } state.timeline.push({time,player:n,team:t,stat}); state.modal=null; toast(`${n} · ${statLabel(stat)} +1`,2600);} render();}
+    else if(act==='rec'){const stat=el.dataset.stat; const n=state.modal.name; const t=state.modal.team; const s=ensureStat(n,t); const time=elapsedClock(); const [xa,xb]=state.playing; let msg=''; if(stat==='own'){ if(t===xa) state.score.B++; if(t===xb) state.score.A++; state.recordStack.push({name:n,stat:'own',team:t}); state.timeline.push({time,player:n,team:t,stat:'own'}); state.modal=null; msg=`${n} · 자책골 기록`;} else { s[stat]=(s[stat]||0)+1; state.recordStack.push({name:n,stat,team:t}); if(stat==='goal'){ if(t===xa) state.score.A++; if(t===xb) state.score.B++; } state.timeline.push({time,player:n,team:t,stat}); state.modal=null; msg=`${n} · ${statLabel(stat)} +1`;} render(); toast(msg,2800);}
     else if(act==='pick-assist'){const an=el.dataset.name; if(an){const s=ensureStat(an,state.modal.team); s.assist=(s.assist||0)+1; state.recordStack.push({name:an,stat:'assist',team:state.modal.team}); const last=state.timeline[state.timeline.length-1]; if(last&&last.stat==='goal') last.assist=an; toast(`${an} 도움+1`);} state.modal=null; render();}
     else if(act==='undo-rec'){const last=state.recordStack.pop(); if(!last) return toast('취소할 기록 없음'); const s=ensureStat(last.name,last.team); const [xa,xb]=state.playing; if(last.stat==='own'){ if(last.team===xa) state.score.B=Math.max(0,state.score.B-1); if(last.team===xb) state.score.A=Math.max(0,state.score.A-1);} else { s[last.stat]=Math.max(0,(s[last.stat]||0)-1); if(last.stat==='goal'){ if(last.team===xa) state.score.A=Math.max(0,state.score.A-1); if(last.team===xb) state.score.B=Math.max(0,state.score.B-1);} } state.timeline.pop(); toast('이전 스탯 취소'); render();}
     else if(act==='ask-end-match'){state.modal={type:'confirm-end-match'}; render();}
