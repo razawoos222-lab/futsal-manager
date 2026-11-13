@@ -96,19 +96,19 @@ function getCoachArchiveSheet_() {
   );
 }
 
-/** 시트 저장용 날짜: 2026.11.19 */
+/** 시트 저장용 날짜: 2026-11-07 (하이픈, 기존 기록과 동일) */
 function formatSheetDate_(v) {
-  if (v == null || v === '') return todayStr_().replace(/-/g, '.');
+  if (v == null || v === '') return todayStr_();
   if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v)) {
     const tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
-    return Utilities.formatDate(v, tz, 'yyyy.MM.dd');
+    return Utilities.formatDate(v, tz, 'yyyy-MM-dd');
   }
   const s = String(v).trim();
   const m = s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
   if (m) {
-    return m[1] + '.' + ('0' + m[2]).slice(-2) + '.' + ('0' + m[3]).slice(-2);
+    return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
   }
-  return s.replace(/-/g, '.');
+  return s.replace(/\./g, '-');
 }
 
 function safeExecute(func) {

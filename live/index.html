@@ -222,8 +222,8 @@
     .hint{font-size:0.7rem;color:var(--muted);text-align:center;margin:8px 0 4px;line-height:1.45;letter-spacing:0}
     .toast{position:absolute;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%) translateY(12px);background:rgba(17,24,39,.94);color:#fff;padding:12px 16px;border-radius:14px;font-weight:700;font-size:0.86rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;max-width:calc(100% - 28px);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);letter-spacing:0;border:1px solid rgba(255,255,255,.12)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    .modal-overlay{position:absolute;inset:0;z-index:30;background:rgba(17,24,39,.45);display:flex;align-items:flex-start;justify-content:center;padding:250px 16px 16px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-    .modal-card{width:100%;max-width:360px;max-height:85%;overflow:auto;background:#ffffff;border-radius:24px;padding:18px 16px 16px;border:2px solid var(--modal-accent);box-shadow:0 20px 50px rgba(0,0,0,.28);position:relative}
+    .modal-overlay{position:fixed;inset:0;z-index:9999;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+    .modal-card{width:100%;max-width:360px;max-height:min(85dvh,85%);overflow:auto;background:#ffffff;border-radius:24px;padding:18px 16px 16px;border:2px solid var(--modal-accent);box-shadow:0 20px 50px rgba(0,0,0,.28);position:relative}
     .modal-card::before{content:"";display:block;height:8px;border-radius:999px;background:var(--modal-accent);margin:0 40px 14px}
     .modal-card h3{font-size:1.05rem;font-weight:900;text-align:center;margin-bottom:8px;color:#111827;letter-spacing:0}
     .modal-card .msub{font-size:0.8rem;color:#4b5563;text-align:center;margin-bottom:12px;line-height:1.4;letter-spacing:0}
@@ -399,7 +399,7 @@ function snapshotBaseTeams(){state.baseTeams=JSON.parse(JSON.stringify(state.tea
 function restoreBaseTeams(){if(!state.baseTeams)return;state.teams=JSON.parse(JSON.stringify(state.baseTeams));}
 function teamsForPersist(){return state.baseTeams?JSON.parse(JSON.stringify(state.baseTeams)):JSON.parse(JSON.stringify(state.teams));}
 function formatDateLabel(iso){if(!iso)return '';const [y,m,d]=String(iso).replace(/\./g,'-').split('-');return `${y}.${m}.${d}`;}
-function sheetDateStr(iso){return formatDateLabel(iso||state.sessionDate||todayStr());}
+function sheetDateStr(iso){const s=String(iso||state.sessionDate||todayStr()).trim();const m=s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);if(m) return `${m[1]}-${('0'+m[2]).slice(-2)}-${('0'+m[3]).slice(-2)}`;return s.replace(/\./g,'-');}
 function fmtTime(sec){const s=Math.max(0,Math.floor(Number(sec)||0));const m=Math.floor(s/60);const r=s%60;return `${m}:${String(r).padStart(2,'0')}`;}
 function syncMatchElapsed(){state.matchElapsedSec=Math.max(0,(Number(state.duration)||0)-(Number(state.secondsLeft)||0));}
 function elapsedClock(){syncMatchElapsed();return fmtTime(state.matchElapsedSec);}
