@@ -3,424 +3,340 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JMFC · 본인 기록 분기 비교 목업</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>JMFC Stats · 파트너 케미 목업</title>
   <style>
-    :root {
-      --ink: #102018;
-      --muted: #5c6f64;
-      --line: #d7e3db;
-      --paper: #f4f7f4;
-      --panel: #ffffff;
-      --pitch: #1f7a4c;
-      --pitch-deep: #145c38;
-      --glow: #b8f27a;
-      --up: #0f9f6e;
-      --down: #e11d48;
-      --flat: #64748b;
-      --shadow: 0 18px 50px rgba(16, 32, 24, 0.12);
-    }
-
-    * { box-sizing: border-box; }
+    /* 기존 Stats 대시보드와 동일한 톤 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--ink);
-      font-family: "IBM Plex Sans KR", sans-serif;
-      background:
-        radial-gradient(900px 420px at 80% -10%, rgba(184, 242, 122, 0.35), transparent 55%),
-        radial-gradient(700px 380px at -10% 20%, rgba(31, 122, 76, 0.12), transparent 50%),
-        linear-gradient(180deg, #eef5ef 0%, var(--paper) 45%, #e8f0ea 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      font-size: 18px;
+      line-height: 1.45;
     }
-
-    .wrap {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 28px 18px 64px;
-    }
-
-    .mock-tag {
-      display: inline-block;
-      margin-bottom: 14px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      background: rgba(31, 122, 76, 0.1);
-      color: var(--pitch-deep);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-    }
-
-    .player {
-      font-family: "Black Han Sans", sans-serif;
-      font-size: clamp(2.6rem, 10vw, 4.2rem);
-      line-height: 0.95;
-      letter-spacing: -0.02em;
-      margin: 0 0 10px;
-      animation: rise 0.55s ease both;
-    }
-
-    .timeline {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 22px;
-      animation: rise 0.55s ease 0.05s both;
-    }
-
-    .timeline .from,
-    .timeline .to {
-      font-size: 1.05rem;
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 18px;
+      font-size: 32px;
       font-weight: 700;
     }
-
-    .timeline .from { color: var(--muted); }
-    .timeline .to { color: var(--pitch-deep); }
-
-    .arrow {
-      width: 42px;
-      height: 28px;
-      position: relative;
-      flex: 0 0 auto;
-    }
-    .arrow::before {
-      content: "";
-      position: absolute;
-      inset: 12px 8px 12px 0;
-      background: var(--pitch);
-      border-radius: 999px;
-    }
-    .arrow::after {
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 5px;
-      border: 9px solid transparent;
-      border-left-color: var(--pitch);
-    }
-
-    .pickers {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 22px;
-      animation: rise 0.55s ease 0.1s both;
-    }
-
-    label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-
-    select {
-      width: 100%;
-      height: 46px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      color: var(--ink);
-      padding: 0 12px;
-      font: inherit;
-      font-weight: 600;
-      box-shadow: 0 1px 0 rgba(255,255,255,0.8);
-    }
-
-    .delta-hero {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+    .mock-note {
+      text-align: center;
+      color: #6c757d;
+      font-size: 14px;
       margin-bottom: 18px;
     }
-
-    .delta-card {
-      position: relative;
+    .tabs {
+      display: flex;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
       overflow: hidden;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 16px 16px 14px;
-      box-shadow: var(--shadow);
-      animation: rise 0.55s ease both;
     }
-    .delta-card:nth-child(1) { animation-delay: 0.12s; }
-    .delta-card:nth-child(2) { animation-delay: 0.18s; }
-    .delta-card:nth-child(3) { animation-delay: 0.24s; }
-    .delta-card:nth-child(4) { animation-delay: 0.3s; }
-
-    .delta-card::after {
-      content: "";
-      position: absolute;
-      right: -20px;
-      bottom: -28px;
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(184, 242, 122, 0.45), transparent 70%);
-      pointer-events: none;
-    }
-
-    .delta-card .k {
-      font-size: 13px;
-      color: var(--muted);
+    .tab {
+      flex: 1;
+      padding: 16px 12px;
+      text-align: center;
+      background: #f8f9fa;
+      border: none;
+      font-size: 16px;
       font-weight: 600;
-      margin-bottom: 6px;
+      color: #666;
     }
-
-    .delta-card .d {
-      font-family: "Black Han Sans", sans-serif;
-      font-size: clamp(2rem, 8vw, 2.8rem);
-      line-height: 1;
-      letter-spacing: -0.03em;
+    .tab.active { background: #007bff; color: white; }
+    .content {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 24px;
     }
-
-    .delta-card .pair {
-      margin-top: 8px;
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 500;
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      align-items: end;
     }
-
-    .delta-card .pair b {
-      color: var(--ink);
-      font-weight: 700;
-    }
-
-    .up { color: var(--up); }
-    .down { color: var(--down); }
-    .flat { color: var(--flat); }
-
-    .board {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      animation: rise 0.55s ease 0.34s both;
-    }
-
-    .board-head {
-      display: grid;
-      grid-template-columns: 1fr 72px 72px 84px;
-      gap: 8px;
-      padding: 12px 16px;
-      background: linear-gradient(90deg, var(--pitch-deep), var(--pitch));
-      color: #f4fff4;
-      font-size: 12px;
+    .filter-group { display: flex; flex-direction: column; gap: 8px; min-width: 160px; }
+    .filter-group label {
       font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    .board-head span:nth-child(2),
-    .board-head span:nth-child(3),
-    .board-head span:nth-child(4) {
-      text-align: right;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 72px 72px 84px;
-      gap: 8px;
-      align-items: center;
-      padding: 14px 16px;
-      border-top: 1px solid var(--line);
-    }
-
-    .row:nth-child(even) {
-      background: rgba(31, 122, 76, 0.03);
-    }
-
-    .row .name {
-      font-weight: 700;
+      color: #495057;
       font-size: 15px;
     }
-
-    .row .v {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
+    select, button {
+      height: 44px;
+      border-radius: 8px;
+      border: 1px solid #ced4da;
+      padding: 0 12px;
+      font: inherit;
+      font-size: 16px;
+      background: white;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
       font-weight: 600;
-      color: var(--muted);
+      cursor: pointer;
+      min-width: 96px;
     }
-
-    .row .v.now {
-      color: var(--ink);
-      font-size: 1.05rem;
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 8px 0 14px;
     }
-
-    .row .chg {
-      text-align: right;
-      font-family: "Black Han Sans", sans-serif;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
+    .section-desc {
+      color: #6c757d;
+      font-size: 14px;
+      margin: -8px 0 16px;
     }
-
-    .hint {
-      margin-top: 16px;
-      color: var(--muted);
+    .leaderboards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .leader-category {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid #e9ecef;
+    }
+    .leader-category h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #2c3e50;
+    }
+    .leader-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .leader-item:last-child { border-bottom: none; }
+    .leader-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #dee2e6;
+      color: #495057;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 13px;
-      line-height: 1.5;
+      font-weight: 700;
+      flex: 0 0 auto;
     }
-
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+    .leader-rank.first { background: #ffc107; color: #212529; }
+    .leader-rank.second { background: #adb5bd; color: #212529; }
+    .leader-rank.third { background: #fd7e14; color: white; }
+    .leader-info { flex: 1; min-width: 0; }
+    .leader-name { font-weight: 700; font-size: 16px; }
+    .leader-sub { font-size: 13px; color: #6c757d; margin-top: 2px; }
+    .leader-stat { font-weight: 700; font-size: 17px; color: #007bff; white-space: nowrap; }
+    .feasibility {
+      background: #fff8e6;
+      border: 1px solid #ffe08a;
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 14px;
+      color: #664d03;
+      line-height: 1.55;
     }
-
-    @media (max-width: 520px) {
-      .board-head,
-      .row {
-        grid-template-columns: 1fr 56px 56px 70px;
-      }
-      .delta-hero { gap: 10px; }
+    .feasibility strong { color: #212529; }
+    .feasibility ul { margin: 8px 0 0 18px; }
+    .feasibility li { margin: 4px 0; }
+    .ok { color: #198754; font-weight: 700; }
+    .no { color: #dc3545; font-weight: 700; }
+    .later { color: #fd7e14; font-weight: 700; }
+    @media (max-width: 600px) {
+      h1 { font-size: 26px; }
+      .tab { font-size: 14px; padding: 14px 6px; }
+      body { font-size: 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="mock-tag">MOCKUP · 본인 기록만 비교</div>
-    <h1 class="player" id="playerName">김기호</h1>
-    <div class="timeline">
-      <span class="from" id="labelFrom">25년 4분기</span>
-      <span class="arrow" aria-hidden="true"></span>
-      <span class="to" id="labelTo">26년 1분기</span>
+  <div class="container">
+    <h1>JMFC Stats</h1>
+    <p class="mock-note">MOCKUP · 선수비교 탭 대안 — 기존 순위표와 같은 스타일</p>
+
+    <div class="tabs">
+      <button class="tab" type="button">대시보드</button>
+      <button class="tab" type="button">감독</button>
+      <button class="tab" type="button">순위표</button>
+      <button class="tab active" type="button">파트너</button>
     </div>
 
-    <div class="pickers">
-      <div>
-        <label for="periodFrom">이전 분기</label>
-        <select id="periodFrom">
-          <option value="2025-Q4" selected>2025년 4분기</option>
-          <option value="2025-Q3">2025년 3분기</option>
-          <option value="2026-Q1">2026년 1분기</option>
-        </select>
+    <div class="content">
+      <div class="filters">
+        <div class="filter-group">
+          <label for="player">기준 선수</label>
+          <select id="player">
+            <option selected>김기호</option>
+            <option>이영민</option>
+            <option>박준석</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="period">기간</label>
+          <select id="period">
+            <option value="2026-Q1" selected>2026년 1분기</option>
+            <option value="2025-Q4">2025년 4분기</option>
+            <option value="all">전체기간</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>&nbsp;</label>
+          <button type="button" id="run">조회</button>
+        </div>
       </div>
-      <div>
-        <label for="periodTo">최근 분기</label>
-        <select id="periodTo">
-          <option value="2026-Q1" selected>2026년 1분기</option>
-          <option value="2025-Q4">2025년 4분기</option>
-          <option value="2025-Q3">2025년 3분기</option>
-        </select>
+
+      <h2 class="section-title"><span id="who">김기호</span>와 같이 뛸 때</h2>
+      <p class="section-desc">같은 팀으로 나온 경기만 집계 · 최소 5경기 기준(목업)</p>
+
+      <div class="leaderboards-grid">
+        <div class="leader-category">
+          <h3>같이 뛸 때 승률</h3>
+          <div id="winrateList"></div>
+        </div>
+        <div class="leader-category">
+          <h3>같이 뛴 경기수</h3>
+          <div id="gamesList"></div>
+        </div>
+        <div class="leader-category">
+          <h3>같이 뛸 때 득점(합)</h3>
+          <div id="goalsList"></div>
+        </div>
+      </div>
+
+      <div class="feasibility">
+        <strong>데이터로 지금 가능한가?</strong>
+        <ul>
+          <li><span class="ok">가능</span> — 같은 팀 승률 / 같이 뛴 경기수 / 같이 뛸 때 팀 득실<br>
+            근거: <code>지난_팀_구성</code> (경기일·팀·선수·스코어)</li>
+          <li><span class="no">지금 불가</span> — “나에게 어시스트 많이 해준 사람”<br>
+            경기 중에는 도움 선수를 고르지만, 저장 시 개인 합계만 남고 <strong>누구 골에 누구 도움</strong>은 시트에 안 쌓임</li>
+          <li><span class="later">추가하면 가능</span> — 세션 저장 때 타임라인(골→도움)을 같이 아카이브하거나<br>
+            <code>기록실_이벤트</code> 시트(날짜, 득점자, 도움, 팀)를 새로 두면 이후부터 집계 가능</li>
+        </ul>
       </div>
     </div>
-
-    <div class="delta-hero" id="deltaHero"></div>
-
-    <div class="board">
-      <div class="board-head">
-        <span>항목</span>
-        <span id="headFrom">이전</span>
-        <span id="headTo">최근</span>
-        <span>증감</span>
-      </div>
-      <div id="rows"></div>
-    </div>
-
-    <p class="hint">증감이 먼저 보이도록 설계한 목업입니다. A/B 라벨 없이 분기명과 Δ만 씁니다.</p>
   </div>
 
   <script>
-    const SAMPLE = {
+    const DATA = {
       '김기호': {
-        '2026-Q1': { games: 12, goals: 9, assists: 4, defenses: 6, saves: 1, winRate: 0.70, ccp: 48, attackPoints: 13, defensePoints: 7, mp: 33 },
-        '2025-Q4': { games: 14, goals: 6, assists: 5, defenses: 8, saves: 0, winRate: 0.58, ccp: 41, attackPoints: 11, defensePoints: 8, mp: 30 },
-        '2025-Q3': { games: 10, goals: 5, assists: 3, defenses: 4, saves: 1, winRate: 0.55, ccp: 34, attackPoints: 8, defensePoints: 5, mp: 21 }
+        winrate: [
+          { name: '이영민', winRate: 0.78, games: 18 },
+          { name: '박준석', winRate: 0.71, games: 14 },
+          { name: '최도현', winRate: 0.67, games: 12 },
+          { name: '김수호', winRate: 0.62, games: 16 },
+          { name: '정우성', winRate: 0.55, games: 11 }
+        ],
+        games: [
+          { name: '김수호', games: 22 },
+          { name: '이영민', games: 18 },
+          { name: '박준석', games: 14 },
+          { name: '최도현', games: 12 },
+          { name: '정우성', games: 11 }
+        ],
+        goals: [
+          { name: '이영민', goals: 31 },
+          { name: '박준석', goals: 24 },
+          { name: '최도현', goals: 19 },
+          { name: '김수호', goals: 17 },
+          { name: '정우성', goals: 14 }
+        ]
+      },
+      '이영민': {
+        winrate: [
+          { name: '김기호', winRate: 0.78, games: 18 },
+          { name: '김수호', winRate: 0.70, games: 10 },
+          { name: '박준석', winRate: 0.64, games: 11 }
+        ],
+        games: [
+          { name: '김기호', games: 18 },
+          { name: '박준석', games: 11 },
+          { name: '김수호', games: 10 }
+        ],
+        goals: [
+          { name: '김기호', goals: 31 },
+          { name: '박준석', goals: 20 },
+          { name: '김수호', goals: 15 }
+        ]
+      },
+      '박준석': {
+        winrate: [
+          { name: '김기호', winRate: 0.71, games: 14 },
+          { name: '이영민', winRate: 0.64, games: 11 },
+          { name: '최도현', winRate: 0.60, games: 10 }
+        ],
+        games: [
+          { name: '김기호', games: 14 },
+          { name: '이영민', games: 11 },
+          { name: '최도현', games: 10 }
+        ],
+        goals: [
+          { name: '김기호', goals: 24 },
+          { name: '이영민', goals: 20 },
+          { name: '최도현', goals: 16 }
+        ]
       }
     };
 
-    const LABELS = {
-      '2026-Q1': '26년 1분기',
-      '2025-Q4': '25년 4분기',
-      '2025-Q3': '25년 3분기'
-    };
-
-    const HEAD_SHORT = {
-      '2026-Q1': '26.1Q',
-      '2025-Q4': '25.4Q',
-      '2025-Q3': '25.3Q'
-    };
-
-    const FOCUS = [
-      { key: 'goals', label: '득점' },
-      { key: 'assists', label: '도움' },
-      { key: 'ccp', label: 'CCP' },
-      { key: 'winRate', label: '승률', pct: true }
-    ];
-
-    const METRICS = [
-      { key: 'goals', label: '득점' },
-      { key: 'assists', label: '도움' },
-      { key: 'attackPoints', label: '공격P' },
-      { key: 'defenses', label: '수비' },
-      { key: 'defensePoints', label: '수비P' },
-      { key: 'ccp', label: 'CCP' },
-      { key: 'mp', label: 'MP' },
-      { key: 'winRate', label: '승률', pct: true },
-      { key: 'games', label: '경기수' }
-    ];
-
-    function fmt(v, pct) {
-      if (pct) return (v * 100).toFixed(1) + '%';
-      return String(v);
+    function rankClass(i) {
+      return i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
     }
 
-    function tone(d) {
-      if (Math.abs(d) < 1e-9) return 'flat';
-      return d > 0 ? 'up' : 'down';
-    }
-
-    function deltaText(d, pct) {
-      if (Math.abs(d) < 1e-9) return '0';
-      const sign = d > 0 ? '+' : '';
-      if (pct) return sign + (d * 100).toFixed(1) + '%p';
-      return sign + (Number.isInteger(d) ? d : d.toFixed(1));
-    }
-
-    function render() {
-      const player = '김기호';
-      const fromKey = document.getElementById('periodFrom').value;
-      const toKey = document.getElementById('periodTo').value;
-      const bag = SAMPLE[player];
-      const from = bag[fromKey];
-      const to = bag[toKey];
-
-      document.getElementById('playerName').textContent = player;
-      document.getElementById('labelFrom').textContent = LABELS[fromKey];
-      document.getElementById('labelTo').textContent = LABELS[toKey];
-      document.getElementById('headFrom').textContent = HEAD_SHORT[fromKey];
-      document.getElementById('headTo').textContent = HEAD_SHORT[toKey];
-
-      document.getElementById('deltaHero').innerHTML = FOCUS.map(m => {
-        const d = to[m.key] - from[m.key];
+    function renderList(id, rows, mode) {
+      const el = document.getElementById(id);
+      el.innerHTML = rows.map((r, i) => {
+        let stat = '';
+        let sub = '';
+        if (mode === 'winrate') {
+          stat = (r.winRate * 100).toFixed(1) + '%';
+          sub = r.games + '경기 동반';
+        } else if (mode === 'games') {
+          stat = r.games + '경기';
+          sub = '같은 팀';
+        } else {
+          stat = r.goals + '골';
+          sub = '같이 뛴 경기 팀 득점 합(목업)';
+        }
         return `
-          <article class="delta-card">
-            <div class="k">${m.label}</div>
-            <div class="d ${tone(d)}">${deltaText(d, m.pct)}</div>
-            <div class="pair"><b>${fmt(to[m.key], m.pct)}</b> · 이전 ${fmt(from[m.key], m.pct)}</div>
-          </article>
-        `;
-      }).join('');
-
-      document.getElementById('rows').innerHTML = METRICS.map(m => {
-        const d = to[m.key] - from[m.key];
-        return `
-          <div class="row">
-            <div class="name">${m.label}</div>
-            <div class="v">${fmt(from[m.key], m.pct)}</div>
-            <div class="v now">${fmt(to[m.key], m.pct)}</div>
-            <div class="chg ${tone(d)}">${deltaText(d, m.pct)}</div>
+          <div class="leader-item">
+            <div class="leader-rank ${rankClass(i)}">${i + 1}</div>
+            <div class="leader-info">
+              <div class="leader-name">${r.name}</div>
+              <div class="leader-sub">${sub}</div>
+            </div>
+            <div class="leader-stat">${stat}</div>
           </div>
         `;
       }).join('');
     }
 
-    document.getElementById('periodFrom').addEventListener('change', render);
-    document.getElementById('periodTo').addEventListener('change', render);
+    function render() {
+      const who = document.getElementById('player').value;
+      document.getElementById('who').textContent = who;
+      const bag = DATA[who];
+      renderList('winrateList', bag.winrate, 'winrate');
+      renderList('gamesList', bag.games, 'games');
+      renderList('goalsList', bag.goals, 'goals');
+    }
+
+    document.getElementById('run').addEventListener('click', render);
+    document.getElementById('player').addEventListener('change', render);
+    document.getElementById('period').addEventListener('change', render);
     render();
   </script>
 </body>
