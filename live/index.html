@@ -393,7 +393,7 @@ function teamNames(){return TEAM_ALL.slice(0,Number(state.teamMode)||3);}
 function activeDetailOrder(){return DETAIL_ORDER.filter(t=>teamNames().includes(t));}
 function activeStandingsOrder(){return STANDINGS_ORDER.filter(t=>teamNames().includes(t));}
 function toast(msg,ms){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms||2600);}
-function go(screen){render._jumpTop=true;state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;persistState();render();}
+function go(screen){if(state.screen==='match'&&screen!=='match') stopTimer(); render._jumpTop=true;state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;persistState();render();}
 function ensureStat(name,homeTeam){if(!state.playerStats[name])state.playerStats[name]={goal:0,assist:0,defense:0,save:0,wins:0,draws:0,losses:0,homeTeam:homeTeam||null};if(homeTeam&&!state.playerStats[name].homeTeam)state.playerStats[name].homeTeam=homeTeam;return state.playerStats[name];}
 function snapshotBaseTeams(){state.baseTeams=JSON.parse(JSON.stringify(state.teams));}
 function restoreBaseTeams(){if(!state.baseTeams)return;state.teams=JSON.parse(JSON.stringify(state.baseTeams));}
@@ -769,6 +769,25 @@ function rebuildTeamStatsFromHistory(){
   state.teamStats=stats;
 }
 
+/** 경기 수정 후에도 개인 승/무/패가 맞게 남도록 history 기준으로 재계산 */
+function rebuildPlayerWdlFromHistory(){
+  Object.keys(state.playerStats||{}).forEach(n=>{
+    const s=state.playerStats[n];
+    if(!s) return;
+    s.wins=0; s.draws=0; s.losses=0;
+  });
+  (state.matchHistory||[]).forEach(h=>{
+    if(!h||!h.a||!h.b) return;
+    const rosterA=h.rosterA||state.teams[h.a]||[];
+    const rosterB=h.rosterB||state.teams[h.b]||[];
+    let resA='draw';
+    if(h.scoreA>h.scoreB) resA='win';
+    else if(h.scoreA<h.scoreB) resA='loss';
+    rosterA.forEach(n=>{const s=ensureStat(n,h.a); if(resA==='win')s.wins++; else if(resA==='loss')s.losses++; else s.draws++;});
+    rosterB.forEach(n=>{const s=ensureStat(n,h.b); if(resA==='win')s.losses++; else if(resA==='loss')s.wins++; else s.draws++;});
+  });
+}
+
 function endMatch(){
   stopTimer(); ensureCoachesInTeams();
   const [a,b]=state.playing; const sa=state.score.A, sb=state.score.B;
@@ -777,11 +796,7 @@ function endMatch(){
   if(state.editingMatchId){const i=state.matchHistory.findIndex(x=>x.id===state.editingMatchId); if(i>=0) state.matchHistory[i]=entry; else state.matchHistory.push(entry);}
   else {state.matchHistory.push(entry); state.matchCount++;}
   rebuildTeamStatsFromHistory();
-  if(!state.editingMatchId){
-    let resA='draw'; if(sa>sb)resA='win'; else if(sa<sb)resA='loss';
-    rosterA.forEach(n=>{const s=ensureStat(n,a); if(resA==='win')s.wins++; else if(resA==='loss')s.losses++; else s.draws++;});
-    rosterB.forEach(n=>{const s=ensureStat(n,b); if(resA==='win')s.losses++; else if(resA==='loss')s.wins++; else s.draws++;});
-  }
+  rebuildPlayerWdlFromHistory();
   restoreBaseTeams(); ensureCoachesInTeams();
   state.playing=[]; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.modal=null;
   state.matchLive=false; state.alerted2min=false; state.matchElapsedSec=0;
@@ -829,7 +844,7 @@ function bind(){
     else if(act==='toggle-play'){const t=el.dataset.team; if(state.playing.includes(t)) state.playing=state.playing.filter(x=>x!==t); else if(state.playing.length<2) state.playing.push(t); else toast('2팀만 선택'); render();}
     else if(act==='start-match'){if(state.playing.length!==2) return toast('2팀을 선택하세요'); restoreBaseTeams(); ensureCoachesInTeams(); const d=document.getElementById('duration'); if(d) state.duration=Number(d.value); state.secondsLeft=state.duration; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.matchTab='lineup'; state.matchLive=true; state.alerted2min=false; state.matchElapsedSec=0; stopTimer(); go('match');}
     else if(act==='resume-match'){if(state.playing.length!==2) return toast('재개할 경기가 없습니다'); ensureCoachesInTeams(); state.matchLive=true; go('match');}
-    else if(act==='match-next'){state.matchLive=true; persistState(true); go('matchSelect'); toast('기록 유지 · 경기 선택으로 이동');}
+    else if(act==='match-next'){stopTimer(); state.matchLive=true; persistState(true); go('matchSelect'); toast('기록 유지 · 경기 선택으로 이동');}
     else if(act==='edit-match'){const id=Number(el.dataset.id); const h=state.matchHistory.find(x=>x.id===id); if(!h) return; state.editingMatchId=h.id; state.playing=[h.a,h.b]; state.score={A:h.scoreA,B:h.scoreB}; state.timeline=[...(h.timeline||[])]; state.matchTab='lineup'; state.secondsLeft=state.duration; state.matchLive=true; stopTimer(); go('match'); toast(`Match #${h.num} 수정`);}
     else if(act==='match-tab'){state.matchTab=el.dataset.tab; render();}
     else if(act==='toggle-timer') toggleTimer();
@@ -839,7 +854,7 @@ function bind(){
     else if(act==='close-modal'){state.modal=null; render();}
     else if(act==='rec'){const stat=el.dataset.stat; const n=state.modal.name; const t=state.modal.team; const s=ensureStat(n,t); const time=elapsedClock(); const [xa,xb]=state.playing; state.matchLive=true; if(stat==='own'){ if(t===xa) state.score.B++; if(t===xb) state.score.A++; state.recordStack.push({name:n,stat:'own',team:t}); state.timeline.push({time,player:n,team:t,stat:'own'}); state.modal=null; persistState(); render(); toast(`${n} · 자책골 기록`,2800); return;} s[stat]=(s[stat]||0)+1; state.recordStack.push({name:n,stat,team:t}); if(stat==='goal'){ if(t===xa) state.score.A++; if(t===xb) state.score.B++; state.timeline.push({time,player:n,team:t,stat}); state.modal={type:'assist',scorer:n,team:t}; persistState(); render(); toast(`${n} · 득점 +1`,1800); return;} state.timeline.push({time,player:n,team:t,stat}); state.modal=null; persistState(); render(); toast(`${n} · ${statLabel(stat)} +1`,2800);}
     else if(act==='pick-assist'){const an=el.dataset.name; if(an){const s=ensureStat(an,state.modal.team); s.assist=(s.assist||0)+1; state.recordStack.push({name:an,stat:'assist',team:state.modal.team}); const last=state.timeline[state.timeline.length-1]; if(last&&last.stat==='goal') last.assist=an; toast(`${an} 도움+1`);} state.modal=null; persistState(); render();}
-    else if(act==='undo-rec'){const last=state.recordStack.pop(); if(!last) return toast('취소할 기록 없음'); const s=ensureStat(last.name,last.team); const [xa,xb]=state.playing; if(last.stat==='own'){ if(last.team===xa) state.score.B=Math.max(0,state.score.B-1); if(last.team===xb) state.score.A=Math.max(0,state.score.A-1);} else { s[last.stat]=Math.max(0,(s[last.stat]||0)-1); if(last.stat==='goal'){ if(last.team===xa) state.score.A=Math.max(0,state.score.A-1); if(last.team===xb) state.score.B=Math.max(0,state.score.B-1);} } state.timeline.pop(); toast('이전 스탯 취소'); persistState(); render();}
+    else if(act==='undo-rec'){const last=state.recordStack.pop(); if(!last) return toast('취소할 기록 없음'); const s=ensureStat(last.name,last.team); const [xa,xb]=state.playing; if(last.stat==='own'){ if(last.team===xa) state.score.B=Math.max(0,state.score.B-1); if(last.team===xb) state.score.A=Math.max(0,state.score.A-1); state.timeline.pop(); } else if(last.stat==='assist'){ s.assist=Math.max(0,(s.assist||0)-1); const tl=state.timeline[state.timeline.length-1]; if(tl&&tl.stat==='goal'&&tl.assist===last.name) delete tl.assist; } else { s[last.stat]=Math.max(0,(s[last.stat]||0)-1); if(last.stat==='goal'){ if(last.team===xa) state.score.A=Math.max(0,state.score.A-1); if(last.team===xb) state.score.B=Math.max(0,state.score.B-1);} state.timeline.pop(); } toast('이전 스탯 취소'); persistState(); render();}
     else if(act==='ask-end-match'){state.modal={type:'confirm-end-match'}; render();}
     else if(act==='confirm-end-match') endMatch();
     else if(act==='ask-end-session'){state.modal={type:'confirm-end-session'}; render();}

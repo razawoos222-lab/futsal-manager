@@ -210,6 +210,21 @@ function writeRowsAt_(sheet, startRow, rows) {
   sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
 }
 
+/** 같은 경기일 행을 지운 뒤 다시 쓰도록 — 중복 저장 방지 */
+function clearRowsForDate_(sheet, dateCol1Based, width, dateKey) {
+  const key = normalizeDateKey_(dateKey);
+  if (!key) return;
+  const last = sheet.getLastRow();
+  if (last < 2) return;
+  const cols = Math.max(width || dateCol1Based, dateCol1Based);
+  const values = sheet.getRange(2, 1, last - 1, cols).getValues();
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (normalizeDateKey_(values[i][dateCol1Based - 1]) === key) {
+      sheet.deleteRow(i + 2);
+    }
+  }
+}
+
 function getAppState() {
   const sheet = getSheet(CONFIG.APP_STATE_SHEET);
   const raw = sheet.getRange('A1').getValue();
@@ -366,6 +381,7 @@ function updateAndArchiveSession(payload) {
       })
       .filter(Boolean);
     if (rowsToAdd.length) {
+      clearRowsForDate_(archiveSheet, 1, 10, date);
       writeRowsAt_(archiveSheet, nextDataRowByKey_(archiveSheet, 2, 10, rowsToAdd.length), rowsToAdd);
     }
 
@@ -419,6 +435,7 @@ function updateAndArchiveSession(payload) {
       }
     }
     if (coachRows.length) {
+      clearRowsForDate_(coachSheet, 1, 9, date);
       writeRowsAt_(coachSheet, nextDataRowByKey_(coachSheet, 2, 9, coachRows.length), coachRows);
     }
 
@@ -458,6 +475,7 @@ function updateAndArchiveSession(payload) {
       }
     });
     if (teamRows.length) {
+      clearRowsForDate_(pastTeamsSheet, 1, 13, date);
       writeRowsAt_(pastTeamsSheet, nextDataRowByKey_(pastTeamsSheet, 3, 13, teamRows.length), teamRows);
     }
 
