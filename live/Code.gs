@@ -10,7 +10,10 @@ const CONFIG = {
   COACH_ARCHIVE_SHEET_ALT: '감독기록',
   PAST_TEAMS_SHEET: '지난_팀_구성',
   APP_STATE_SHEET: '앱_상태_저장',
-  SESSION_ARCHIVE_SHEET: '세션_결과_아카이브'
+  SESSION_ARCHIVE_SHEET: '세션_결과_아카이브',
+  TEAM_LEADERS_SHEET: '감독_배정_2026',
+  /** 감독순위 웹앱(통계대시보드) 스프레드시트 */
+  STATS_SPREADSHEET_ID: '1A_rY2T1Tk1G5_tQq6SxNSxr7k330bHqD4rXCElS1BiA'
 };
 
 const TEAM_ALL = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
@@ -264,6 +267,8 @@ function resetSession() {
 
 function getInitialData() {
   return safeExecute(() => {
+    // 감독_배정_2026 + 지난_팀_구성 → 기록실_감독기록 자동 동기화 (순위 앱용)
+    try { syncCoachArchiveFromAssignments_(); } catch (e) { console.error('coach sync', e); }
     const pastSessions = listPastSessions_();
     return {
       masterPlayers: getMasterPlayersFromSheet(),
@@ -459,6 +464,9 @@ function updateAndArchiveSession(payload) {
     // 4) 세션 아카이브 (지난 경기 결과 불러오기용)
     upsertSessionArchive_(payload);
 
+    // 저장 후 감독기록도 배정표·지난팀구성 기준으로 재동기화
+    try { syncCoachArchiveFromAssignments_(); } catch (e) { console.error('coach sync', e); }
+
     // 5) 앱 상태 초기화
     SpreadsheetApp.flush();
     const stateSheet = getSheet(CONFIG.APP_STATE_SHEET);
@@ -470,123 +478,238 @@ function updateAndArchiveSession(payload) {
 }
 
 
-/** 팀장.xlsx(=날짜별 감독) → 시트 `감독_배정_2026` 생성/갱신. Apps Script 편집기에서 이 함수만 실행 */
-function importTeamLeaders2026() {
-  const sheetName = '감독_배정_2026';
+/**
+ * 감독_배정_2026 + 지난_팀_구성 → 기록실_감독기록 자동 집계
+ * - 앱 로드/세션 저장 시 자동 호출
+ * - 통계대시보드(STATS_SPREADSHEET_ID)에도 동일 시트를 복사
+ * Apps Script에서 syncCoachArchiveFromAssignments_ 또는 syncCoachArchiveNow() 실행 가능
+ */
+function syncCoachArchiveNow() {
+  return safeExecute(() => syncCoachArchiveFromAssignments_());
+}
+
+function findSheetByPrefix_(ss, exactName, prefix) {
+  let sh = ss.getSheetByName(exactName);
+  if (sh) return sh;
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const n = sheets[i].getName();
+    if (n === exactName || (prefix && n.indexOf(prefix) === 0)) return sheets[i];
+  }
+  return null;
+}
+
+function normalizeDateKey_(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v)) {
+    return Utilities.formatDate(v, SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+  }
+  const s = String(v).trim();
+  const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  return s.replace(/\./g, '-');
+}
+
+function parseScorePair_(s) {
+  if (s == null || s === '') return null;
+  const m = String(s).match(/(-?\d+)\s*:\s*(-?\d+)/);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2])];
+}
+
+function buildCoachArchiveRowsFromAssignments_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(sheetName);
-  if (!sheet) sheet = ss.insertSheet(sheetName);
-  else sheet.clear();
-  const rows = [
-  ['2026-02-14', '김명래'],
-  ['2026-02-14', '신윤호'],
-  ['2026-02-14', '이윤수'],
-  ['2026-02-18', '권성민'],
-  ['2026-02-18', '김기호'],
-  ['2026-02-18', '김남현'],
-  ['2026-02-21', '신용주'],
-  ['2026-02-21', '이광일'],
-  ['2026-02-21', '장용호'],
-  ['2026-02-28', '김기호'],
-  ['2026-02-28', '신승진'],
-  ['2026-02-28', '신용주'],
-  ['2026-03-07', '송환규'],
-  ['2026-03-07', '정세진'],
-  ['2026-03-07', '최호진'],
-  ['2026-03-14', '김상덕'],
-  ['2026-03-14', '배철호'],
-  ['2026-03-14', '조덕기'],
-  ['2026-03-21', '김민수'],
-  ['2026-03-21', '양승현'],
-  ['2026-03-21', '이호섭'],
-  ['2026-03-28', '김남현'],
-  ['2026-03-28', '송환규'],
-  ['2026-03-28', '조덕기'],
-  ['2026-04-04', '권성민'],
-  ['2026-04-04', '김기호'],
-  ['2026-04-04', '배수천'],
-  ['2026-04-11', '김명래'],
-  ['2026-04-11', '배철호'],
-  ['2026-04-11', '이장영'],
-  ['2026-04-18', '안재욱'],
-  ['2026-04-18', '이광일'],
-  ['2026-04-18', '장용호'],
-  ['2026-04-25', '김명래'],
-  ['2026-04-25', '김상덕'],
-  ['2026-04-25', '정세진'],
-  ['2026-05-02', '배철호'],
-  ['2026-05-02', '송환규'],
-  ['2026-05-02', '이윤수'],
-  ['2026-05-09', '김남현'],
-  ['2026-05-09', '김민수'],
-  ['2026-05-09', '신승진'],
-  ['2026-05-23', '김상덕'],
-  ['2026-05-23', '양승현'],
-  ['2026-05-23', '최호진'],
-  ['2026-05-30', '김명래'],
-  ['2026-05-30', '송환규'],
-  ['2026-05-30', '여도영'],
-  ['2026-05-30', '이윤수'],
-  ['2026-06-06', '김기호'],
-  ['2026-06-06', '신용주'],
-  ['2026-06-06', '황민구'],
-  ['2026-06-13', '신용주'],
-  ['2026-06-13', '안재욱'],
-  ['2026-06-13', '이장영'],
-  ['2026-06-20', '신승진'],
-  ['2026-06-20', '이광일'],
-  ['2026-06-20', '장용호'],
-  ['2026-06-27', '권성민'],
-  ['2026-06-27', '김민수'],
-  ['2026-06-27', '황민구'],
-  ['2026-07-04', '김기호'],
-  ['2026-07-04', '양승현'],
-  ['2026-07-04', '이장영'],
-  ['2026-07-11', '신윤호'],
-  ['2026-07-11', '이영중'],
-  ['2026-07-25', '김명래'],
-  ['2026-07-25', '이영중'],
-  ['2026-07-25', '정세진'],
-  ['2026-08-01', '권성민'],
-  ['2026-08-01', '김기호'],
-  ['2026-08-01', '배수천'],
-  ['2026-08-08', '여도영'],
-  ['2026-08-08', '이호준'],
-  ['2026-08-08', '정세진'],
-  ['2026-08-15', '김상덕'],
-  ['2026-08-15', '배철호'],
-  ['2026-08-15', '양승현'],
-  ['2026-09-05', '김민수'],
-  ['2026-09-05', '배철호'],
-  ['2026-09-05', '이호섭'],
-  ['2026-09-12', '배수천'],
-  ['2026-09-12', '안재욱'],
-  ['2026-09-12', '이광일'],
-  ['2026-09-19', '김남현'],
-  ['2026-09-19', '김명래'],
-  ['2026-09-19', '최한호'],
-  ['2026-09-26', '김상덕'],
-  ['2026-09-26', '배철호'],
-  ['2026-10-03', '이호섭'],
-  ['2026-10-03', '이호준'],
-  ['2026-10-03', '최호진'],
-  ['2026-10-10', '안재욱'],
-  ['2026-10-10', '장용호'],
-  ['2026-10-17', '김상덕'],
-  ['2026-10-17', '배철호'],
-  ['2026-10-17', '정세진'],
-  ['2026-10-24', '배수천'],
-  ['2026-10-24', '이광일'],
-  ['2026-10-24', '황민구'],
-  ['2026-10-31', '김남현'],
-  ['2026-10-31', '김민수'],
-  ['2026-10-31', '양승현'],
-  ['2026-11-07', '이호섭'],
-  ['2026-11-07', '이호준'],
-  ['2026-11-07', '조덕기']
-  ];
-  const values = [['경기일', '감독명']].concat(rows);
-  sheet.getRange(1, 1, values.length, 2).setValues(values);
+  const leadSheet = findSheetByPrefix_(ss, CONFIG.TEAM_LEADERS_SHEET, '감독_배정_2026');
+  const pastSheet = ss.getSheetByName(CONFIG.PAST_TEAMS_SHEET);
+  if (!leadSheet || leadSheet.getLastRow() < 2) {
+    return { rows: [], reason: 'no-leaders' };
+  }
+  if (!pastSheet || pastSheet.getLastRow() < 2) {
+    return { rows: [], reason: 'no-past-teams' };
+  }
+
+  const leadVals = leadSheet.getRange(2, 1, leadSheet.getLastRow() - 1, 2).getValues();
+  const coachesByDate = {};
+  leadVals.forEach(r => {
+    const d = normalizeDateKey_(r[0]);
+    const name = r[1] ? String(r[1]).trim() : '';
+    if (!d || !name || name === '합계') return;
+    if (!coachesByDate[d]) coachesByDate[d] = [];
+    if (coachesByDate[d].indexOf(name) < 0) coachesByDate[d].push(name);
+  });
+
+  const pastLast = pastSheet.getLastRow();
+  const pastWidth = Math.max(12, pastSheet.getLastColumn());
+  const pastVals = pastSheet.getRange(2, 1, pastLast - 1, pastWidth).getValues();
+  const matchesByDate = {};
+  pastVals.forEach(r => {
+    const d = normalizeDateKey_(r[0]);
+    if (!d || !coachesByDate[d]) return;
+    const team = r[2] ? String(r[2]).trim() : '';
+    if (!team) return;
+    const players = [];
+    for (let c = 3; c <= 10 && c < r.length; c++) {
+      if (r[c] != null && String(r[c]).trim() !== '') players.push(String(r[c]).trim());
+    }
+    // 감독 열이 있으면(13열) 포함
+    if (r.length >= 13 && r[12] != null && String(r[12]).trim() !== '') {
+      players.push(String(r[12]).trim());
+    }
+    const scoreRaw = r[11];
+    if (!matchesByDate[d]) matchesByDate[d] = [];
+    matchesByDate[d].push({
+      num: r[1] != null ? String(r[1]) : '',
+      team: team,
+      players: players,
+      score: scoreRaw
+    });
+  });
+
+  const out = [];
+  Object.keys(coachesByDate).sort().forEach(d => {
+    const coaches = coachesByDate[d];
+    const rows = matchesByDate[d] || [];
+    if (!rows.length) return;
+
+    const counts = {};
+    coaches.forEach(c => { counts[c] = {}; });
+    rows.forEach(r => {
+      coaches.forEach(c => {
+        if (r.players.indexOf(c) >= 0) {
+          counts[c][r.team] = (counts[c][r.team] || 0) + 1;
+        }
+      });
+    });
+    const coachTeam = {};
+    coaches.forEach(c => {
+      let best = null;
+      let bestN = -1;
+      Object.keys(counts[c]).forEach(t => {
+        if (counts[c][t] > bestN) {
+          bestN = counts[c][t];
+          best = t;
+        }
+      });
+      if (best) coachTeam[c] = best;
+    });
+
+    const byNum = {};
+    rows.forEach(r => {
+      if (!byNum[r.num]) byNum[r.num] = {};
+      byNum[r.num][r.team] = r;
+    });
+
+    const stats = {};
+    Object.keys(coachTeam).forEach(c => {
+      stats[c] = { team: coachTeam[c], games: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 };
+    });
+
+    Object.keys(byNum).forEach(num => {
+      const teams = byNum[num];
+      Object.keys(teams).forEach(t => {
+        const sc = parseScorePair_(teams[t].score);
+        if (!sc) return;
+        const gf = sc[0];
+        const ga = sc[1];
+        Object.keys(stats).forEach(c => {
+          if (stats[c].team !== t) return;
+          stats[c].games++;
+          stats[c].gf += gf;
+          stats[c].ga += ga;
+          if (gf > ga) stats[c].w++;
+          else if (gf < ga) stats[c].l++;
+          else stats[c].d++;
+        });
+      });
+    });
+
+    Object.keys(stats).forEach(c => {
+      const s = stats[c];
+      out.push([d, c, s.team, s.games, s.w, s.d, s.l, s.gf, s.ga]);
+    });
+  });
+
+  return { rows: out, dates: Object.keys(coachesByDate) };
+}
+
+function writeCoachArchiveSheet_(sheet, builtRows, replaceDates) {
+  ensureHeaderRow_(sheet, ['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']);
+  const last = sheet.getLastRow();
+  let keep = [];
+  if (last >= 2) {
+    const vals = sheet.getRange(2, 1, last - 1, 9).getValues();
+    const replaceSet = {};
+    (replaceDates || []).forEach(d => { replaceSet[d] = true; });
+    vals.forEach(r => {
+      const d = normalizeDateKey_(r[0]);
+      if (!d) return;
+      if (replaceSet[d]) return; // 배정표 날짜는 재계산분으로 교체
+      keep.push([
+        d,
+        r[1],
+        r[2],
+        Number(r[3]) || 0,
+        Number(r[4]) || 0,
+        Number(r[5]) || 0,
+        Number(r[6]) || 0,
+        Number(r[7]) || 0,
+        Number(r[8]) || 0
+      ]);
+    });
+  }
+  const all = keep.concat(builtRows || []);
+  // clear data body
+  if (last >= 2) sheet.getRange(2, 1, last - 1, 9).clearContent();
+  if (all.length) {
+    sheet.getRange(1, 1, 1, 9).setValues([['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']]);
+    sheet.getRange(2, 1, all.length, 9).setValues(all);
+  }
+  return all.length;
+}
+
+function syncCoachArchiveFromAssignments_() {
+  const built = buildCoachArchiveRowsFromAssignments_();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const local = getCoachArchiveSheet_();
+  const n = writeCoachArchiveSheet_(local, built.rows || [], built.dates || []);
+
+  let remote = 0;
+  try {
+    if (CONFIG.STATS_SPREADSHEET_ID) {
+      const statsSs = SpreadsheetApp.openById(CONFIG.STATS_SPREADSHEET_ID);
+      let remoteSheet = statsSs.getSheetByName(CONFIG.COACH_ARCHIVE_SHEET);
+      if (!remoteSheet) remoteSheet = statsSs.insertSheet(CONFIG.COACH_ARCHIVE_SHEET);
+      // 통계대시보드에는 배정 기반 전체 행을 그대로 기록(기존 빈 시트 가정)
+      remoteSheet.clear();
+      remoteSheet.getRange(1, 1, 1, 9).setValues([['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']]);
+      if (built.rows && built.rows.length) {
+        remoteSheet.getRange(2, 1, built.rows.length, 9).setValues(built.rows);
+      }
+      remote = built.rows ? built.rows.length : 0;
+    }
+  } catch (e) {
+    console.error('stats coach sync failed', e);
+  }
+
   SpreadsheetApp.flush();
-  return { success: true, rows: rows.length, sheet: sheetName };
+  return {
+    success: true,
+    localRows: n,
+    builtRows: (built.rows || []).length,
+    remoteRows: remote,
+    reason: built.reason || null
+  };
+}
+
+/** 팀장 배정표가 없을 때만 시트를 만들고, 바로 감독기록까지 동기화 */
+function importTeamLeaders2026() {
+  const sheetName = CONFIG.TEAM_LEADERS_SHEET;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = findSheetByPrefix_(ss, sheetName, '감독_배정_2026');
+  if (!sheet) sheet = ss.insertSheet(sheetName);
+  // 시트가 비어 있으면 안내만 (데이터는 이미 Drive/복붙으로 있을 수 있음)
+  if (sheet.getLastRow() < 2) {
+    sheet.getRange(1, 1, 1, 2).setValues([['경기일', '감독명']]);
+  }
+  return syncCoachArchiveFromAssignments_();
 }

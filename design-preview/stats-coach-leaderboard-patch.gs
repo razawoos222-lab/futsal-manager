@@ -1,16 +1,20 @@
 /**
  * JMFC Stats 앱(Apps Script)에 붙이는 감독 순위 패치
+ * 웹앱: .../AKfycbyDj-x8up-wwoloKcOBuZzasGFOpfXQ5fMtrXE9XKvGrhzujVPPcmquRB3ZWviNTawE-g/exec
  *
  * 구조
  * - 원본(매니저) 시트: 1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk
  * - Stats 시트:       1A_rY2T1Tk1G5_tQq6SxNSxr7k330bHqD4rXCElS1BiA  ← 이 웹앱이 읽는 쪽
  *
- * 시트에만 데이터를 넣으면 HTML에는 자동 반영되지 않습니다.
+ * 매니저 앱 Code.gs의 syncCoachArchiveFromAssignments_() 가
+ * Stats 시트의 '기록실_감독기록' 탭을 자동으로 채웁니다.
+ * (앱 로드 / 기록 저장 시, 또는 syncCoachArchiveNow 실행)
+ *
  * 아래 함수를 Stats 프로젝트 Code.gs에 추가하고,
  * index.html 순위표에 감독 카드를 넣은 뒤 "새 버전 배포"가 필요합니다.
  *
- * 전제: Stats 시트에 '기록실_감독기록' 탭이 있고
- * 헤더 = 경기일,감독명,팀명,경기수,승,무,패,득점,실점
+ * 전제: Stats 시트에 '기록실_감독기록' 탭
+ * 헤더 = 경기일,감독명,팀,경기수,승,무,패,득점,실점
  */
 
 var COACH_ARCHIVE_SHEET = '기록실_감독기록';
