@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>JMFC 실험실 · 팀파워 풀플로우</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+
+    :root {
+      --bg: #f0f0f2; --card: #fff; --text: #18181b; --muted: #52525b;
+      --red: #dc2626; --blue: #2563eb; --yellow: #fde047; --yellow-text: #f59e0b;
+      --black: #18181b; --border: #c4c4c8; --border-strong: #a1a1aa;
+      --ok: #16a34a; --primary: #2563eb; --cta: #2563eb;
+      --gold: #c9a227; --gold-light: #f5e6b8; --neon: #a3e635;
+      --sub: #7c3aed; --sub-dark: #6d28d9; --green: #16a34a;
+      --touch-min: 48px; --font-btn: 0.9375rem;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .top { max-width: 720px; margin: 0 auto; padding: 0.85rem 1rem 0; }
+    .top h1 { font-family: Cinzel, Georgia, serif; font-size: 1.15rem; }
+    .top .meta { font-size: 0.78rem; color: var(--muted); line-height: 1.45; margin-top: 0.25rem; }
+    .formula {
+      max-width: 720px; margin: 0.65rem auto 0; padding: 0.65rem 0.85rem;
+      background: #fff7ed; border: 1px solid #fdba74; border-radius: 10px;
+      font-size: 0.75rem; line-height: 1.5; color: #9a3412;
+    }
+    .formula code { background: #ffedd5; padding: 0 0.25rem; border-radius: 3px; }
+    .steps { max-width: 720px; margin: 0.75rem auto 0; padding: 0 1rem; display: flex; gap: 0.3rem; flex-wrap: wrap; }
+    .steps span { font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.45rem; border-radius: 999px; background: #e4e4e7; color: #52525b; }
+    .steps span.on { background: var(--primary); color: #fff; }
+    .steps span.done { background: #bbf7d0; color: #166534; }
+    #app { max-width: 720px; margin: 0.75rem auto 2rem; padding: 0 1rem; }
+    .screen {
+      background: var(--card); border: 1.5px solid var(--border-strong); border-radius: 20px;
+      padding: 0; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+    }
+    .screen .body { padding: 12px 14px 16px; }
+    h2 { font-size: 1.1rem; font-weight: 900; margin-bottom: 10px; }
+    .hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.85rem; line-height: 1.45; }
+    .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; }
+    label { font-size: 0.85rem; font-weight: 700; }
+    select, button {
+      font: inherit; border: 1.5px solid var(--border); background: #fff;
+      border-radius: 10px; padding: 0.55rem 0.75rem; cursor: pointer;
+    }
+    button.cta, .btn-cta {
+      width: 100%; min-height: var(--touch-min); background: var(--cta); color: #fff; border: none;
+      border-radius: 12px; font-weight: 900; font-size: var(--font-btn); padding: 12px; margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+    button.sec, .btn-sec {
+      width: 100%; min-height: var(--touch-min); background: #fafafa; font-weight: 700; margin-top: 6px;
+      border-radius: 12px; color: var(--muted); border: 1.5px solid var(--border); padding: 12px;
+    }
+    button.danger, .btn-danger {
+      width: 100%; min-height: var(--touch-min); background: #991b1b; color: #fff; border: none;
+      border-radius: 12px; font-weight: 900; margin-top: 8px; padding: 12px;
+    }
+    .btn-green {
+      width: 100%; min-height: var(--touch-min); background: var(--green); color: #fff; border: none;
+      border-radius: 12px; font-weight: 900; padding: 12px; margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(22,163,74,0.25);
+    }
+    .btn-outline {
+      width: 100%; min-height: var(--touch-min); padding: 12px; margin-top: 6px;
+      border: 1.5px solid var(--border-strong); border-radius: 12px; background: #fff; font-weight: 800;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .chip { background: #f4f4f5; border: 1.5px solid var(--border); color: var(--text); font-size: 0.75rem; font-weight: 700; padding: 6px 10px; border-radius: 8px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
+
+    .pcard {
+      border: 2px solid var(--border); border-radius: 10px; padding: 8px 10px;
+      text-align: left; background: #fafafa; cursor: pointer;
+      display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; min-height: 48px;
+    }
+    .pcard.on { outline: 3px solid rgba(22,163,74,0.28); background: linear-gradient(160deg,#f0fdf4,#ecfdf5); border-color: #16a34a; }
+    .pcard.merc { border-style: dashed; color: #71717a; }
+    .pcard .nm { font-weight: 900; font-size: 0.92rem; color: var(--text); }
+    .pcard .meta { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+    .pcard.sm { padding: 0.4rem 0.5rem; min-height: 40px; }
+    .pcard.sm .nm { font-size: 0.82rem; }
+    .pcard.static { cursor: default; }
+    .pcard.name-only { justify-content: space-between; }
+    .ex-btn {
+      margin-left: auto; padding: 0.2rem 0.45rem !important; font-size: 0.68rem !important;
+      font-weight: 800 !important; background: #fef2f2 !important; color: #991b1b !important;
+      border-color: #fecaca !important; border-radius: 8px !important;
+    }
+
+    .coach-slots { display: grid; gap: 6px; margin-bottom: 10px; }
+    .coach-slots.m2 { grid-template-columns: 1fr 1fr; }
+    .coach-slots.m3 { grid-template-columns: 1fr 1fr 1fr; }
+    .coach-slots.m4 { grid-template-columns: 1fr 1fr; }
+    .cslot {
+      border: 2px dashed var(--border-strong); border-radius: 10px; padding: 0.7rem; text-align: center;
+      font-size: 0.75rem; font-weight: 800; color: var(--muted); cursor: pointer; min-height: 64px;
+    }
+    .cslot.active { box-shadow: 0 0 0 3px rgba(37,99,235,0.2); border-color: var(--primary); border-style: solid; background: #eff6ff; }
+    .cslot.filled { border-style: solid; color: var(--text); }
+    .cslot.RED.filled { border-color: var(--red); background: #fef2f2; }
+    .cslot.BLUE.filled { border-color: var(--blue); background: #eff6ff; }
+    .cslot.YELLOW.filled { border-color: #eab308; background: #fffbeb; }
+    .cslot.BLACK.filled { border-color: #18181b; background: #f4f4f5; }
+    .tname-RED, .t-red { color: var(--red); } .tname-BLUE, .t-blue { color: var(--blue); }
+    .tname-YELLOW, .t-yellow { color: var(--yellow-text); } .tname-BLACK { color: var(--black); }
+
+    .team-card {
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 8px;
+      background: #fafafa; border-left: 4px solid var(--border);
+    }
+    .team-card.RED { border-left-color: var(--red); }
+    .team-card.BLUE { border-left-color: var(--blue); }
+    .team-card.YELLOW { border-left-color: var(--yellow); background: linear-gradient(90deg,#fffbeb 0%,#fafafa 28%); }
+    .team-card.BLACK { border-left-color: #52525b; }
+    .team-card.pickable { cursor: pointer; }
+    .team-card.selected { box-shadow: 0 0 0 3px rgba(37,99,235,0.25); background: #fff; }
+    .team-card .head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+    .team-card .head h3 { font-size: 0.85rem; font-weight: 900; }
+    .team-card .val { font-weight: 900; font-size: 1.05rem; letter-spacing: -0.02em; }
+    .team-card .sub { font-size: 0.72rem; color: var(--muted); margin: 4px 0 6px; line-height: 1.4; }
+    .team-card .plist { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+    @media (max-width: 520px) { .team-card .plist { grid-template-columns: 1fr; } }
+
+    .order-box {
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 10px; background: #fafafa;
+    }
+    .order-box h4 { font-size: 0.82rem; margin-bottom: 0.45rem; }
+    .order-seed { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.55rem; }
+    .order-row {
+      display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.55rem;
+      border-radius: 10px; border: 2px solid var(--border); background: #fff; font-weight: 800;
+      cursor: grab; user-select: none;
+    }
+    .order-row.dragging { opacity: 0.5; }
+    .order-row .idx { width: 1.4rem; color: var(--muted); font-size: 0.75rem; }
+    .order-row .move { display: flex; gap: 0.2rem; margin-left: auto; }
+    .order-row .move button { padding: 0.2rem 0.45rem; font-size: 0.7rem; font-weight: 900; }
+    .order-preview { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .order-chip {
+      font-size: 0.68rem; font-weight: 900; padding: 0.25rem 0.45rem; border-radius: 8px;
+      background: #fff; border: 1.5px solid var(--border);
+    }
+    .order-chip.RED { color: var(--red); border-color: #fca5a5; background: #fef2f2; }
+    .order-chip.BLUE { color: var(--blue); border-color: #93c5fd; background: #eff6ff; }
+    .order-chip.YELLOW { color: var(--yellow-text); border-color: #fde047; background: #fffbeb; }
+    .order-chip.BLACK { color: #27272a; border-color: #a1a1aa; background: #f4f4f5; }
+    .order-chip.now { outline: 2px solid #18181b; }
+
+    .live-banner, .draft-banner {
+      background: #18181b; color: var(--neon); border-radius: 10px; padding: 10px;
+      font-weight: 800; margin-bottom: 8px; font-size: 0.8rem; text-align: center;
+    }
+
+    .jmfc-bar {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: #fff; border-bottom: 1.5px solid var(--border);
+    }
+    .jmfc-bar img, .jmfc-bar .logo { width: 38px; height: 38px; flex-shrink: 0; border-radius: 8px; object-fit: cover; }
+    .jmfc-brand strong { display: block; font-family: Cinzel, Georgia, serif; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.06em; }
+    .jmfc-brand span { display: block; font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-top: 1px; }
+
+    .score-big { text-align: center; font-size: 1.55rem; font-weight: 900; margin: 8px 0 12px; }
+    .score-big .sep { margin: 0 8px; }
+    .ctrl-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .timer-box {
+      font-family: ui-monospace, monospace; font-size: 1.2rem; font-weight: 900;
+      padding: 8px 16px; border-radius: 12px; background: #fafafa; border: 1.5px solid var(--border);
+    }
+    .btn-sm { min-height: 40px; padding: 8px 12px; border-radius: 10px; border: none; font-size: 0.78rem; font-weight: 800; color: #fff; }
+    .btn-sm.gray { background: #71717a; } .btn-sm.blue { background: var(--blue); }
+
+    .tabs {
+      display: flex; justify-content: space-around; gap: 8px; margin-bottom: 14px;
+      border-bottom: 1.5px solid var(--border); padding: 0 4px;
+    }
+    .tabs button, .tabs span {
+      flex: 1; padding: 10px 8px; font-size: 0.78rem; font-weight: 800; color: var(--muted);
+      border: none; background: transparent; border-bottom: 3px solid transparent; margin-bottom: -1.5px;
+      border-radius: 0; text-align: center;
+    }
+    .tabs button.on, .tabs span.on { color: var(--text); border-bottom-color: var(--primary); }
+
+    .lineup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .lineup-col {
+      border-radius: 14px; overflow: hidden; border: 1.5px solid var(--border); background: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .lineup-col .team-head {
+      padding: 10px 8px; text-align: center; font-family: Cinzel, Georgia, serif;
+      font-size: 0.95rem; font-weight: 900; letter-spacing: 0.12em; color: #fff;
+    }
+    .lineup-col.team-RED .team-head { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+    .lineup-col.team-BLUE .team-head { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+    .lineup-col.team-YELLOW .team-head { background: linear-gradient(135deg, #eab308, #facc15); color: #422006; }
+    .lineup-col.team-BLACK .team-head { background: linear-gradient(135deg, #27272a, #52525b); }
+    .lineup-col .roster { padding: 8px 6px 10px; }
+    .prow { display: flex; gap: 4px; margin-bottom: 6px; align-items: stretch; }
+    .prow:last-child { margin-bottom: 0; }
+    .prow .name {
+      flex: 1; text-align: left; padding: 11px 10px; font-size: 1.05rem; font-weight: 900;
+      background: #f8fafc; border: 1.5px solid #e4e4e7; border-radius: 10px;
+      min-height: 46px; display: flex; align-items: center; cursor: pointer; font-family: inherit;
+    }
+    .lineup-col.team-RED .prow .name { border-left: 3px solid var(--red); }
+    .lineup-col.team-BLUE .prow .name { border-left: 3px solid var(--blue); }
+    .lineup-col.team-YELLOW .prow .name { border-left: 3px solid var(--yellow); }
+    .lineup-col.team-BLACK .prow .name { border-left: 3px solid #52525b; }
+    .prow .name .cap {
+      font-size: 0.62rem; font-weight: 800; margin-right: 4px; background: #18181b;
+      padding: 2px 5px; border-radius: 4px; color: var(--neon);
+    }
+    .prow .ex-btn { align-self: center; margin-left: 0; flex-shrink: 0; }
+    .btn-sub {
+      width: calc(100% - 12px); min-height: var(--touch-min); margin: 8px 6px 10px; padding: 12px;
+      border: none; border-radius: 12px; background: linear-gradient(135deg, var(--sub), var(--sub-dark));
+      color: #fff; font-weight: 900; font-size: var(--font-btn); font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.3);
+    }
+    .act2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0 0; }
+    .act2 button { padding: 12px; min-height: var(--touch-min); border: none; border-radius: 12px; font-weight: 800; font-size: var(--font-btn); color: #fff; margin: 0; width: 100%; }
+    .act2 .u { background: #71717a; } .act2 .e { background: var(--primary); }
+    .flow-note { font-size: 0.72rem; color: var(--blue); font-weight: 700; padding: 8px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin: 8px 0; line-height: 1.45; }
+
+    .timeline { font-size: 0.78rem; margin: 0.55rem 0; max-height: 120px; overflow: auto; list-style: none; }
+    .timeline li { padding: 0.3rem 0.45rem; border-radius: 8px; margin-bottom: 0.25rem; font-weight: 700; }
+    .timeline li.RED { background: #fee2e2; color: #991b1b; }
+    .timeline li.BLUE { background: #dbeafe; color: #1e40af; }
+    .timeline li.YELLOW { background: #fef9c3; color: #854d0e; }
+    .timeline li.BLACK { background: #e4e4e7; color: #27272a; }
+
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+    .modal .box, .modal-card {
+      background: #fff; border-radius: 16px; padding: 16px; width: min(420px, 100%);
+      max-height: 90vh; overflow: auto; border: 1.5px solid var(--border-strong);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal h3, .modal-card h3 { font-size: 1.05rem; font-weight: 900; text-align: center; margin-bottom: 8px; }
+    .modal .acts, .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .modal .group { margin-bottom: 0.65rem; }
+    .modal .group h4 { font-size: 0.78rem; font-weight: 900; margin-bottom: 0.35rem; }
+    .modal-btns button { min-height: 52px; border: none; border-radius: 10px; font-weight: 900; font-size: 0.9rem; font-family: inherit; }
+    .modal-btns .goal, .modal-btns .def, .modal-btns .save,
+    .btn-goal, .btn-def, .btn-save {
+      background: #18181b !important; color: var(--neon) !important; border: none !important;
+      letter-spacing: 0.06em; font-weight: 900 !important;
+      box-shadow: inset 0 1px 0 rgba(163,230,53,0.18), 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .modal-btns .og, .btn-own { background: #dc2626 !important; color: #fff !important; border: none !important; }
+    .btn-assist { background: #f0fdf4 !important; color: var(--green) !important; border: 2px solid var(--green) !important; font-weight: 900 !important; border-radius: 999px !important; }
+    .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: #18181b; color: #fff; padding: 0.65rem 1rem; border-radius: 10px; font-weight: 700; z-index: 60; font-size: 0.85rem; }
+    table.rank, table.data { width: 100%; border-collapse: collapse; font-size: 0.68rem; }
+    table.rank th, table.rank td, table.data th, table.data td {
+      border-bottom: 1px solid var(--border); padding: 7px 2px; text-align: center; white-space: nowrap;
+    }
+    table.rank th, table.data th { color: var(--muted); font-weight: 800; font-size: 0.65rem; }
+    .status { font-size: 0.75rem; color: var(--muted); }
+    .status.ok { color: var(--ok); } .status.err { color: #ea580c; }
+    .nav-back { background: transparent; border: none; font-weight: 800; color: var(--muted); padding: 0.25rem 0; margin-bottom: 0.35rem; }
+    .flow-nav, .nav-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+    .flow-nav button, .nav-row button {
+      width: 100%; min-height: var(--touch-min); font-weight: 800; margin-top: 0;
+      border-radius: 12px; border: 1.5px solid var(--primary); background: #eff6ff; color: var(--primary);
+    }
+    .flow-nav button.next, .nav-row button.next { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,0.2); }
+    .mvp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .result-hero {
+      padding: 12px 8px; border-radius: 16px; margin-bottom: 0;
+      background: linear-gradient(145deg, #0c0c0e 0%, #1a1a22 55%, #121218 100%);
+      border: 1.5px solid var(--gold); box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .result-hero .eyebrow {
+      font-family: Cinzel, Georgia, serif; font-size: 0.58rem; font-weight: 900;
+      letter-spacing: 0.1em; color: var(--gold-light); text-align: center;
+    }
+    .result-hero .mvp-names { text-align: center; font-size: 1.05rem; font-weight: 900; color: #fff; margin-top: 8px; }
+    .result-hero .mp-plain { text-align: center; margin-top: 6px; color: var(--gold-light); font-size: 0.72rem; font-weight: 800; line-height: 1.35; }
+    .award-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .award {
+      padding: 10px; border-radius: 12px; background: linear-gradient(160deg,#fafafa,#f4f4f5);
+      border: 1.5px solid #e4e4e7; font-size: 0.78rem; font-weight: 700;
+    }
+    .award b { display: block; font-size: 0.68rem; color: #57534e; margin-bottom: 4px; font-weight: 800; }
+    .result-card {
+      background: #fff; border-radius: 14px; padding: 12px; border: 1.5px solid #e4e4e7;
+      margin-bottom: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .result-card.team-RED { border-left: 4px solid var(--red); }
+    .result-card.team-BLUE { border-left: 4px solid var(--blue); }
+    .result-card.team-YELLOW { border-left: 4px solid var(--yellow); }
+    .result-card.team-BLACK { border-left: 4px solid #52525b; }
+    .result-btns { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .rank-block { margin-bottom: 0.85rem; }
+    .rank-block h3 { font-size: 0.92rem; margin-bottom: 0.35rem; }
+    .warn-banner {
+      font-size: 0.78rem; line-height: 1.5; padding: 10px; border-radius: 10px;
+      background: #fef3c7; border: 1.5px solid #fcd34d; color: #713f12; margin-bottom: 10px;
+    }
+    .seg { display: flex; margin-bottom: 10px; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .seg button { flex: 1; min-height: 44px; border: none; background: #fafafa; font-weight: 800; font-size: 0.85rem; color: var(--muted); border-radius: 0; }
+    .seg button.on { background: var(--primary); color: #fff; }
+    table.edit-stats { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
+    table.edit-stats th, table.edit-stats td { padding: 9px 4px; text-align: center; border-bottom: 1px solid var(--border); }
+    table.edit-stats .pname { text-align: left; font-weight: 700; }
+    table.edit-stats input {
+      width: 48px; min-height: 44px; text-align: center; font-weight: 700;
+      border: 1.5px solid var(--border); border-radius: 8px;
+    }
+    .excluded-box { margin-top: 0.75rem; padding: 0.55rem; border-radius: 10px; background: #f4f4f5; font-size: 0.78rem; }
+    .sub-pick { padding: 10px; border-radius: 10px; border: 2px solid var(--border); margin-bottom: 8px; background: #fafafa; }
+    .sub-pick.out { border-color: var(--red); background: #fef2f2; }
+    .sub-pick.out .lbl { font-size: 0.68rem; color: var(--red); font-weight: 800; margin-bottom: 4px; }
+    .sub-pick.out .pname { font-size: 1.15rem; font-weight: 900; }
+
+    .pcard.name-only .nm { font-size: 0.95rem; }
+    .attend-grid .pcard { justify-content: center; min-height: 52px; }
+    .attend-grid .pcard .nm { font-size: 1rem; }
+    .cslot .coach-meta { font-size: 0.68rem; color: var(--muted); font-weight: 700; margin-top: 4px; line-height: 1.35; }
+    .cslot .coach-name { font-size: 0.9rem; font-weight: 900; color: var(--text); margin-top: 2px; }
+    .order-simple { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+    .order-simple .lab { font-size: 0.75rem; font-weight: 800; color: var(--muted); }
+    .order-pill {
+      display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 999px;
+      border: 1.5px solid var(--border); background: #fff; font-weight: 900; font-size: 0.78rem;
+    }
+    .order-pill button { padding: 2px 6px; font-size: 0.65rem; font-weight: 900; border-radius: 6px; }
+    .plist .pcard[draggable="true"] { cursor: grab; }
+    .team-card.drag-over { outline: 3px dashed var(--primary); }
+    table.data.rank, table.rank-tight { table-layout: fixed; width: 100%; }
+    table.rank-tight col.c-rank { width: 2.2rem; }
+    table.rank-tight col.c-name { width: auto; }
+    table.rank-tight col.c-val { width: 3.2rem; }
+    table.rank-tight th, table.rank-tight td { text-align: left; padding: 7px 6px; }
+    table.rank-tight th.c-val, table.rank-tight td.c-val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+    table.rank-tight th.c-rank, table.rank-tight td.c-rank { text-align: center; color: var(--muted); width: 2.2rem; }
+    table.edit-stats { table-layout: fixed; width: 100%; }
+    table.edit-stats col.c-name { width: 28%; }
+    table.edit-stats col.c-num { width: 14%; }
+    table.edit-stats col.c-mp { width: 16%; }
+    table.edit-stats td.mp-cell, table.edit-stats th.mp-cell {
+      text-align: right; font-variant-numeric: tabular-nums; font-weight: 900; min-width: 3.5rem;
+    }
+    table.edit-stats input { width: 100%; max-width: 56px; }
+    .score-big .pwr { display: block; font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-top: 2px; }
+    .score-big .side { display: inline-block; min-width: 5.5rem; vertical-align: top; }
+    .score-big .sep { display: inline-block; min-width: 4.5rem; }
+
+
+  </style>
+</head>
+<body>
+  <div style="max-width:920px;margin:12px auto;padding:12px 14px;border-radius:12px;background:#111;color:#fff;font-family:sans-serif">
+    <b>이 페이지는 구버전 실험실입니다.</b> 최종 UI는
+    <a style="color:#93c5fd;font-weight:900" href="jmfc-session/index.html">jmfc-session/index.html</a>
+    또는 <a style="color:#93c5fd;font-weight:900" href="jmfc-mockup.html">jmfc-mockup.html</a> 을 열어주세요.
+  </div>
+
+  <div class="top">
+    <h1>JMFC 실험실 · 풀플로우</h1>
+    <p class="meta">운영 GAS 아님 · 시트 데이터로 참석→감독→드래프트→라인업→경기→결과</p>
+  </div>
+  <div class="formula">
+    <b>팀파워</b> = 팀원 개인점수 평균 · 개인점수 = <code>(CCP/G ÷ 전선수 최고 CCP/G) × 100</code>
+    · <b>승률</b> = <code>용병*</code> 제외
+  </div>
+  <div class="steps" id="steps"></div>
+  <div class="row top" style="max-width:720px;padding:0.5rem 1rem 0;gap:0.4rem">
+    <button id="btn-load" style="background:var(--primary);color:#fff;border-color:var(--primary);font-weight:800">시트 새로고침</button>
+    <button id="btn-snap" title="구글 시트 fetch가 실패하거나 오프라인일 때 쓰는 로컬 players-snapshot.json 선수 명단을 불러옵니다. 경기 기록 저장이 아닙니다.">오프라인 스냅샷</button>
+    <button id="btn-nov7" style="background:#18181b;color:#f5e6b8;border-color:#c9a227;font-weight:800" title="2026-11-07 실기록으로 결과 화면 미리보기">11/7 실결과</button>
+    <span class="status" id="load-status">대기</span>
+  </div>
+  <div id="app"></div>
+  <div id="modal-root"></div>
+
+<script>
+const SHEET_ID = '1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+const TEAM_ORDER = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
+const STEP_DEFS = [
+  ['attendance', '참석'], ['coach', '감독'], ['draft', '드래프트'],
+  ['lineup', '라인업'], ['matchSelect', '경기선택'], ['match', '경기'], ['results', '결과'],
+];
+const FLOW = ['attendance','coach','draft','lineup','matchSelect','match','results'];
+
+let players = [];
+let byName = {};
+let refs = { maxCcpG: 1, maxPlayerName: '-' };
+let dragSeedFrom = null;
+
+const state = {
+  screen: 'attendance',
+  teamMode: 3,
+  attending: [],
+  coaches: {},
+  coachPickTeam: null,
+  teams: emptyTeams(),
+  originalTeams: null,
+  snakeSeed: null,
+  draftPool: [],
+  draftTurn: 0,
+  draftHistory: [],
+  playing: [],
+  duration: 480,
+  matchCount: 1,
+  score: { A: 0, B: 0 },
+  timeline: [],
+  recordStack: [],
+  teamStats: {},
+  playerStats: {},
+  matchTab: 'lineup',
+  timerOn: false,
+  secondsLeft: 480,
+  timerId: null,
+  excluded: [],
+  editTeam: null,
+  sessionDateLabel: '세션 종료',
+};
+
+function emptyTeams() {
+  return Object.fromEntries(TEAM_ORDER.map(t => [t, { players: [], coach: null }]));
+}
+
+function teamNames() {
+  return TEAM_ORDER.slice(0, Number(state.teamMode) || 3);
+}
+
+function isMerc(name) { return String(name || '').startsWith('용병'); }
+
+function parseWinRatePct(raw) {
+  const n = Number(String(raw ?? '0').replace('%', '').trim());
+  if (!Number.isFinite(n)) return 0;
+  return n > 1 ? n : n * 100;
+}
+
+function normalizePlayer(p) {
+  const name = String(p.name || '').trim();
+  return {
+    name,
+    position: p.position || '',
+    att: Number(p.att) || 0,
+    def: Number(p.def) || 0,
+    sum: Number(p.sum) || (Number(p.att) || 0) + (Number(p.def) || 0),
+    games: Number(p.games) || 0,
+    winRatePct: Number(p.winRatePct) || 0,
+    ccpPerGame: Number(p.ccpPerGame) || 0,
+    isMercenary: p.isMercenary ?? isMerc(name),
+  };
+}
+
+function rebuildRefs() {
+  let maxCcpG = 0, maxPlayerName = '-';
+  players.forEach(p => {
+    if (p.ccpPerGame > maxCcpG) { maxCcpG = p.ccpPerGame; maxPlayerName = p.name; }
+  });
+  refs = { maxCcpG: maxCcpG > 0 ? maxCcpG : 1, maxPlayerName };
+  byName = Object.fromEntries(players.map(p => [p.name, p]));
+}
+
+function personalScore(nameOrP) {
+  const p = typeof nameOrP === 'string' ? byName[nameOrP] : nameOrP;
+  if (!p || !(p.ccpPerGame > 0) || !(refs.maxCcpG > 0)) return 0;
+  return (p.ccpPerGame / refs.maxCcpG) * 100;
+}
+
+function calcTeamPower(names) {
+  const list = (names || []).map(n => byName[n]).filter(Boolean);
+  if (!list.length) return 0;
+  return Math.round(Math.min(100, Math.max(0, list.reduce((a, p) => a + personalScore(p), 0) / list.length)));
+}
+
+function calcTeamWinRate(names) {
+  const vals = (names || []).map(n => byName[n]).filter(p => p && !p.isMercenary && p.winRatePct > 0).map(p => p.winRatePct);
+  if (!vals.length) return '-';
+  return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) + '%';
+}
+
+function teamRoster(t) {
+  const td = state.teams[t] || { players: [], coach: null };
+  const names = [...td.players].filter(n => !state.excluded.includes(n));
+  if (td.coach && !names.includes(td.coach) && !state.excluded.includes(td.coach)) names.unshift(td.coach);
+  return names;
+}
+
+function getSnakeSeed() {
+  const names = teamNames();
+  if (!state.snakeSeed || state.snakeSeed.length !== names.length) state.snakeSeed = [...names];
+  // keep only valid teams for mode
+  state.snakeSeed = state.snakeSeed.filter(t => names.includes(t));
+  names.forEach(t => { if (!state.snakeSeed.includes(t)) state.snakeSeed.push(t); });
+  return state.snakeSeed;
+}
+
+/** 스네이크: seed 순서 기준 정/역방향 */
+function snakeTeamAt(turnIndex) {
+  const names = getSnakeSeed();
+  const n = names.length;
+  const round = Math.floor(turnIndex / n);
+  const pos = turnIndex % n;
+  return round % 2 === 0 ? names[pos] : names[n - 1 - pos];
+}
+
+function playerCardHtml(p, opts = {}) {
+  if (!p) return '';
+  const on = opts.on ? ' on' : '';
+  const merc = p.isMercenary ? ' merc' : '';
+  const sm = opts.sm ? ' sm' : '';
+  const nameOnly = opts.nameOnly ? ' name-only' : '';
+  const score = personalScore(p).toFixed(1);
+  const wr = p.isMercenary ? '-' : (p.winRatePct.toFixed(1) + '%');
+  const tag = opts.coach ? ' (C)' : '';
+  const attrs = opts.act ? `data-act="${opts.act}" ${opts.nameAttr ? `data-name="${p.name}"` : ''} ${opts.extra || ''}` : '';
+  // exclude 버튼과 중첩되지 않도록 카드는 항상 div, 클릭은 data-act로
+  const meta = opts.nameOnly ? '' : `<span class="meta">${p.position || '-'} · 점수 ${score} · 승률 ${wr}</span>`;
+  const ex = opts.exclude
+    ? `<button type="button" class="ex-btn" data-act="exclude" data-name="${p.name}">제외</button>`
+    : '';
+  const cursor = (opts.static && !opts.act) ? ' static' : '';
+  return `<div class="pcard${on}${merc}${sm}${cursor}${nameOnly}" ${attrs} style="${opts.act || !opts.static ? 'cursor:pointer' : ''}">
+    <span class="nm">${p.name}${tag}${p.isMercenary ? ' · 용병' : ''}</span>
+    ${meta}${ex}
+  </div>`;
+}
+
+function jmfcBar(sub) {
+  return `<div class="jmfc-bar">
+    <img class="logo" src="assets/jmfc-logo.png" alt="JMFC" />
+    <div class="jmfc-brand"><strong>JMFC FOOTBALL</strong><span>${sub || ''}</span></div>
+  </div>`;
+}
+
+function flowNav() {
+  const i = FLOW.indexOf(state.screen);
+  if (i < 0) {
+    return `<div class="nav-row">
+      <button type="button" data-act="go" data-screen="results">← 결과</button>
+      <span></span>
+    </div>`;
+  }
+  const prev = i > 0 ? FLOW[i - 1] : null;
+  const next = i < FLOW.length - 1 ? FLOW[i + 1] : null;
+  return `<div class="nav-row">
+    ${prev ? `<button type="button" data-act="go" data-screen="${prev}">← 이전</button>` : '<span></span>'}
+    ${next ? `<button type="button" class="next" data-act="go" data-screen="${next}">다음 →</button>` : '<span></span>'}
+  </div>`;
+}
+
+
+const LAST_ATT_KEY = 'jmfc_lab_last_attending_v1';
+
+function saveLastAttending(names) {
+  try {
+    const list = [...new Set((names || []).filter(Boolean))];
+    localStorage.setItem(LAST_ATT_KEY, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      names: list,
+    }));
+  } catch (e) { /* ignore */ }
+}
+
+function loadLastAttending() {
+  try {
+    const raw = localStorage.getItem(LAST_ATT_KEY);
+    if (!raw) {
+      toast('저장된 저번주 참석자가 없습니다. 참석 완료를 한 번 하면 저장됩니다.');
+      return;
+    }
+    const data = JSON.parse(raw);
+    const names = (data.names || []).filter(n => byName[n]);
+    if (!names.length) {
+      toast('저번주 명단이 현재 시트에 없습니다.');
+      return;
+    }
+    state.attending = names;
+    const when = data.savedAt ? new Date(data.savedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '';
+    toast(`저번주 참석 ${names.length}명 불러옴${when ? ' · ' + when : ''}`);
+    render();
+  } catch (e) {
+    toast('저번주 참석자 불러오기 실패');
+  }
+}
+
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('load-status');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function parseCsv(text) {
+  const rows = []; let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (c === '"' && inQ && n === '"') { cur += '"'; i++; continue; }
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { row.push(cur); cur = ''; continue; }
+    if ((c === '\n' || c === '\r') && !inQ) {
+      if (c === '\r' && n === '\n') i++;
+      row.push(cur); cur = '';
+      if (row.some(x => x.trim())) rows.push(row);
+      row = []; continue;
+    }
+    cur += c;
+  }
+  if (cur.length || row.length) { row.push(cur); if (row.some(x => x.trim())) rows.push(row); }
+  return rows;
+}
+
+function playersFromCsv(text) {
+  const rows = parseCsv(text);
+  const h = rows[0].map(x => x.trim());
+  const idx = (name) => h.indexOf(name);
+  const gIdx = ['경기수','경기','G','games'].map(idx).find(i => i >= 0) ?? -1;
+  return rows.slice(1).map(r => normalizePlayer({
+    name: r[idx('이름')], position: r[idx('포지션')], att: r[idx('공격(임의)')], def: r[idx('수비(임의)')],
+    sum: r[idx('합산')], games: gIdx >= 0 ? r[gIdx] : 0,
+    winRatePct: parseWinRatePct(r[idx('승률')]), ccpPerGame: r[idx('CCP/G')],
+  })).filter(p => p.name);
+}
+
+async function loadLive() {
+  setStatus('시트 로딩…');
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    players = playersFromCsv(await res.text());
+    rebuildRefs();
+    setStatus(`시트 OK · ${players.length}명`, 'ok');
+    render();
+  } catch (e) {
+    setStatus('fetch 실패 → 스냅샷: ' + e.message, 'err');
+    await loadSnapshot();
+  }
+}
+
+async function loadSnapshot() {
+  const data = await (await fetch('./players-snapshot.json', { cache: 'no-store' })).json();
+  players = data.map(normalizePlayer);
+  rebuildRefs();
+  setStatus(`오프라인 스냅샷 · ${players.length}명`, 'ok');
+  toast('로컬 스냅샷 명단 로드 (경기기록 저장 아님)');
+  render();
+}
+
+function ensureTeamStats() {
+  teamNames().forEach(t => {
+    if (!state.teamStats[t]) state.teamStats[t] = { matchesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 };
+  });
+}
+
+function ensurePlayerStat(name) {
+  if (!state.playerStats[name]) state.playerStats[name] = {
+    goal: 0, assist: 0, defense: 0, save: 0, ownGoal: 0,
+    matches: 0, wins: 0, draws: 0, losses: 0, homeTeam: null,
+  };
+  const s = state.playerStats[name];
+  if (s.matches == null) { s.matches = 0; s.wins = 0; s.draws = 0; s.losses = 0; }
+  if (s.homeTeam === undefined) s.homeTeam = null;
+  return s;
+}
+
+function cloneTeams(src) {
+  const out = emptyTeams();
+  TEAM_ORDER.forEach(t => {
+    out[t] = { players: [...(src[t]?.players || [])], coach: src[t]?.coach || null };
+  });
+  return out;
+}
+
+function originalRoster(t) {
+  const src = state.originalTeams || state.teams;
+  const td = src[t] || { players: [], coach: null };
+  const names = [...(td.players || [])];
+  if (td.coach && !names.includes(td.coach)) names.unshift(td.coach);
+  return names;
+}
+
+function originalTeamOf(name) {
+  for (const t of teamNames()) {
+    if (originalRoster(t).includes(name)) return t;
+  }
+  return null;
+}
+
+function restoreOriginalLineup() {
+  if (!state.originalTeams) return;
+  state.teams = cloneTeams(state.originalTeams);
+  // keep exclusions applied
+  state.excluded.forEach(name => removeFromAllTeams(name, false));
+}
+
+function removeFromAllTeams(name, touchOriginal) {
+  TEAM_ORDER.forEach(t => {
+    if (!state.teams[t]) return;
+    state.teams[t].players = state.teams[t].players.filter(n => n !== name);
+  });
+  if (touchOriginal && state.originalTeams) {
+    TEAM_ORDER.forEach(t => {
+      if (!state.originalTeams[t]) return;
+      state.originalTeams[t].players = state.originalTeams[t].players.filter(n => n !== name);
+    });
+  }
+}
+
+function excludePlayer(name) {
+  if (!name) return;
+  if (!state.excluded.includes(name)) state.excluded.push(name);
+  // 현재/이후 경기 명단에서만 제외 · 최초 라인업(결과 표)은 유지
+  removeFromAllTeams(name, false);
+  toast(`${name} 이후 경기 명단에서 제외 (기록은 유지)`);
+  render();
+}
+
+function go(screen) { state.screen = screen; render(); }
+
+function renderSteps() {
+  const order = STEP_DEFS.map(x => x[0]);
+  const idx = order.indexOf(state.screen === 'recordEdit' ? 'results' : state.screen);
+  document.getElementById('steps').innerHTML = STEP_DEFS.map(([id, label], i) =>
+    `<span class="${i === idx ? 'on' : (i < idx ? 'done' : '')}">${i + 1}. ${label}</span>`
+  ).join('');
+}
+
+function render() {
+  renderSteps();
+  const map = {
+    attendance: renderAttendance, coach: renderCoach, draft: renderDraft,
+    lineup: renderLineup, matchSelect: renderMatchSelect, match: renderMatch,
+    results: renderResults, recordEdit: renderRecordEdit,
+  };
+  document.getElementById('app').innerHTML = (map[state.screen] || renderAttendance)();
+  bind();
+}
+
+function draftOrderHtml() {
+  const seed = getSnakeSeed();
+  const pills = seed.map((t, i) => `
+    <span class="order-pill tname-${t}">
+      <b>${i + 1}</b> ${t}
+      <button type="button" data-act="seed-up" data-idx="${i}" ${i===0?'disabled':''}>↑</button>
+      <button type="button" data-act="seed-down" data-idx="${i}" ${i===seed.length-1?'disabled':''}>↓</button>
+    </span>`).join('<span style="color:var(--muted);font-weight:800">→</span>');
+  return `<div class="order-box">
+    <h4>스네이크 드래프트 순서 (기본 ${seed.join('→')} · 바꾸면 픽 차례 반영)</h4>
+    <div class="order-simple"><span class="lab">1라운드</span>${pills}</div>
+    <p class="hint" style="margin:0">2라운드는 역순 · 예: ${seed.join('→')} → ${[...seed].reverse().join('→')}</p>
+  </div>`;
+}
+
+function renderAttendance() {
+  const list = [...players].sort((a, b) => (b.games||0) - (a.games||0) || personalScore(b) - personalScore(a));
+  return `<div class="screen">
+    ${jmfcBar('참석 조사')}
+    <div class="body">
+    <h2>참석 조사</h2>
+    <p class="hint">이름만 선택 · 저번주 명단은 직전 세션 참석 완료 시 저장됨</p>
+    <div class="row">
+      <label>팀 구성
+        <select id="team-mode">
+          <option value="2" ${state.teamMode===2?'selected':''}>2팀</option>
+          <option value="3" ${state.teamMode===3?'selected':''}>3팀</option>
+          <option value="4" ${state.teamMode===4?'selected':''}>4팀</option>
+        </select>
+      </label>
+      <button type="button" data-act="load-last-attending">저번주 참석자 불러오기</button>
+      <button type="button" data-act="select-all">전체 선택(용병제외)</button>
+      <button type="button" data-act="clear-att">해제</button>
+    </div>
+    <div class="chip-row"><span class="chip">참석 ${state.attending.length}명</span></div>
+    <div class="grid2 attend-grid">${list.map(p => playerCardHtml(p, {
+      on: state.attending.includes(p.name), act: 'toggle-att', nameAttr: true, nameOnly: true
+    })).join('')}</div>
+    <button class="cta" data-act="to-coach" ${state.attending.length < state.teamMode ? 'disabled' : ''}>참석 완료 → 감독 선택</button>
+    ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function renderCoach() {
+  const names = teamNames();
+  const filled = names.filter(t => state.coaches[t]).length;
+  const pool = state.attending.filter(n => !Object.values(state.coaches).includes(n) && !state.excluded.includes(n)).map(n => byName[n]).filter(Boolean)
+    .sort((a, b) => personalScore(b) - personalScore(a));
+  if (!state.coachPickTeam) state.coachPickTeam = names.find(t => !state.coaches[t]) || names[0];
+  return `<div class="screen">
+    ${jmfcBar('감독 선택')}
+    <div class="body">
+    <h2>감독 ${names.length}명 선택</h2>
+    <p class="hint">슬롯 탭 → 선수 탭</p>
+    <div class="coach-slots m${names.length}">${names.map(t => {
+      const c = state.coaches[t];
+      const p = c ? byName[c] : null;
+      const meta = p
+        ? `<div class="coach-name">${c}</div><div class="coach-meta">점수 ${personalScore(p).toFixed(1)} · 승률 ${p.isMercenary ? '-' : p.winRatePct.toFixed(1)+'%'}</div>`
+        : `<div>감독?</div>`;
+      return `<div class="cslot ${t}${c?' filled '+t:''}${state.coachPickTeam===t?' active':''}" data-act="pick-slot" data-team="${t}">
+        <div class="tname-${t}">TEAM ${t}</div>
+        ${meta}
+      </div>`;
+    }).join('')}</div>
+    <div class="chip-row"><span class="chip">${filled}/${names.length} 완료</span></div>
+    <div class="grid2">${pool.map(p => playerCardHtml(p, { act: 'set-coach', nameAttr: true })).join('') || '<p class="hint">남은 선수 없음</p>'}</div>
+    <button class="cta" data-act="to-draft" ${filled < names.length ? 'disabled' : ''}>드래프트 시작</button>
+    ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function renderDraft() {
+  const turnTeam = snakeTeamAt(state.draftTurn);
+  const live = teamNames().map(t => {
+    const roster = teamRoster(t);
+    const cards = roster.map(n => `<div class="pcard sm static" draggable="true" data-drag-name="${n}" data-from-team="${t}">
+      <span class="nm">${n}${state.teams[t].coach===n?' (C)':''}</span>
+      <span class="meta">${(byName[n]?.position)||'-'} · 점수 ${personalScore(byName[n]).toFixed(1)} · 승률 ${byName[n]?.isMercenary?'-':((byName[n]?.winRatePct||0).toFixed(1)+'%')}</span>
+    </div>`).join('');
+    return `<div class="team-card ${t}" data-drop-team="${t}">
+      <div class="head">
+        <h3 class="tname-${t}">TEAM ${t} ${roster.length}명</h3>
+        <span class="val">팀파워 ${calcTeamPower(roster)} · 승률 ${calcTeamWinRate(roster)}</span>
+      </div>
+      <div class="plist">${cards || '<span class="hint">비어 있음</span>'}</div>
+    </div>`;
+  }).join('');
+  const pool = state.draftPool.filter(n => !state.excluded.includes(n)).map(n => byName[n]).filter(Boolean).sort((a, b) => personalScore(b) - personalScore(a));
+  return `<div class="screen">
+    ${jmfcBar('스네이크 Draft')}
+    <div class="body">
+    <h2>스네이크 Draft</h2>
+    ${draftOrderHtml()}
+    <div class="draft-banner">TEAM ${turnTeam} 차례 · 남은 ${pool.length}명 · 스네이크</div>
+    ${live}
+    <p class="hint">미배정 선수 · 탭하면 ${turnTeam}에 즉시 편성 · 개인점수 높은 순</p>
+    <div class="grid2">${pool.map(p => playerCardHtml(p, { act: 'draft-pick', nameAttr: true })).join('') || '<p class="hint">전원 배정됨</p>'}</div>
+    <button class="sec" data-act="draft-undo" ${!state.draftHistory.length?'disabled':''}>↩ 마지막 픽 취소</button>
+    <button class="sec" data-act="draft-autobuild">남은 인원 자동 밸런스 배분</button>
+    <button class="cta" data-act="to-lineup" ${pool.length ? 'disabled' : ''}>팀 구성 확정 → 라인업</button>
+    ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function renderLineup() {
+  const cards = teamNames().map(t => {
+    const roster = teamRoster(t);
+    const coach = state.teams[t].coach;
+    const mercN = roster.filter(isMerc).length;
+    const plist = roster.map(n => {
+      const p = byName[n];
+      return `<div class="pcard sm static name-only" draggable="true" data-drag-name="${n}" data-from-team="${t}">
+        <span class="nm">${n}${n===coach?' (C)':''}</span>
+        <button type="button" class="ex-btn" data-act="exclude" data-name="${n}">제외</button>
+      </div>`;
+    }).join('');
+    return `<div class="team-card ${t}" data-drop-team="${t}">
+      <div class="head"><h3 class="tname-${t}">TEAM ${t} ${roster.length}명</h3><span class="val">팀파워 ${calcTeamPower(roster)} · 승률 ${calcTeamWinRate(roster)}</span></div>
+      <div class="sub">감독 <b>${coach || '-'}</b>${mercN ? ` · 용병 ${mercN}` : ''} · 드래그로 팀 이동</div>
+      <div class="plist">${plist || '<span class="hint">비어 있음</span>'}</div>
+    </div>`;
+  }).join('');
+  return `<div class="screen">
+    ${jmfcBar('라인업 확정')}
+    <div class="body">
+    <h2>라인업 확정</h2>
+    <p class="hint">이름만 · 선수 카드를 다른 팀으로 드래그해 인원 맞추기 · 제외 = 이후 경기 제외</p>
+    ${cards}
+    ${excludedNote()}
+    <button class="cta" data-act="to-match-select">팀 구성 확정 → 경기 선택</button>
+    ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function excludedNote() {
+  if (!state.excluded.length) return '';
+  return `<div class="excluded-box">제외됨: ${state.excluded.join(', ')}</div>`;
+}
+
+function renderMatchSelect() {
+  ensureTeamStats();
+  const cards = teamNames().map(t => {
+    const roster = teamRoster(t);
+    const st = state.teamStats[t];
+    const selected = state.playing.includes(t) ? ' selected' : '';
+    const plist = roster.map(n => playerCardHtml(byName[n], {
+      sm: true, static: true, nameOnly: true, coach: state.teams[t].coach === n, exclude: true
+    })).join('');
+    return `<div class="team-card ${t} pickable${selected}" data-act="toggle-play" data-team="${t}">
+      <div class="head"><h3 class="tname-${t}">TEAM ${t}</h3><span class="val">${state.playing.includes(t)?'✓ 선택':'—'}</span></div>
+      <div class="sub">팀파워 <b>${calcTeamPower(roster)}</b> · 승률 <b>${calcTeamWinRate(roster)}</b> · 오늘 ${st.wins}승 ${st.draws}무 ${st.losses}패</div>
+      <div class="plist">${plist}</div>
+    </div>`;
+  }).join('');
+  const opts = Array.from({ length: 15 }, (_, i) => {
+    const sec = (i + 1) * 60;
+    return `<option value="${sec}" ${state.duration===sec?'selected':''}>${i+1}분</option>`;
+  }).join('');
+  return `<div class="screen">
+    ${jmfcBar('경기 선택')}
+    <div class="body">
+    <h2>경기 선택</h2>
+    <div class="chip-row">
+      <span class="chip">Match #${state.matchCount}</span>
+      <span class="chip">선택 ${state.playing.length}/2</span>
+    </div>
+    <div class="row"><label>경기 시간 <select id="duration">${opts}</select></label></div>
+    <p class="hint">선수 이름만 · 제외 버튼으로 중도 귀가 처리 · 2팀 선택</p>
+    ${cards}
+    ${excludedNote()}
+    <button class="cta" data-act="start-match" ${state.playing.length!==2?'disabled':''}>경기 시작</button>
+    <button class="danger" data-act="to-results">전체 세션 종료 → 결과</button>
+    ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function mpOf(s) { return (s.goal||0)*2 + (s.assist||0)*2 + (s.defense||0) + (s.save||0); }
+function atkOf(s) { return (s.goal||0)*2 + (s.assist||0)*2; }
+function defOf(s) { return (s.defense||0) + (s.save||0); }
+
+function topList(key, n=10) {
+  return Object.entries(state.playerStats)
+    .map(([name, s]) => ({
+      name,
+      v: key === 'mp' ? mpOf(s) : key === 'atk' ? atkOf(s) : key === 'dfn' ? defOf(s) : (s[key] || 0),
+      ...s,
+    }))
+    .filter(x => x.v > 0)
+    .sort((a,b) => b.v - a.v)
+    .slice(0, n);
+}
+
+function renderMatch() {
+  const [a, b] = state.playing;
+  const rosterA = teamRoster(a), rosterB = teamRoster(b);
+  const tab = state.matchTab;
+  let body = '';
+  if (tab === 'lineup') {
+    const col = (t, roster) => `<div class="lineup-col team-${t}">
+      <div class="team-head">TEAM ${t}</div>
+      <div class="roster">
+        ${roster.map(n => {
+          const coach = state.teams[t].coach === n;
+          return `<div class="prow">
+            <button type="button" class="name" data-act="record" data-name="${n}" data-team="${t}">${coach ? '<span class="cap">C</span>' : ''}${n}</button>
+          </div>`;
+        }).join('')}
+      </div>
+      <button type="button" class="btn-sub" data-act="open-swap" data-team="${t}">↑↓ 선수교체</button>
+    </div>`;
+    body = `<div class="lineup-grid">${col(a, rosterA)}${col(b, rosterB)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <button type="button" class="btn-sub" style="width:100%;margin:0" data-act="open-add">선수추가</button>
+        <button type="button" class="btn-sec" style="margin:0" data-act="restore-lineup">🔄 원팀복귀</button>
+      </div>
+      <p class="hint" style="margin-top:8px">선수 탭 → 득점/수비/선방 기록</p>
+      ${excludedNote()}`;
+  } else if (tab === 'table') {
+    ensureTeamStats();
+    const rows = teamNames().map(t => {
+      const s = state.teamStats[t];
+      const gd = s.goalsFor - s.goalsAgainst;
+      return { t, ...s, gd, pts: s.wins*3+s.draws, wr: (s.wins+s.losses)>0?((s.wins/(s.wins+s.losses))*100).toFixed(0)+'%':'-' };
+    }).sort((x,y)=>y.pts-x.pts||y.gd-x.gd);
+    body = `<div class="result-card" style="overflow-x:auto"><table class="data rank"><thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="tname-${r.t} col-team">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wr}</td><td>${r.pts}</td></tr>`).join('')}</tbody></table></div>`;
+  } else {
+    const blocks = [
+      ['MVP 순위', 'mp', 'MP', 5],
+      ['득점 순위', 'goal', '득', 10],
+      ['도움 순위', 'assist', '도', 10],
+      ['수비 순위', 'defense', '수', 10],
+      ['선방 순위', 'save', '선', 10],
+    ].map(([title, key, unit, n]) => {
+      const rows = topList(key, n);
+      return `<div class="rank-block"><h3>${title} (TOP ${n})</h3>
+        <div class="result-card"><table class="rank-tight">
+          <colgroup><col class="c-rank"/><col class="c-name"/><col class="c-val"/></colgroup>
+          <thead><tr><th class="c-rank">#</th><th>선수</th><th class="c-val">${unit}</th></tr></thead>
+          <tbody>${rows.map((p,i)=>`<tr><td class="c-rank">${i+1}</td><td>${p.name}</td><td class="c-val">${p.v}</td></tr>`).join('') || '<tr><td colspan="3">기록 없음</td></tr>'}
+          </tbody></table></div>
+      </div>`;
+    }).join('');
+    body = blocks;
+  }
+  const mm = String(Math.floor(state.secondsLeft/60)).padStart(2,'0');
+  const ss = String(state.secondsLeft%60).padStart(2,'0');
+  return `<div class="screen">
+    ${jmfcBar(`Match #${state.matchCount}`)}
+    <div class="body">
+      <div class="score-big">
+        <span class="side"><span class="tname-${a}">${a}</span><span class="pwr">팀파워 ${calcTeamPower(rosterA)}</span></span>
+        <span class="sep">${state.score.A} : ${state.score.B}</span>
+        <span class="side"><span class="tname-${b}">${b}</span><span class="pwr">팀파워 ${calcTeamPower(rosterB)}</span></span>
+      </div>
+      <div class="ctrl-row">
+        <button type="button" class="btn-sm gray" data-act="restore-lineup">🔄 원팀복귀</button>
+        <div class="timer-box">${mm}:${ss}</div>
+        <button type="button" class="btn-sm blue" data-act="toggle-timer">${state.timerOn?'일시정지':'시작'}</button>
+      </div>
+      <div class="tabs">
+        <button type="button" class="${tab==='lineup'?'on':''}" data-act="tab" data-tab="lineup">라인업</button>
+        <button type="button" class="${tab==='table'?'on':''}" data-act="tab" data-tab="table">팀 순위</button>
+        <button type="button" class="${tab==='stats'?'on':''}" data-act="tab" data-tab="stats">개인기록</button>
+      </div>
+      ${body}
+      <ul class="timeline">${state.timeline.map(e =>
+        `<li class="${e.team}">[${e.time}] ${e.team} ${e.player}: ${e.stat}</li>`
+      ).join('') || '<li style="background:#f4f4f5;color:#71717a">타임라인 없음</li>'}</ul>
+      <div class="act2">
+        <button type="button" class="u" data-act="undo-record" ${!state.recordStack.length?'disabled':''}>스탯 취소</button>
+        <button type="button" class="e" data-act="end-match">현재 경기 종료</button>
+      </div>
+      <p class="flow-note">현재 경기 종료 → <b>경기 선택</b> 화면으로</p>
+      <button class="btn-danger" data-act="to-results">🚨 전체 세션 종료</button>
+      ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function renderResults() {
+  ensureTeamStats();
+  const rows = teamNames().map(t => {
+    const s = state.teamStats[t];
+    const roster = originalRoster(t);
+    return {
+      t, ...s, gd: s.goalsFor - s.goalsAgainst, pts: s.wins*3+s.draws,
+      power: calcTeamPower(roster), wrSheet: calcTeamWinRate(roster),
+      wrSession: (s.wins+s.losses)>0 ? ((s.wins/(s.wins+s.losses))*100).toFixed(0)+'%' : '-',
+    };
+  }).sort((a,b)=>b.pts-a.pts||b.gd-a.gd);
+  const rankMap = Object.fromEntries(rows.map((r,i)=>[r.t, i+1]));
+  // 요약카드 표시 순서: BLUE 먼저
+  const standingsShow = ['BLUE','RED','YELLOW','BLACK']
+    .filter(t => teamNames().includes(t))
+    .map(t => {
+      const hit = rows.find(r => r.t === t);
+      if (hit) return { ...hit, rank: rankMap[t] };
+      const s = state.teamStats[t] || { matchesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0 };
+      return {
+        t, ...s, gd: s.goalsFor-s.goalsAgainst, pts: s.wins*3+s.draws,
+        wrSession: (s.wins+s.losses)>0 ? ((s.wins/(s.wins+s.losses))*100).toFixed(0)+'%' : '-',
+        rank: rankMap[t] || '-',
+      };
+    });
+  const atkMvps = topList('atk', 5);
+  const defMvps = topList('dfn', 5);
+  const topScorer = topList('goal', 1)[0];
+  const topAssist = topList('assist', 1)[0];
+  const topDef = topList('defense', 1)[0];
+  const topSave = topList('save', 1)[0];
+  const atkNames = atkMvps.slice(0, 2).map(x => x.name).join(' · ') || '-';
+  const defNames = defMvps.slice(0, 2).map(x => x.name).join(' · ') || '-';
+  const atkPts = atkMvps[0] ? atkMvps[0].v : 0;
+  const defPts = defMvps[0] ? defMvps[0].v : 0;
+  const sessionLabel = state.sessionDateLabel || '세션 종료';
+  // 팀별 기록: RED → BLUE → YELLOW (블루 중간), 탭 없이 일렬
+  const detailOrder = ['RED','BLUE','YELLOW','BLACK'].filter(t => teamNames().includes(t));
+  const teamMp = detailOrder.map(t => {
+    const names = originalRoster(t);
+    const list = names.map(n => {
+      const s = ensurePlayerStat(n);
+      if (!s.homeTeam) s.homeTeam = t;
+      return { name: n, ...s, mp: mpOf(s) };
+    }).sort((a,b)=>b.mp-a.mp || a.name.localeCompare(b.name,'ko'));
+    return `<div class="result-card team-${t}">
+      <div style="font-weight:900;margin-bottom:6px;font-size:0.92rem" class="tname-${t}">TEAM ${t}</div>
+      <table class="data" style="font-size:0.9rem">
+        <tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr>
+        ${list.map(p => {
+          return `<tr><td style="font-size:0.98rem;font-weight:800">${p.name}</td><td style="font-weight:700">${p.goal}</td><td style="font-weight:700">${p.assist}</td><td style="font-weight:700">${p.defense}</td><td style="font-weight:700">${p.save}</td><td style="font-variant-numeric:tabular-nums;font-weight:900;font-size:0.9rem">${p.mp}</td></tr>`;
+        }).join('') || '<tr><td colspan="6">없음</td></tr>'}
+      </table>
+    </div>`;
+  }).join('');
+
+  const atkDetail = atkMvps[0]
+    ? `${atkMvps[0].goal||0}득점${atkMvps[0].assist||0}도움`
+    : '';
+  const defDetail = defMvps[0]
+    ? `${defMvps[0].defense||0}수비${defMvps[0].save||0}선방`
+    : '';
+
+  return `<div class="screen">
+    ${jmfcBar(sessionLabel)}
+    <div class="body">
+      <h2>오늘의 경기 결과</h2>
+      <div class="mvp-row">
+        <div class="result-hero">
+          <div class="eyebrow">ATTACK MVP</div>
+          <div class="mvp-names">${atkNames}</div>
+          <div class="mp-plain">공격P ${atkPts}${atkDetail ? `<br>${atkDetail}` : ''}</div>
+        </div>
+        <div class="result-hero">
+          <div class="eyebrow">DEFENSE MVP</div>
+          <div class="mvp-names">${defNames}</div>
+          <div class="mp-plain">수비P ${defPts}${defDetail ? `<br>${defDetail}` : ''}</div>
+        </div>
+      </div>
+      <div class="award-g">
+        <div class="award"><b>TOP SCORER</b>${topScorer ? `${topScorer.name} ${topScorer.v}` : '-'}</div>
+        <div class="award"><b>TOP ASSIST</b>${topAssist ? `${topAssist.name} ${topAssist.v}` : '-'}</div>
+        <div class="award"><b>TOP DEFENSE</b>${topDef ? `${topDef.name} ${topDef.v}` : '-'}</div>
+        <div class="award"><b>TOP SAVE</b>${topSave ? `${topSave.name} ${topSave.v}` : '-'}</div>
+      </div>
+      <div class="result-card" style="overflow-x:auto">
+        <table class="data rank">
+          <thead><tr><th>순위</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>득실</th><th>승률</th><th>승점</th></tr></thead>
+          <tbody>${standingsShow.map((r)=>`<tr><td>${r.rank}</td><td class="tname-${r.t} col-team">${r.t}</td><td>${r.matchesPlayed}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.goalsFor}</td><td>${r.goalsAgainst}</td><td>${r.gd>0?'+':''}${r.gd}</td><td>${r.wrSession}</td><td>${r.pts}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <p class="hint">최초 라인업 기준 · 팀별 기록은 RED→BLUE→YELLOW 일렬 표시</p>
+      ${teamMp}
+      <div class="result-btns">
+        <button type="button" class="btn-green" data-act="go" data-screen="recordEdit">기록 수정하기</button>
+        <button type="button" class="btn-cta" style="margin-top:0" data-act="save-session">기록저장 & NEW 세션</button>
+        <button type="button" class="btn-danger" style="margin-top:0" data-act="reset-session">기록 리셋 & NEW 세션</button>
+      </div>
+      ${flowNav()}
+    </div>
+  </div>`;
+}
+
+function renderRecordEdit() {
+  if (!state.editTeam) state.editTeam = teamNames()[0];
+  const t = state.editTeam;
+  const names = originalRoster(t);
+  const rows = names.map(n => {
+    const s = ensurePlayerStat(n);
+    return `<tr data-edit-name="${n}">
+      <td class="pname tname-${t}">${n}</td>
+      <td><input type="number" min="0" data-field="goal" value="${s.goal}" /></td>
+      <td><input type="number" min="0" data-field="assist" value="${s.assist}" /></td>
+      <td><input type="number" min="0" data-field="defense" value="${s.defense}" /></td>
+      <td><input type="number" min="0" data-field="save" value="${s.save}" /></td>
+      <td class="mp-cell" data-mp>${mpOf(s)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6">선수 없음</td></tr>';
+  return `<div class="screen">
+    ${jmfcBar('기록 수정')}
+    <div class="body">
+      <h2>기록 수정</h2>
+      <div class="warn-banner">득점 수를 바꿔도 <strong>팀 승패·득실</strong>은 자동 반영되지 않을 수 있습니다. MP는 입력 즉시 반영됩니다.</div>
+      <div class="seg">
+        ${teamNames().map(x => `<button type="button" class="${x===t?'on':''} tname-${x}" data-act="edit-team" data-team="${x}">TEAM ${x}</button>`).join('')}
+      </div>
+      <table class="edit-stats">
+        <colgroup>
+          <col class="c-name"/><col class="c-num"/><col class="c-num"/><col class="c-num"/><col class="c-num"/><col class="c-mp"/>
+        </colgroup>
+        <thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th class="mp-cell">MP</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <button class="btn-outline" data-act="save-record-edit">수정 완료 → 결과로</button>
+    </div>
+  </div>`;
+}
+
+function startDraft() {
+  const names = teamNames();
+  state.teams = emptyTeams();
+  state.snakeSeed = [...names];
+  names.forEach(t => {
+    state.teams[t].coach = state.coaches[t] || null;
+    if (state.coaches[t] && !state.excluded.includes(state.coaches[t])) state.teams[t].players = [state.coaches[t]];
+  });
+  const used = new Set(Object.values(state.coaches));
+  state.draftPool = state.attending.filter(n => !used.has(n) && !state.excluded.includes(n));
+  state.draftTurn = 0;
+  state.draftHistory = [];
+  ensureTeamStats();
+  go('draft');
+}
+
+function draftPick(name) {
+  const t = snakeTeamAt(state.draftTurn);
+  if (!state.draftPool.includes(name)) return;
+  state.draftPool = state.draftPool.filter(n => n !== name);
+  if (!state.teams[t].players.includes(name)) state.teams[t].players.push(name);
+  state.draftHistory.push({ team: t, name });
+  state.draftTurn++;
+  render();
+}
+
+function draftUndo() {
+  const last = state.draftHistory.pop();
+  if (!last) return;
+  state.teams[last.team].players = state.teams[last.team].players.filter(n => n !== last.name);
+  state.draftPool.push(last.name);
+  state.draftTurn = Math.max(0, state.draftTurn - 1);
+  render();
+}
+
+function movePlayerBetweenTeams(name, fromTeam, toTeam) {
+  if (!name || !toTeam || fromTeam === toTeam) return;
+  if (fromTeam && state.teams[fromTeam]) {
+    state.teams[fromTeam].players = state.teams[fromTeam].players.filter(n => n !== name);
+  }
+  teamNames().forEach(t => {
+    if (t !== toTeam) state.teams[t].players = state.teams[t].players.filter(n => n !== name);
+  });
+  if (state.teams[toTeam].coach !== name && !state.teams[toTeam].players.includes(name)) {
+    state.teams[toTeam].players.push(name);
+  }
+  // 라인업 확정 전(드래프트·라인업)에만 최초 라인업 동기화
+  const played = Object.values(state.teamStats || {}).some(s => (s.matchesPlayed || 0) > 0);
+  if (!played && (state.screen === 'lineup' || state.screen === 'draft')) {
+    state.originalTeams = cloneTeams(state.teams);
+  }
+}
+
+function draftAutobuild() {
+  const names = teamNames();
+  const pool = [...state.draftPool].map(n => byName[n]).filter(Boolean).sort((a,b)=>personalScore(b)-personalScore(a));
+  // 인원 균등 우선 → 동률이면 팀파워 낮은 팀 → 시드 순서
+  pool.forEach(p => {
+    const target = [...names].sort((a, b) => {
+      const la = teamRoster(a).length, lb = teamRoster(b).length;
+      if (la !== lb) return la - lb;
+      const pa = calcTeamPower(teamRoster(a)), pb = calcTeamPower(teamRoster(b));
+      if (pa !== pb) return pa - pb;
+      return getSnakeSeed().indexOf(a) - getSnakeSeed().indexOf(b);
+    })[0];
+    if (!state.teams[target].players.includes(p.name) && state.teams[target].coach !== p.name) {
+      state.teams[target].players.push(p.name);
+    }
+    state.draftHistory.push({ team: target, name: p.name });
+  });
+  state.draftPool = [];
+  state.draftTurn = state.draftHistory.length; // keep turn consistent
+  render();
+}
+
+function moveSeed(idx, dir) {
+  const seed = getSnakeSeed();
+  const j = idx + dir;
+  if (j < 0 || j >= seed.length) return;
+  [seed[idx], seed[j]] = [seed[j], seed[idx]];
+  state.snakeSeed = seed;
+  render();
+}
+
+function endMatch() {
+  const [a, b] = state.playing;
+  ensureTeamStats();
+  const sa = state.score.A, sb = state.score.B;
+  state.teamStats[a].matchesPlayed++; state.teamStats[b].matchesPlayed++;
+  state.teamStats[a].goalsFor += sa; state.teamStats[a].goalsAgainst += sb;
+  state.teamStats[b].goalsFor += sb; state.teamStats[b].goalsAgainst += sa;
+  let resultA = 'draw';
+  if (sa > sb) { state.teamStats[a].wins++; state.teamStats[b].losses++; resultA = 'win'; }
+  else if (sa < sb) { state.teamStats[b].wins++; state.teamStats[a].losses++; resultA = 'loss'; }
+  else { state.teamStats[a].draws++; state.teamStats[b].draws++; }
+  // 출전 선수만 개인 승무패 누적 (최초 소속팀 homeTeam 기록)
+  const applyWdl = (team, result) => {
+    teamRoster(team).forEach(n => {
+      const s = ensurePlayerStat(n);
+      if (!s.homeTeam) s.homeTeam = originalTeamOf(n) || team;
+      s.matches++;
+      if (result === 'win') s.wins++;
+      else if (result === 'loss') s.losses++;
+      else s.draws++;
+    });
+  };
+  applyWdl(a, resultA);
+  applyWdl(b, resultA === 'win' ? 'loss' : resultA === 'loss' ? 'win' : 'draw');
+  stopTimer();
+  state.matchCount++;
+  state.playing = [];
+  state.score = { A: 0, B: 0 };
+  state.timeline = [];
+  state.recordStack = [];
+  state.secondsLeft = state.duration;
+  go('matchSelect');
+}
+
+function openRecordModal(team, player) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal"><div class="modal-card">
+    <h3>${player} (TEAM ${team})</h3>
+    <p class="hint" style="text-align:center">기록을 선택하세요</p>
+    <div class="modal-btns">
+      <button class="goal" data-rec="goal">득점</button>
+      <button class="og" data-rec="ownGoal">자책골</button>
+      <button class="def" data-rec="defense">수비</button>
+      <button class="save" data-rec="save">선방</button>
+      <button class="cancel" id="modal-cancel" style="grid-column:1/-1">취소</button>
+    </div>
+  </div></div>`;
+  root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
+  root.querySelectorAll('[data-rec]').forEach(btn => {
+    btn.onclick = () => {
+      const stat = btn.dataset.rec;
+      root.innerHTML = '';
+      if (stat === 'goal') openAssistModal(team, player);
+      else applyRecord(team, player, stat, null);
+    };
+  });
+}
+
+function openAssistModal(team, player) {
+  const mates = teamRoster(team).filter(n => n !== player);
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal"><div class="modal-card">
+    <h3>${player} 선수 득점!</h3>
+    <p class="hint" style="text-align:center">도움을 준 선수를 선택하세요</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0">
+      ${mates.map(n => `<button class="btn-assist" data-assist="${n}">${n}</button>`).join('') || '<p class="hint">후보 없음</p>'}
+      <button class="btn-assist" data-assist="">없음</button>
+    </div>
+    <button class="btn-sec" id="modal-cancel">취소</button>
+  </div></div>`;
+  root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
+  root.querySelectorAll('[data-assist]').forEach(btn => {
+    btn.onclick = () => {
+      const assist = btn.dataset.assist || null;
+      root.innerHTML = '';
+      applyRecord(team, player, 'goal', assist);
+    };
+  });
+}
+
+function matchClock() {
+  const elapsed = state.duration - state.secondsLeft;
+  const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const ss = String(elapsed%60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+
+function applyRecord(team, player, stat, assist) {
+  const [a, b] = state.playing;
+  const time = matchClock();
+  const snap = { team, player, stat, assist, scoreA: state.score.A, scoreB: state.score.B };
+  ensurePlayerStat(player);
+  if (stat === 'goal') {
+    state.playerStats[player].goal++;
+    if (team === a) state.score.A++; else state.score.B++;
+    if (assist) { ensurePlayerStat(assist).assist++; }
+    state.timeline.push({ time, team, player, stat: assist ? `득점 (도움:${assist})` : '득점' });
+  } else if (stat === 'ownGoal') {
+    state.playerStats[player].ownGoal++;
+    if (team === a) state.score.B++; else state.score.A++;
+    state.timeline.push({ time, team, player, stat: '자책골' });
+  } else if (stat === 'defense') {
+    state.playerStats[player].defense++;
+    state.timeline.push({ time, team, player, stat: '수비' });
+  } else if (stat === 'save') {
+    state.playerStats[player].save++;
+    state.timeline.push({ time, team, player, stat: '선방' });
+  }
+  state.recordStack.push(snap);
+  render();
+}
+
+function undoRecord() {
+  const last = state.recordStack.pop();
+  if (!last) return;
+  state.timeline.pop();
+  const s = ensurePlayerStat(last.player);
+  if (last.stat === 'goal') {
+    s.goal = Math.max(0, s.goal - 1);
+    if (last.assist) ensurePlayerStat(last.assist).assist = Math.max(0, ensurePlayerStat(last.assist).assist - 1);
+  } else if (last.stat === 'ownGoal') s.ownGoal = Math.max(0, s.ownGoal - 1);
+  else if (last.stat === 'defense') s.defense = Math.max(0, s.defense - 1);
+  else if (last.stat === 'save') s.save = Math.max(0, s.save - 1);
+  state.score.A = last.scoreA;
+  state.score.B = last.scoreB;
+  toast('기록 취소됨');
+  render();
+}
+
+function findTeamOf(name) {
+  return teamNames().find(t => teamRoster(t).includes(name)) || null;
+}
+
+function candidateGroups(outTeam) {
+  const [a, b] = state.playing;
+  const resting = teamNames().filter(t => t !== a && t !== b);
+  const groups = [];
+  // playing opponent + same? for swap IN: other teams first
+  teamNames().forEach(t => {
+    if (t === outTeam) return;
+    const list = teamRoster(t);
+    if (list.length) groups.push({ title: `TEAM ${t}`, team: t, names: list });
+  });
+  // non-attending / not on any team
+  const onAny = new Set();
+  teamNames().forEach(t => teamRoster(t).forEach(n => onAny.add(n)));
+  const nonAtt = players.map(p => p.name).filter(n => !state.attending.includes(n) && !state.excluded.includes(n) && !onAny.has(n));
+  const freeAtt = state.attending.filter(n => !onAny.has(n) && !state.excluded.includes(n));
+  if (freeAtt.length) groups.push({ title: '미배정 참석', team: '', names: freeAtt });
+  if (nonAtt.length) groups.push({ title: '미참석 멤버', team: '', names: nonAtt });
+  return groups;
+}
+
+function openSwapModal() {
+  const [a, b] = state.playing;
+  const root = document.getElementById('modal-root');
+  const sides = [a, b].map(t => `<div>
+    <div class="tname-${t}" style="font-weight:900;margin:0.35rem 0">${t} OUT</div>
+    ${teamRoster(t).map(n => `<button data-swap-out="${n}" data-team="${t}" style="width:100%;margin-bottom:0.3rem">${n}</button>`).join('')}
+  </div>`).join('');
+  root.innerHTML = `<div class="modal"><div class="box">
+    <h3>선수교체</h3>
+    <p class="hint">OUT 선택 → 팀별/미참석 IN</p>
+    <div class="grid2">${sides}</div>
+    <button class="sec" id="modal-cancel">취소</button>
+  </div></div>`;
+  root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
+  root.querySelectorAll('[data-swap-out]').forEach(btn => {
+    btn.onclick = () => pickSwapIn(btn.dataset.team, btn.dataset.swapOut);
+  });
+}
+
+function pickSwapIn(outTeam, outName) {
+  const root = document.getElementById('modal-root');
+  const groups = candidateGroups(outTeam);
+  root.innerHTML = `<div class="modal"><div class="box">
+    <h3>${outName} ↔ IN 선택</h3>
+    ${groups.map(g => `<div class="group">
+      <h4 class="${g.team ? 'tname-'+g.team : ''}">${g.title}</h4>
+      <div class="grid2">${g.names.filter(n => n !== outName).map(n =>
+        `<button data-swap-in="${n}" data-from="${findTeamOf(n)||''}">${n}</button>`
+      ).join('') || '<p class="hint">없음</p>'}</div>
+    </div>`).join('') || '<p class="hint">후보 없음</p>'}
+    <button class="sec" id="modal-cancel">취소</button>
+  </div></div>`;
+  root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
+  root.querySelectorAll('[data-swap-in]').forEach(btn => {
+    btn.onclick = () => {
+      const inName = btn.dataset.swapIn;
+      const from = btn.dataset.from;
+      state.teams[outTeam].players = state.teams[outTeam].players.filter(n => n !== outName);
+      if (from) {
+        state.teams[from].players = state.teams[from].players.filter(n => n !== inName);
+        if (state.teams[from].coach !== outName) state.teams[from].players.push(outName);
+      }
+      if (!state.attending.includes(inName)) state.attending.push(inName);
+      if (state.teams[outTeam].coach !== inName && !state.teams[outTeam].players.includes(inName)) {
+        state.teams[outTeam].players.push(inName);
+      }
+      root.innerHTML = '';
+      toast(`${outName} ↔ ${inName}`);
+      render();
+    };
+  });
+}
+
+function openAddModal() {
+  const [a, b] = state.playing;
+  const resting = teamNames().filter(t => t !== a && t !== b);
+  const root = document.getElementById('modal-root');
+  const onPlay = new Set([...teamRoster(a), ...teamRoster(b)]);
+  const groups = [];
+  resting.forEach(t => {
+    const list = teamRoster(t).filter(n => !onPlay.has(n));
+    if (list.length) groups.push({ title: `쉬는 TEAM ${t}`, team: t, names: list });
+  });
+  const onAny = new Set();
+  teamNames().forEach(t => teamRoster(t).forEach(n => onAny.add(n)));
+  const freeAtt = state.attending.filter(n => !onAny.has(n) && !state.excluded.includes(n));
+  const nonAtt = players.map(p => p.name).filter(n => !state.attending.includes(n) && !state.excluded.includes(n) && !onAny.has(n));
+  if (freeAtt.length) groups.push({ title: '미배정 참석', team: '', names: freeAtt });
+  if (nonAtt.length) groups.push({ title: '미참석 멤버', team: '', names: nonAtt });
+
+  root.innerHTML = `<div class="modal"><div class="box">
+    <h3>선수추가</h3>
+    <p class="hint">추가할 팀 선택 후 선수 탭 · 쉬는 팀·미참석 포함</p>
+    <div class="row">
+      <button data-add-team="${a}" class="tname-${a}" style="flex:1;font-weight:900">${a}에 추가</button>
+      <button data-add-team="${b}" class="tname-${b}" style="flex:1;font-weight:900">${b}에 추가</button>
+    </div>
+    <div id="add-pool" style="margin-top:0.5rem">
+      ${groups.map(g => `<div class="group">
+        <h4 class="${g.team ? 'tname-'+g.team : ''}">${g.title}</h4>
+        <div class="grid2">${g.names.map(n => `<button data-add-name="${n}" data-from="${g.team}">${n}</button>`).join('')}</div>
+      </div>`).join('') || '<p class="hint">추가 가능한 선수 없음</p>'}
+    </div>
+    <button class="sec" id="modal-cancel">취소</button>
+  </div></div>`;
+  let target = a;
+  root.querySelectorAll('[data-add-team]').forEach(btn => {
+    btn.onclick = () => { target = btn.dataset.addTeam; toast(`${target} 선택`); };
+  });
+  root.querySelector('#modal-cancel').onclick = () => { root.innerHTML = ''; };
+  root.querySelectorAll('[data-add-name]').forEach(btn => {
+    btn.onclick = () => {
+      const n = btn.dataset.addName;
+      const from = btn.dataset.from;
+      if (from) state.teams[from].players = state.teams[from].players.filter(x => x !== n);
+      if (!state.attending.includes(n)) state.attending.push(n);
+      if (!state.teams[target].players.includes(n) && state.teams[target].coach !== n) {
+        state.teams[target].players.push(n);
+      }
+      root.innerHTML = '';
+      toast(`${n} → ${target}`);
+      render();
+    };
+  });
+}
+
+function stopTimer() {
+  state.timerOn = false;
+  if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+}
+
+function toggleTimer() {
+  if (state.timerOn) { stopTimer(); render(); return; }
+  state.timerOn = true;
+  state.timerId = setInterval(() => {
+    if (state.secondsLeft <= 0) { stopTimer(); toast('시간 종료'); render(); return; }
+    state.secondsLeft--;
+    if (state.screen === 'match') {
+      const clock = document.querySelector('.timer-box');
+      if (clock) {
+        const mm = String(Math.floor(state.secondsLeft/60)).padStart(2,'0');
+        const ss = String(state.secondsLeft%60).padStart(2,'0');
+        clock.textContent = `${mm}:${ss}`;
+      }
+    }
+  }, 1000);
+  render();
+}
+
+/** 2026-11-07 실기록(시트) → 결과 화면 미리보기. 공격MVP=공격P, 수비MVP=수비+선방 */
+function loadNov7Session() {
+  stopTimer();
+  const RED = ['이호준','신용주','장용호','배철호','양승현','황민구'];
+  const YELLOW = ['김기호','이영중','정세진','이호섭','이광일'];
+  const BLUE = ['김민수','안재욱','최한호','권성민','조덕기','배수천'];
+  const stats = {
+    이호준:{goal:3,assist:2,defense:0,save:0,wins:5,draws:3,losses:1,homeTeam:'RED'},
+    신용주:{goal:1,assist:3,defense:0,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    장용호:{goal:3,assist:1,defense:0,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    배철호:{goal:0,assist:3,defense:1,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    양승현:{goal:3,assist:0,defense:0,save:0,wins:6,draws:3,losses:0,homeTeam:'RED'},
+    황민구:{goal:0,assist:0,defense:0,save:0,wins:5,draws:3,losses:0,homeTeam:'RED'},
+    김기호:{goal:4,assist:3,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    이영중:{goal:2,assist:2,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    정세진:{goal:2,assist:2,defense:0,save:0,wins:2,draws:1,losses:3,homeTeam:'YELLOW'},
+    이호섭:{goal:1,assist:1,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    이광일:{goal:0,assist:1,defense:0,save:0,wins:3,draws:1,losses:4,homeTeam:'YELLOW'},
+    김민수:{goal:3,assist:0,defense:1,save:0,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    안재욱:{goal:0,assist:1,defense:2,save:2,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    최한호:{goal:2,assist:0,defense:0,save:1,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    권성민:{goal:0,assist:1,defense:0,save:0,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    조덕기:{goal:0,assist:0,defense:1,save:1,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+    배수천:{goal:0,assist:0,defense:0,save:0,wins:1,draws:2,losses:5,homeTeam:'BLUE'},
+  };
+  const teams = emptyTeams();
+  teams.RED = { players: [...RED], coach: null };
+  teams.YELLOW = { players: [...YELLOW], coach: null };
+  teams.BLUE = { players: [...BLUE], coach: null };
+  teams.BLACK = { players: [], coach: null };
+  const playerStats = {};
+  Object.entries(stats).forEach(([name, s]) => {
+    playerStats[name] = { ownGoal: 0, matches: s.wins + s.draws + s.losses, ...s };
+  });
+  Object.assign(state, {
+    screen: 'results',
+    teamMode: 3,
+    attending: [...RED, ...YELLOW, ...BLUE],
+    coaches: {},
+    teams,
+    originalTeams: cloneTeams(teams),
+    snakeSeed: ['RED','BLUE','YELLOW'],
+    draftPool: [], draftTurn: 0, draftHistory: [],
+    playing: [], matchCount: 12, score: { A: 0, B: 0 }, timeline: [], recordStack: [],
+    teamStats: {
+      RED: { matchesPlayed: 8, wins: 5, draws: 3, losses: 0, goalsFor: 10, goalsAgainst: 4 },
+      YELLOW: { matchesPlayed: 8, wins: 3, draws: 1, losses: 4, goalsFor: 9, goalsAgainst: 9 },
+      BLUE: { matchesPlayed: 8, wins: 1, draws: 2, losses: 5, goalsFor: 5, goalsAgainst: 11 },
+      BLACK: { matchesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 },
+    },
+    playerStats,
+    matchTab: 'lineup',
+    secondsLeft: state.duration,
+    excluded: [],
+    editTeam: null,
+    sessionDateLabel: '2026.11.07 · 세션 종료',
+  });
+  setStatus('11/7 실기록 로드 · 공격MVP 김기호 · 수비MVP 안재욱', 'ok');
+  toast('2026.11.07 실결과 · 공격MVP 김기호 / 수비MVP 안재욱');
+  render();
+}
+
+function resetSession() {
+  stopTimer();
+  Object.assign(state, {
+    screen: 'attendance', attending: [], coaches: {}, coachPickTeam: null,
+    teams: emptyTeams(), originalTeams: null, snakeSeed: null,
+    draftPool: [], draftTurn: 0, draftHistory: [],
+    playing: [], matchCount: 1, score: { A: 0, B: 0 }, timeline: [], recordStack: [],
+    teamStats: {}, playerStats: {}, matchTab: 'lineup', secondsLeft: state.duration,
+    excluded: [],
+    editTeam: null,
+    sessionDateLabel: '세션 종료',
+  });
+  toast('새 세션');
+  render();
+}
+
+function saveRecordEdit() {
+  document.querySelectorAll('tr[data-edit-name]').forEach(row => {
+    const name = row.dataset.editName;
+    const s = ensurePlayerStat(name);
+    row.querySelectorAll('input[data-field]').forEach(inp => {
+      s[inp.dataset.field] = Math.max(0, Number(inp.value) || 0);
+    });
+  });
+  toast('기록 저장됨');
+  go('results');
+}
+
+function bindSeedDrag() {
+  const list = document.getElementById('seed-list');
+  if (!list) return;
+  list.querySelectorAll('.order-row').forEach(row => {
+    row.addEventListener('dragstart', () => { dragSeedFrom = Number(row.dataset.seedIdx); row.classList.add('dragging'); });
+    row.addEventListener('dragend', () => { row.classList.remove('dragging'); dragSeedFrom = null; });
+    row.addEventListener('dragover', e => { e.preventDefault(); });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const to = Number(row.dataset.seedIdx);
+      if (dragSeedFrom == null || dragSeedFrom === to) return;
+      const seed = getSnakeSeed();
+      const [item] = seed.splice(dragSeedFrom, 1);
+      seed.splice(to, 0, item);
+      state.snakeSeed = seed;
+      render();
+    });
+  });
+}
+
+function bind() {
+  const app = document.getElementById('app');
+  app.onclick = (e) => {
+    const ex = e.target.closest('[data-act="exclude"]');
+    if (ex) { e.stopPropagation(); excludePlayer(ex.dataset.name); return; }
+    const t = e.target.closest('[data-act]');
+    if (!t) return;
+    const act = t.dataset.act;
+    if (act === 'toggle-att') {
+      const n = t.dataset.name;
+      const i = state.attending.indexOf(n);
+      if (i >= 0) state.attending.splice(i, 1); else state.attending.push(n);
+      render();
+    } else if (act === 'load-last-attending') {
+      loadLastAttending();
+    } else if (act === 'select-all') {
+      state.attending = players.filter(p => !p.isMercenary).map(p => p.name); render();
+    } else if (act === 'clear-att') {
+      state.attending = []; render();
+    } else if (act === 'to-coach') {
+      state.teamMode = Number(document.getElementById('team-mode')?.value || state.teamMode);
+      if (state.attending.length < state.teamMode) return toast('인원 부족');
+      saveLastAttending(state.attending);
+      state.coaches = {}; state.coachPickTeam = teamNames()[0]; state.snakeSeed = [...teamNames()]; go('coach');
+    } else if (act === 'pick-slot') {
+      state.coachPickTeam = t.dataset.team; render();
+    } else if (act === 'set-coach') {
+      const team = state.coachPickTeam || teamNames().find(x => !state.coaches[x]);
+      if (!team) return;
+      Object.keys(state.coaches).forEach(k => { if (state.coaches[k] === t.dataset.name) delete state.coaches[k]; });
+      state.coaches[team] = t.dataset.name;
+      state.coachPickTeam = teamNames().find(x => !state.coaches[x]) || team;
+      render();
+    } else if (act === 'to-draft') startDraft();
+    else if (act === 'draft-pick') draftPick(t.dataset.name);
+    else if (act === 'draft-undo') draftUndo();
+    else if (act === 'draft-autobuild') draftAutobuild();
+    else if (act === 'seed-up') moveSeed(Number(t.dataset.idx), -1);
+    else if (act === 'seed-down') moveSeed(Number(t.dataset.idx), 1);
+    else if (act === 'to-lineup') {
+      state.originalTeams = cloneTeams(state.teams);
+      go('lineup');
+    }
+    else if (act === 'to-match-select') {
+      state.originalTeams = cloneTeams(state.teams);
+      go('matchSelect');
+    }
+    else if (act === 'toggle-play') {
+      const team = t.dataset.team;
+      if (state.playing.includes(team)) state.playing = state.playing.filter(x => x !== team);
+      else if (state.playing.length < 2) state.playing.push(team);
+      else toast('2팀만 선택');
+      render();
+    } else if (act === 'start-match') {
+      state.duration = Number(document.getElementById('duration')?.value || state.duration);
+      restoreOriginalLineup();
+      state.secondsLeft = state.duration;
+      state.score = { A: 0, B: 0 };
+      state.timeline = [];
+      state.recordStack = [];
+      state.matchTab = 'lineup';
+      stopTimer();
+      go('match');
+    } else if (act === 'tab') { state.matchTab = t.dataset.tab; render(); }
+    else if (act === 'record') openRecordModal(t.dataset.team, t.dataset.name);
+    else if (act === 'toggle-timer') toggleTimer();
+    else if (act === 'end-match') endMatch();
+    else if (act === 'undo-record') undoRecord();
+    else if (act === 'restore-lineup') { restoreOriginalLineup(); toast('원팀 복귀'); render(); }
+    else if (act === 'open-swap') openSwapModal();
+    else if (act === 'open-add') openAddModal();
+    else if (act === 'to-results') { stopTimer(); go('results'); }
+    else if (act === 'save-session') {
+      try {
+        localStorage.setItem('jmfc_lab_session_v1', JSON.stringify({
+          attending: state.attending, coaches: state.coaches, teams: state.teams,
+          originalTeams: state.originalTeams, playerStats: state.playerStats,
+          teamStats: state.teamStats, matchCount: state.matchCount, savedAt: Date.now(),
+        }));
+        saveLastAttending(state.attending);
+        toast('기록 저장 완료 · 새 세션');
+        resetSession();
+      } catch (e) { toast('저장 실패: ' + e.message); }
+    }
+    else if (act === 'reset-session') {
+      try { localStorage.removeItem('jmfc_lab_session_v1'); } catch (_) {}
+      toast('기록 리셋 · 새 세션');
+      resetSession();
+    }
+    else if (act === 'edit-team') { state.editTeam = t.dataset.team; render(); }
+    else if (act === 'save-record-edit') saveRecordEdit();
+    else if (act === 'go') go(t.dataset.screen);
+  };
+  const mode = document.getElementById('team-mode');
+  if (mode) mode.onchange = () => { state.teamMode = Number(mode.value); state.snakeSeed = null; render(); };
+  const dur = document.getElementById('duration');
+  if (dur) dur.onchange = () => { state.duration = Number(dur.value); };
+  bindSeedDrag();
+  bindLineupDrag();
+  bindLiveMp();
+}
+
+function bindLineupDrag() {
+  let dragName = null, fromTeam = null;
+  document.querySelectorAll('[data-drag-name]').forEach(el => {
+    el.addEventListener('dragstart', () => {
+      dragName = el.dataset.dragName;
+      fromTeam = el.dataset.fromTeam;
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  });
+  document.querySelectorAll('[data-drop-team]').forEach(card => {
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const to = card.dataset.dropTeam;
+      if (!dragName || !to) return;
+      movePlayerBetweenTeams(dragName, fromTeam, to);
+      toast(`${dragName} → ${to}`);
+      render();
+    });
+  });
+}
+
+function bindLiveMp() {
+  document.querySelectorAll('tr[data-edit-name] input[data-field]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const row = inp.closest('tr');
+      const name = row.dataset.editName;
+      const s = ensurePlayerStat(name);
+      row.querySelectorAll('input[data-field]').forEach(el => {
+        s[el.dataset.field] = Math.max(0, Number(el.value) || 0);
+      });
+      const cell = row.querySelector('[data-mp]');
+      if (cell) cell.textContent = mpOf(s);
+    });
+  });
+}
+
+document.getElementById('btn-load').onclick = loadLive;
+document.getElementById('btn-snap').onclick = loadSnapshot;
+document.getElementById('btn-nov7').onclick = loadNov7Session;
+loadLive();
+</script>
+</body>
+</html>
