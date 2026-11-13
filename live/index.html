@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC GAS web app · mockup-parity UI -->
+<!-- JMFC GAS web app · mockup-parity UI · BUILD 2026-11-14-live-v4 -->
 <head>
   <base target="_top">
   <meta charset="UTF-8" />
@@ -978,6 +978,7 @@ function render(){
   requestAnimationFrame(restore);
   setTimeout(restore, 0);
 }
+const APP_BUILD='2026-11-14-live-v4';
 function applyInitialPayload(data){
   PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
   refreshPlayerIndex();
@@ -990,7 +991,8 @@ function applyInitialPayload(data){
     }catch(_){}
   }
   render();
-  toast('준비 완료 · 선수 '+PLAYERS.length+'명');
+  const warn=data.bootWarning?(' · 주의:'+data.bootWarning):'';
+  toast('준비 완료 · 선수 '+PLAYERS.length+'명 · '+APP_BUILD+warn, 4000);
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pullRemoteState(true); });
   window.addEventListener('focus',()=>pullRemoteState(true));
   setInterval(()=>pullRemoteState(true), 8000);
@@ -1007,18 +1009,21 @@ function bootFromServer(attempt){
     // local preview fallback: keep empty roster message
     PLAYERS=[]; refreshPlayerIndex(); render(); toast('GAS 밖에서 미리보기 · 시트 연동 없음'); return;
   }
-  toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중…', 8000);
+  toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중… · '+APP_BUILD, 8000);
   google.script.run.withSuccessHandler(res=>{
     const data=(res&&res.data&&!res.masterPlayers)?res.data:res;
     if(res&&res.success===false){
       if(tries<2){ setTimeout(()=>bootFromServer(tries+1), 1200); return; }
-      toast('초기 로드 실패: '+(res.message||'')); render(); return;
+      // 최후: 빈 화면이라도 띄움 (옛 alert 절대 사용 안 함)
+      PLAYERS=[]; refreshPlayerIndex(); render();
+      toast('초기 로드 실패: '+(res.message||'')+' · '+APP_BUILD, 6000);
+      return;
     }
     applyInitialPayload(data||{});
   }).withFailureHandler(err=>{
     if(tries<2){ setTimeout(()=>bootFromServer(tries+1), 1200); return; }
-    toast('초기 로드 실패: '+(err&&err.message||err));
-    render();
+    PLAYERS=[]; refreshPlayerIndex(); render();
+    toast('초기 로드 실패: '+(err&&err.message||err)+' · '+APP_BUILD, 6000);
   }).getInitialData();
 }
 document.addEventListener('pointerdown', unlockAudio, {once:false, passive:true});

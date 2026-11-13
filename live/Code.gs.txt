@@ -306,17 +306,53 @@ function resetSession() {
   });
 }
 
+function getAppBuild() {
+  return '2026-11-14-live-v4';
+}
+
 function getInitialData() {
-  // 부팅 경로에서는 무거운 감독기록 동기화를 하지 않음 (타임아웃·초기화 실패 방지)
-  // 동기화는 세션 저장 시 + 클라이언트 boot 후 syncCoachArchiveNow()로 백그라운드 실행
-  return safeRead_(() => {
-    const pastSessions = listPastSessions_();
+  // 부팅은 절대 실패로 죽이지 않음. 부분 실패 시에도 빈 데이터로 success 반환.
+  // 무거운 감독기록 동기화는 boot 후 syncCoachArchiveNow() / 세션 저장 시 실행.
+  try {
+    const out = safeRead_(() => {
+      let masterPlayers = [];
+      let appState = null;
+      let pastSessions = [];
+      try { masterPlayers = getMasterPlayersFromSheet() || []; } catch (e) { console.error('masterPlayers', e); }
+      try { appState = getAppState(); } catch (e) { console.error('appState', e); appState = buildInitialState_(); }
+      try { pastSessions = listPastSessions_() || []; } catch (e) { console.error('pastSessions', e); }
+      return {
+        masterPlayers: masterPlayers,
+        appState: appState || buildInitialState_(),
+        pastSessions: pastSessions,
+        appBuild: getAppBuild()
+      };
+    });
+    if (out && out.success === false) {
+      return {
+        success: true,
+        data: {
+          masterPlayers: [],
+          appState: buildInitialState_(),
+          pastSessions: [],
+          appBuild: getAppBuild(),
+          bootWarning: out.message || 'partial-boot'
+        }
+      };
+    }
+    return out;
+  } catch (e) {
     return {
-      masterPlayers: getMasterPlayersFromSheet(),
-      appState: getAppState(),
-      pastSessions: pastSessions
+      success: true,
+      data: {
+        masterPlayers: [],
+        appState: buildInitialState_(),
+        pastSessions: [],
+        appBuild: getAppBuild(),
+        bootWarning: e && e.message ? e.message : String(e)
+      }
     };
-  });
+  }
 }
 
 function listPastSessions_() {
