@@ -44,7 +44,8 @@
     .steps button.on{background:rgba(255,255,255,.92);color:#111827;box-shadow:0 4px 14px rgba(15,23,42,.12)}
     .steps button.done{color:#374151}
     .body{padding:8px 14px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
-    h2{font-size:1.1rem;font-weight:900;margin-bottom:8px;color:#111827;letter-spacing:0}
+    h2{font-size:1.1rem;font-weight:900;margin-bottom:8px;color:#111827;letter-spacing:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+    h2 .h2-date{font-size:0.82rem;font-weight:800;color:var(--muted);letter-spacing:0}
     .sub{font-size:0.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45;letter-spacing:0}
     .field{width:100%;min-height:46px;border-radius:999px;border:var(--glass-border);padding:8px 16px;font:inherit;font-weight:700;margin-bottom:10px;background:var(--glass);box-shadow:var(--press);color:var(--text);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
     .field.date-compact{min-height:42px;height:42px;padding:0 14px;font-size:0.88rem;font-weight:800;margin-bottom:10px;line-height:42px}
@@ -548,7 +549,7 @@ return `<h2>드래프트</h2>
 <div class="team-cards">${teamNames().map(t=>teamCardHtml(t,{editable:true})).join('')}</div>
 ${navRow('coach',null,!!pool.length,'data-act="to-lineup"','다음 →')}`;}
 
-function renderLineup(){return `<h2>${state.teamMode}팀 라인업</h2><p class="sub">${formatDateLabel(state.sessionDate)} · 팀승률(용병 제외) · 표시순서는 랜덤(감독 고정)</p><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
+function renderLineup(){return `<h2>${state.teamMode}팀 라인업 <span class="h2-date">${formatDateLabel(state.sessionDate)}</span></h2><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
 
 function renderMatchSelect(){ensureCoachesInTeams();const picks=state.playing;const opts=Array.from({length:6},(_,i)=>{const m=i+7;return `<option value="${m*60}" ${state.duration===m*60?'selected':''}>${m}분</option>`;}).join('');
 const histItems=(state.matchHistory||[]).map(h=>`<button type="button" class="hist-item" data-act="edit-match" data-id="${h.id}"><b>Match #${h.num}</b><div class="scoreline"><span class="t-${h.a}">${h.a}</span> ${h.scoreA}:${h.scoreB} <span class="t-${h.b}">${h.b}</span></div><span>탭 · 다시 보기/수정</span></button>`).join('');
