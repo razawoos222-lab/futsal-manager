@@ -11,16 +11,35 @@
   header { position:sticky; top:0; z-index:6; background:#1f3a5f; color:#fff; padding:14px 16px; }
   header h1 { margin:0; font-size:18px; }
   header p { margin:6px 0 0; font-size:12px; opacity:.85; }
-  .bar { display:flex; gap:12px; padding:12px 16px; flex-wrap:wrap; align-items:flex-end; background:#fff; border-bottom:1px solid #e3e8ee; position:sticky; top:62px; z-index:5; }
-  .bar label { display:block; font-size:11px; font-weight:700; color:#556070; margin-bottom:4px; }
-  select { appearance:none; border:1px solid #d0d7de; border-radius:10px; padding:10px 36px 10px 12px; font-size:14px; font-weight:700; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%2364748b' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E") right 12px center/10px no-repeat; min-width:140px; }
-  select[multiple] { appearance:auto; background-image:none; padding:8px; min-width:180px; min-height:120px; font-weight:600; }
-  .hint { font-size:11px; color:#6b7280; margin-top:4px; }
-  .actions { display:flex; gap:8px; padding:12px 16px; flex-wrap:wrap; align-items:center; }
-  .actions a, .actions button { display:inline-block; padding:10px 14px; border-radius:10px; text-decoration:none; font-size:14px; font-weight:600; border:none; cursor:pointer; font-family:inherit; }
+  .panel { background:#fff; border-bottom:1px solid #e3e8ee; padding:12px 16px; position:sticky; top:62px; z-index:5; }
+  .panel-head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .panel-head strong { font-size:14px; }
+  .panel-head .count { font-size:13px; font-weight:700; color:#1f3a5f; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .actions button, .actions a {
+    display:inline-block; padding:8px 12px; border-radius:10px; text-decoration:none;
+    font-size:13px; font-weight:700; border:none; cursor:pointer; font-family:inherit;
+  }
   .pdf { background:#1f3a5f; color:#fff; }
   .ghost { background:#e8eef5; color:#1f3a5f; }
-  .note { margin:0 16px 12px; font-size:12px; color:#556070; line-height:1.45; }
+  .checks {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    gap:8px;
+    max-height:220px;
+    overflow:auto;
+    padding:4px 2px 2px;
+  }
+  .checks label {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border:1px solid #e3e8ee; border-radius:10px;
+    background:#f8fafc; font-size:13px; font-weight:700; cursor:pointer; user-select:none;
+  }
+  .checks label:has(input:checked) { background:#e8f0fe; border-color:#93b4e8; }
+  .checks input { width:18px; height:18px; accent-color:#1f3a5f; flex:0 0 auto; }
+  .checks .nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .checks .rk { color:#6b7280; font-size:11px; font-weight:700; }
+  .note { margin:12px 16px; font-size:12px; color:#556070; line-height:1.45; }
   .meta { margin:0 16px 8px; font-size:13px; font-weight:700; color:#1f3a5f; }
   .wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 0 24px; background:#fff; }
   table { border-collapse:collapse; width:max-content; min-width:100%; font-size:13px; }
@@ -37,31 +56,19 @@
 <body>
 <header>
   <h1>JMFC 2026 감독별 팀성적</h1>
-  <p>감독 팀 기준 · 승점순 · 인원/감독 선택</p>
+  <p>감독 팀 기준 · 승점순 · 체크한 감독만 표시</p>
 </header>
 
-<div class="bar">
-  <div>
-    <label for="limitSel">표시 인원</label>
-    <select id="limitSel">
-      <option value="5">상위 5명</option>
-      <option value="10" selected>상위 10명</option>
-      <option value="15">상위 15명</option>
-      <option value="20">상위 20명</option>
-      <option value="all">전체</option>
-    </select>
+<div class="panel">
+  <div class="panel-head">
+    <strong>감독 선택 <span class="count" id="checkCount">0명</span></strong>
+    <div class="actions">
+      <button type="button" class="ghost" id="btnAll">전체 선택</button>
+      <button type="button" class="ghost" id="btnClear">전체 해제</button>
+      <a class="pdf" href="./JMFC_2026_coach_team_stats.pdf" download>PDF 다운로드</a>
+    </div>
   </div>
-  <div>
-    <label for="coachSel">감독 선택 (복수)</label>
-    <select id="coachSel" multiple></select>
-    <div class="hint">Ctrl/⌘ + 클릭으로 여러 명 · 비우면 상위 N명</div>
-  </div>
-</div>
-
-<div class="actions">
-  <button type="button" class="ghost" id="btnClear">선택 초기화</button>
-  <button type="button" class="ghost" id="btnAll">전체 선택</button>
-  <a class="pdf" href="./JMFC_2026_coach_team_stats.pdf" download>PDF 다운로드</a>
+  <div class="checks" id="coachChecks"></div>
 </div>
 
 <p class="note">집계: 감독 지정일 → 주 소속팀. 경기/승무패/득/실/승점=팀 스코어. 도·수·선=해당 팀 선수 합. 승률=승÷(승+패). 이광일 10/24 제외.</p>
@@ -75,7 +82,6 @@
 </div>
 
 <script>
-/** 승점순 고정 데이터 (기존 HTML 표와 동일) */
 const ROWS = [
   {rank:1,name:"배철호",sessions:7,games:56,wins:23,draws:17,losses:16,gf:76,ast:59,def:8,sv:11,ga:58,gd:18,pts:86,wr:"59.0%"},
   {rank:2,name:"김명래",sessions:6,games:50,wins:23,draws:15,losses:12,gf:67,ast:46,def:7,sv:13,ga:55,gd:12,pts:84,wr:"65.7%"},
@@ -106,26 +112,12 @@ const ROWS = [
   {rank:27,name:"최한호",sessions:1,games:8,wins:0,draws:3,losses:5,gf:5,ast:3,def:1,sv:2,ga:15,gd:-10,pts:3,wr:"0.0%"}
 ];
 
-const limitSel = document.getElementById('limitSel');
-const coachSel = document.getElementById('coachSel');
+const box = document.getElementById('coachChecks');
 const tbody = document.getElementById('tbody');
 const shownMeta = document.getElementById('shownMeta');
+const checkCount = document.getElementById('checkCount');
 
 function gdText(n){ return (n>0?'+':'') + n; }
-
-function selectedNames(){
-  return Array.from(coachSel.selectedOptions).map(o => o.value);
-}
-
-function visibleRows(){
-  const picked = selectedNames();
-  if (picked.length) {
-    return ROWS.filter(r => picked.includes(r.name));
-  }
-  const lim = limitSel.value;
-  if (lim === 'all') return ROWS.slice();
-  return ROWS.slice(0, Number(lim) || 10);
-}
 
 function medalClass(rank){
   if (rank === 1) return 'medal-1';
@@ -134,10 +126,21 @@ function medalClass(rank){
   return '';
 }
 
+function checkedNames(){
+  return Array.from(box.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.value);
+}
+
+function setAll(on){
+  box.querySelectorAll('input[type="checkbox"]').forEach(el => { el.checked = !!on; });
+  render();
+}
+
 function render(){
-  const list = visibleRows();
+  const picked = checkedNames();
+  checkCount.textContent = picked.length + '명';
+  const list = ROWS.filter(r => picked.includes(r.name));
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="15" class="empty">표시할 감독이 없습니다</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" class="empty">체크한 감독이 없습니다 · 위에서 선택하세요</td></tr>';
     shownMeta.textContent = '0명 표시';
     return;
   }
@@ -145,30 +148,17 @@ function render(){
     const cls = medalClass(r.rank);
     return `<tr class="${cls}"><td>${r.rank}</td><td>${r.name}</td><td>${r.sessions}</td><td>${r.games}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.gf}</td><td>${r.ast}</td><td>${r.def}</td><td>${r.sv}</td><td>${r.ga}</td><td>${gdText(r.gd)}</td><td>${r.pts}</td><td>${r.wr}</td></tr>`;
   }).join('');
-  const picked = selectedNames();
-  shownMeta.textContent = picked.length
-    ? `선택 ${picked.length}명 표시 · ${picked.join(', ')}`
-    : `상위/전체 기준 ${list.length}명 표시 (전체 ${ROWS.length}명)`;
+  shownMeta.textContent = `${picked.length}명 표시 · ${picked.join(', ')}`;
 }
 
-function fillCoachSelect(){
-  coachSel.innerHTML = ROWS.map(r =>
-    `<option value="${r.name}">${r.rank}. ${r.name} · ${r.pts}점</option>`
-  ).join('');
-}
+box.innerHTML = ROWS.map(r =>
+  `<label><input type="checkbox" value="${r.name}" checked><span class="rk">${r.rank}</span><span class="nm">${r.name}</span></label>`
+).join('');
 
-limitSel.addEventListener('change', render);
-coachSel.addEventListener('change', render);
-document.getElementById('btnClear').addEventListener('click', () => {
-  Array.from(coachSel.options).forEach(o => { o.selected = false; });
-  render();
-});
-document.getElementById('btnAll').addEventListener('click', () => {
-  Array.from(coachSel.options).forEach(o => { o.selected = true; });
-  render();
-});
+box.addEventListener('change', render);
+document.getElementById('btnAll').addEventListener('click', () => setAll(true));
+document.getElementById('btnClear').addEventListener('click', () => setAll(false));
 
-fillCoachSelect();
 render();
 </script>
 </body>
