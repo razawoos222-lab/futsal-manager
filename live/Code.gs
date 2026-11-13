@@ -1,3 +1,7 @@
+/**
+ * JMFC GAS · Code.gs
+ * 붙여넣기용 전체 파일 (originalTeams: 용병/교체는 해당 경기만, 다음 경기는 원팀 복원)
+ */
 
 const CONFIG = {
   STATS_SHEET: "선수별능력치", // 선수들의 기본 능력치 (공격, 수비, 포지션)가 기록된 시트 이름
@@ -403,33 +407,37 @@ function resetSession() {
   });
 }
 
-// 원팀 저장 함수 (새로 추가)
+// 최초 라인업(원팀) 스냅샷 — 용병 추가/교체는 live teams만 바꾸고 originalTeams는 절대 수정하지 않음
+function snapshotOriginalTeams_(state, force) {
+  if (!state) return;
+  if (force || !state.originalTeams) {
+    state.originalTeams = JSON.parse(JSON.stringify(state.teams));
+  }
+}
+
+function applyOriginalTeamsRestore_(state) {
+  if (!state || !state.originalTeams) return false;
+  state.teams = JSON.parse(JSON.stringify(state.originalTeams));
+  return true;
+}
+
+// 원팀 저장 함수
 function saveOriginalTeams() {
   return safeExecute(() => {
     const state = getAppState();
-    
-    // 원팀이 아직 저장되지 않았다면 현재 팀을 원팀으로 저장
-    if (!state.originalTeams) {
-      state.originalTeams = JSON.parse(JSON.stringify(state.teams));
-      
-    }
-    
+    snapshotOriginalTeams_(state, false);
     saveAppState(state);
     return state;
   });
 }
 
-// 원팀 복구 함수 (새로 추가)
+// 원팀 복구 함수
 function restoreOriginalTeams() {
   return safeExecute(() => {
     const state = getAppState();
-    
-    if (state.originalTeams) {
-      state.teams = JSON.parse(JSON.stringify(state.originalTeams));
-      
+    if (applyOriginalTeamsRestore_(state)) {
       saveAppState(state);
     }
-    
     return state;
   });
 }
@@ -901,10 +909,10 @@ function startMatch(teamNames, selectedDuration, selectedField) {
   return safeExecute(() => {
     const s = getAppState(); // 현재 앱 상태를 가져옵니다.
 
-    // 첫 경기 시작 시 원팀 저장
-    if (s.match.count === 1 && !s.originalTeams) {
-      s.originalTeams = JSON.parse(JSON.stringify(s.teams));
-    }
+    // 최초 라인업 스냅샷(없으면 저장) + 매 경기 시작 전 원팀으로 복원
+    // → 이전 경기 용병/교체가 다음 라인업을 오염시키지 않음
+    snapshotOriginalTeams_(s, false);
+    applyOriginalTeamsRestore_(s);
 
     // [오류 수정] teamNames가 유효한 배열인지 확인
     if (!Array.isArray(teamNames) || teamNames.length < 2) {
@@ -949,35 +957,6 @@ function startMatch(teamNames, selectedDuration, selectedField) {
   });
 }
 
-
-
-// ✅ 팀 스탯이 없으면 항상 생성해주는 안전장치
-function ensureTeamStats_(s, teamName) {
-  if (!s) throw new Error("AppState가 비어있습니다.");
-
-  if (!s.sessionStats) s.sessionStats = {};
-  if (!s.sessionStats.teamStats) s.sessionStats.teamStats = {};
-
-  // teamName이 비정상이면 여기서 바로 차단 (원인 추적 쉬워짐)
-  if (!teamName || typeof teamName !== "string") {
-    throw new Error(`유효하지 않은 teamName 입니다: ${teamName}`);
-  }
-
-  if (!s.sessionStats.teamStats[teamName]) {
-    s.sessionStats.teamStats[teamName] = {
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      consecutiveMatches: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      matchesPlayed: 0,
-      consecutivePlays: 0
-    };
-  }
-
-  return s.sessionStats.teamStats[teamName];
-}
 
 
 // ✅ recordEvent 통째 교체 버전 (goalsFor/goalsAgainst 크래시 방지 포함)
@@ -1374,6 +1353,10 @@ function endMatch() {
     // ★ 완전제거: nextMatchSuggestion 무조건 null
     s.match.nextMatchSuggestion = null;
 
+    // ★ 용병/교체 스탯·승무패는 위에서 "그 경기 라인업" 기준으로 반영한 뒤
+    //    다음 경기를 위해 최초 라인업(originalTeams)으로 복원
+    applyOriginalTeamsRestore_(s);
+
     // ★ 무조건 팀 선택 화면으로 이동
     s.currentScreen = 'screen-match-select';
 
@@ -1458,9 +1441,11 @@ function reassignCaptainsIfNeeded(team) {
 
 
 // ✅ 교체 함수 (주장/부주장 자동 재지정 포함)
+// 주의: live teams만 변경. originalTeams는 건드리지 않음(다음 경기에서 원팀 복원).
 function substitutePlayer(teamName, playerOutName, playerInName) {
   return safeExecute(() => {
     const state = getAppState();
+    snapshotOriginalTeams_(state, false);
     const teamPlayers = state.teams[teamName].players;
     const playerOutIndex = teamPlayers.indexOf(playerOutName);
 
@@ -1527,6 +1512,7 @@ function substitutePlayer(teamName, playerOutName, playerInName) {
 
 
 // [신규] 대기 팀에서 선수를 빌려오는 함수
+// 주의: state.teams(현재 경기 라인업)만 변경. originalTeams는 건드리지 않음.
 function addPlayerToTeam(teamName, playerName, fromTeamName) {
   return safeExecute(() => {
     const state = getAppState();
@@ -1540,19 +1526,27 @@ function addPlayerToTeam(teamName, playerName, fromTeamName) {
     if (state.teams[teamName].players.length >= 7) {
       throw new Error(`${teamName} 팀은 이미 최대 인원(7명)입니다.`);
     }
+
+    // 원팀이 없으면 용병 추가 전에 스냅샷 (최초 1회)
+    snapshotOriginalTeams_(state, false);
     
-    // 대기 팀에서 선수 제거
+    // 대기 팀에서 선수 제거 (live teams만)
     if (fromTeamName && state.teams[fromTeamName]) {
       const playerIndex = state.teams[fromTeamName].players.indexOf(playerName);
       if (playerIndex !== -1) {
         state.teams[fromTeamName].players.splice(playerIndex, 1);
       }
+      if (state.teams[fromTeamName].goalkeeper === playerName) {
+        state.teams[fromTeamName].goalkeeper = null;
+      }
     }
     
     // 새 팀에 선수 추가
-    state.teams[teamName].players.push(playerName);
+    if (!state.teams[teamName].players.includes(playerName)) {
+      state.teams[teamName].players.push(playerName);
+    }
     
-    // 선수 통계 초기화 (없으면)
+    // 선수 통계 초기화 (없으면) — 이 경기 승무패/스탯은 endMatch에서 반영
     if (!state.sessionStats.playerStats[playerName]) {
       state.sessionStats.playerStats[playerName] = {
         goal: 0, assist: 0, defense: 0, save: 0,

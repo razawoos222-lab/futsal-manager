@@ -1045,9 +1045,10 @@ document.body.addEventListener('click', async e => {
         case 'undo-snake-pick':
             serverCall('undoSnakeDraftPick');
             break;
-        case 'go-to-match-select':
-            serverCall('changeScreen', 'screen-match-select');
-            break;
+            case 'go-to-match-select':
+                // 라인업 확정 시점을 최초 원팀으로 저장 → 이후 용병/교체는 경기 단위만 적용
+                serverCall('saveOriginalTeams').then(() => serverCall('changeScreen', 'screen-match-select'));
+                break;
         case 'toggle-team-select': {
             let pts = [...(localState.match.playingTeams || [])];
             if (pts.includes(teamName)) pts = pts.filter(t => t !== teamName);
