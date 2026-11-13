@@ -2,7 +2,7 @@
 
 ## 1) 경기 기록 따라하기 (추천 · 화면으로 배움)
 
-**[▶ 경기 기록 따라하기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/match-recording-walkthrough-7fc5/design-preview/jmfc-match-walkthrough/index.html)**
+**[▶ 경기 기록 따라하기](https://htmlpreview.github.io/?https://github.com/razawoos222-lab/futsal-manager/blob/cursor/match-recording-walkthrough-7fc5/design-preview/jmfc-match-walkthrough/index.html)**
 
 깜빡이는 버튼만 누르면 됩니다.
 
