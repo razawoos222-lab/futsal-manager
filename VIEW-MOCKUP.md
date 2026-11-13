@@ -1,13 +1,24 @@
 # JMFC 목업 — 여기만 누르세요
 
-## 1. 메인 목업 (v6.6 · main)
+## 1) 경기 기록 따라하기 (추천 · 화면으로 배움)
 
-**[▶ JMFC 화면 목업 (01–13)](https://raw.githack.com/razawoos222-lab/futsal-manager/main/design-preview/jmfc-mockup.html?v=6.6)**
+**[▶ 경기 기록 따라하기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/match-recording-walkthrough-7fc5/design-preview/jmfc-match-walkthrough/index.html)**
 
-**[▶ HTML 목록 허브](https://raw.githack.com/razawoos222-lab/futsal-manager/main/design-preview/index.html)**
+깜빡이는 버튼만 누르면 됩니다.
 
-1. 링크 클릭 → **「Open the page」** → 확인
+1. 경기시작  
+2. 선수 탭 → 득점 → 도움 선택 → **1:0**  
+3. 라인업 / 팀순위 / 개인기록  
+4. 선수교체 · 선수추가  
 
-### v6.6
-- 팀 순위 표 헤더 가로: 순위 · 경기 · 득 · 실 · 득실 · 승률 · 승점
-- 열 간격 정렬
+파일: `design-preview/jmfc-match-walkthrough/index.html`
+
+---
+
+## 2) 세션 전체 직접 조작
+
+**[▶ JMFC 세션 열기](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-session/index.html?v=7.17)**
+
+참석부터 결과까지 자유롭게 탭으로 조작
+
+파일: `design-preview/jmfc-session/index.html`
