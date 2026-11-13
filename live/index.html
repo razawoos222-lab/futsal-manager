@@ -282,11 +282,20 @@ let byName={};
 let maxCcpG=1;
 const IS_GAS = typeof google !== 'undefined' && google.script && google.script.run;
 let persistTimer=null;
+function normalizeWinRatePct(v){
+  const n=Number(v);
+  if(!isFinite(n)||n<=0) return 0;
+  // 시트 비율(0.524) · 퍼센트(52.4) · 퍼센트서식 오입력 혼재 → 0~100 표시값
+  if(n<=1) return Math.round(n*1000)/10; // 0.524 → 52.4
+  if(n<=100) return Math.round(n*10)/10;
+  return Math.round(n)/10;
+}
 function mapMasterPlayer(p){
+  const raw=p.winRate!=null?p.winRate:p.winRatePct;
   return {
     name:p.name,
     position:p.position||'',
-    winRatePct:Number(p.winRate)!=null?Number(p.winRate):(Number(p.winRatePct)||0),
+    winRatePct:normalizeWinRatePct(raw),
     ccpPerGame:Number(p.ccp)!=null&&p.ccp!==undefined?Number(p.ccp):(Number(p.ccpPerGame)||0),
     games:Number(p.games)||0,
     isMercenary:!!p.isMercenary || String(p.name||'').startsWith('용병'),
@@ -349,7 +358,7 @@ function teamNames(){return TEAM_ALL.slice(0,Number(state.teamMode)||3);}
 function activeDetailOrder(){return DETAIL_ORDER.filter(t=>teamNames().includes(t));}
 function activeStandingsOrder(){return STANDINGS_ORDER.filter(t=>teamNames().includes(t));}
 function toast(msg,ms){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms||2600);}
-function go(screen){state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;persistState();render();}
+function go(screen){render._jumpTop=true;state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;persistState();render();}
 function ensureStat(name,homeTeam){if(!state.playerStats[name])state.playerStats[name]={goal:0,assist:0,defense:0,save:0,wins:0,draws:0,losses:0,homeTeam:homeTeam||null};if(homeTeam&&!state.playerStats[name].homeTeam)state.playerStats[name].homeTeam=homeTeam;return state.playerStats[name];}
 function snapshotBaseTeams(){state.baseTeams=JSON.parse(JSON.stringify(state.teams));}
 function restoreBaseTeams(){if(!state.baseTeams)return;state.teams=JSON.parse(JSON.stringify(state.baseTeams));}
@@ -424,7 +433,7 @@ function randomAssignNonCoaches(){const names=teamNames();const coachSet=new Set
 function movePlayerToTeam(name,toTeam){const coachSet=new Set(Object.values(state.coaches||{}));if(coachSet.has(name)&&state.coaches[toTeam]!==name){toast('감독은 팀 이동 불가');return false;}Object.keys(state.teams).forEach(t=>{state.teams[t]=(state.teams[t]||[]).filter(n=>n!==name);});state.teams[toTeam]=state.teams[toTeam]||[];if(!state.teams[toTeam].includes(name))state.teams[toTeam].push(name);ensureStat(name,toTeam);syncDraftSlotsFromTeams();return true;}
 function allClubNames(){return PLAYERS.map(p=>p.name).sort((a,b)=>a.localeCompare(b,'ko'));}
 
-function renderSteps(){const idx=FLOW.indexOf(state.screen);const box=document.getElementById('steps'); box.innerHTML=FLOW.map((k,i)=>`<button type="button" class="${i===idx?'on':(i<idx?'done':'')}" data-act="go-step" data-screen="${k}">${FLOW_LABEL[k]}</button>`).join('');const on=box.querySelector('button.on'); if(on) on.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});const sub={attendance:'참석 조사',coach:'감독 선정',draft:'드래프트',lineup:`${state.teamMode}팀 라인업`,matchSelect:'경기 선택',match:state.editingMatchId?`경기 수정 #${state.editingMatchId}`:`Match #${state.matchCount}`,results:state.sessionLabel||formatDateLabel(state.sessionDate),edit:'기록 수정'}[state.screen]||'';const barSub=document.getElementById('bar-sub'); if(barSub){barSub.textContent=''; barSub.hidden=true;}}
+function renderSteps(){const idx=FLOW.indexOf(state.screen);const box=document.getElementById('steps'); box.innerHTML=FLOW.map((k,i)=>`<button type="button" class="${i===idx?'on':(i<idx?'done':'')}" data-act="go-step" data-screen="${k}">${FLOW_LABEL[k]}</button>`).join('');const on=box.querySelector('button.on'); if(on&&box){const left=on.offsetLeft-(box.clientWidth-on.offsetWidth)/2; box.scrollLeft=Math.max(0,left);} const barSub=document.getElementById('bar-sub'); if(barSub){barSub.textContent=''; barSub.hidden=true;}}
 function navRow(prev,next,nextDisabled,nextAct,nextLabel,asStart){const na=nextAct||(next?`data-act="go" data-screen="${next}"`:'');const nextCls=asStart?'btn btn-start':'btn btn-cta';return `<div class="nav-row"><button class="btn btn-sec" ${prev?`data-act="go" data-screen="${prev}"`:'disabled'}>← 이전</button><button class="${nextCls}" ${nextDisabled?'disabled':''} ${na}>${nextLabel||'다음 →'}</button></div>`;}
 function formatMvpNames(names){if(!names||!names.length)return '-';const lines=[];for(let i=0;i<names.length;i+=2)lines.push(names.slice(i,i+2).join(' · '));return lines.join('<br>');}
 
@@ -456,7 +465,7 @@ ${navRow(null,'coach',state.attending.length<state.teamMode,'data-act="to-coach"
 
 function renderCoach(){const names=teamNames();Object.keys(state.coaches).forEach(t=>{if(!names.includes(t)||!state.attending.includes(state.coaches[t])) delete state.coaches[t];});const filled=names.filter(t=>state.coaches[t]).length;if(!state.coachPickTeam||!names.includes(state.coachPickTeam))state.coachPickTeam=names.find(t=>!state.coaches[t])||names[0];const active=state.coachPickTeam;const picked=new Set(Object.entries(state.coaches).filter(([t])=>t!==active).map(([,n])=>n));const pool=state.attending.filter(n=>!picked.has(n));return `<h2>감독 ${names.length}명 선택</h2><p class="sub">슬롯 탭 → 선수 탭으로 변경 · ${filled}/${names.length}</p>
 <div class="coach-slots m${names.length}">${names.map(t=>{const c=state.coaches[t];return `<div class="cslot ${c?'filled':''} ${active===t?'active':''}" data-act="pick-slot" data-team="${t}"><span class="slot-team t-${t}">TEAM ${t}</span><span class="slot-name ${c?'':'empty'}">${c||'미선택'}</span></div>`;}).join('')}</div>
-<div class="chip-grid">${pool.map(n=>`<button class="chip ${state.coaches[active]===n?'on':''}" data-act="set-coach-name" data-name="${n}">${n}</button>`).join('')||'<p class="sub">남은 선수 없음</p>'}</div>
+<div class="chip-grid">${pool.map(n=>`<button type="button" class="chip ${state.coaches[active]===n?'on':''}" data-act="set-coach-name" data-name="${n}">${n}</button>`).join('')||'<p class="sub">남은 선수 없음</p>'}</div>
 ${navRow('attendance',null,filled<names.length,'data-act="to-draft"','다음 →')}`;}
 
 function renderDraft(){applyDraftSlotsToTeams();const cur=currentDraftIdx();const pool=remainingPool();
@@ -473,7 +482,7 @@ return `<h2>드래프트</h2>
 <div class="chip-row one-line" style="grid-template-columns:1fr 1fr"><button type="button" class="mini" data-act="random-assign">랜덤 배정</button><button type="button" class="mini" data-act="clear-draft-names">배정 초기화</button></div>
 <div class="draft-board">
   <div class="section-card" style="margin:0"><h3>남은 선수 · 연속 선택</h3>
-    <div class="chip-grid">${pool.map(n=>`<button class="chip" data-act="pick-player" data-name="${n}">${n}</button>`).join('')||'<p class="sub">모두 배정됨</p>'}</div>
+    <div class="chip-grid">${pool.map(n=>`<button type="button" class="chip" data-act="pick-player" data-name="${n}">${n}</button>`).join('')||'<p class="sub">모두 배정됨</p>'}</div>
   </div>
   <div class="section-card" style="margin:0"><h3>픽 순서 · ${cur>=0?`다음 #${cur+1}`:'완료'}</h3>
     <div class="draft-list">${pickRows}</div>
@@ -676,9 +685,11 @@ function endMatch(){
 function bind(){
   const dateEl=document.getElementById('session-date'); if(dateEl) dateEl.onchange=()=>{state.sessionDate=dateEl.value||todayStr();};
   const dur=document.getElementById('duration'); if(dur) dur.onchange=()=>{state.duration=Number(dur.value); state.secondsLeft=state.duration;};
-  document.querySelectorAll('[data-act]').forEach(el=>{el.onclick=()=>{
+  document.querySelectorAll('[data-act]').forEach(el=>{el.onclick=(e)=>{
+    if(e&&e.preventDefault) e.preventDefault();
+    if(e&&e.stopPropagation) e.stopPropagation();
     const act=el.dataset.act;
-    if(act==='toggle-att'){const n=el.dataset.name; if(state.attending.includes(n)) state.attending=state.attending.filter(x=>x!==n); else state.attending.push(n); render();}
+    if(act==='toggle-att'){const n=el.dataset.name; if(state.attending.includes(n)) state.attending=state.attending.filter(x=>x!==n); else state.attending.push(n); persistState(); render();}
     else if(act==='set-mode'){state.teamMode=Number(el.dataset.mode); Object.keys(state.coaches).forEach(t=>{if(!teamNames().includes(t)) delete state.coaches[t];}); render();}
     else if(act==='load-last-att') loadLastAttending();
     else if(act==='open-load-session'){state.modal={type:'load-session'}; render();}
@@ -772,7 +783,26 @@ function bindDraftDnD(){
     card.addEventListener('drop',e=>{e.preventDefault(); card.classList.remove('drag-over'); const name=e.dataTransfer.getData('text/player'); const to=card.dataset.dropTeam; if(name&&to){if(movePlayerToTeam(name,to)){toast(`${name} → ${to}`); render();}}});
   });
 }
-function render(){renderSteps(); const map={attendance:renderAttendance,coach:renderCoach,draft:renderDraft,lineup:renderLineup,matchSelect:renderMatchSelect,match:renderMatch,results:renderResults,edit:renderEdit}; document.getElementById('main').innerHTML=(map[state.screen]||renderAttendance)(); const host=document.getElementById('modal-host'); if(host) host.innerHTML=modalHtml(); bind(); if(state.screen==='draft') bindDraftDnD();}
+function render(){
+  const main=document.getElementById('main');
+  const draftList=document.querySelector('.draft-list');
+  const keepScroll=!!main && !render._jumpTop;
+  const y=keepScroll?main.scrollTop:0;
+  const draftY=keepScroll&&draftList?draftList.scrollTop:0;
+  render._jumpTop=false;
+  try{const ae=document.activeElement; if(ae&&ae!==document.body&&ae.blur) ae.blur();}catch(_){}
+  renderSteps();
+  const map={attendance:renderAttendance,coach:renderCoach,draft:renderDraft,lineup:renderLineup,matchSelect:renderMatchSelect,match:renderMatch,results:renderResults,edit:renderEdit};
+  if(main) main.innerHTML=(map[state.screen]||renderAttendance)();
+  const host=document.getElementById('modal-host'); if(host) host.innerHTML=modalHtml();
+  bind();
+  if(state.screen==='draft') bindDraftDnD();
+  if(main&&keepScroll){
+    main.scrollTop=y;
+    const dl=document.querySelector('.draft-list'); if(dl) dl.scrollTop=draftY;
+    requestAnimationFrame(()=>{ main.scrollTop=y; const d2=document.querySelector('.draft-list'); if(d2) d2.scrollTop=draftY; });
+  }
+}
 function bootFromServer(){
   // Always full-bleed in GAS
   document.body.style.padding='0'; document.body.style.background='#fff';

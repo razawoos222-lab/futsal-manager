@@ -94,6 +94,15 @@ function safeExecute(func) {
   }
 }
 
+/** 시트 승률(0.524 비율 / 52.4 퍼센트) → 클라이언트용 비율(0~1) */
+function normalizeWinRateRatio_(v) {
+  const n = Number(v);
+  if (!isFinite(n) || n <= 0) return 0;
+  if (n <= 1) return n;
+  if (n <= 100) return n / 100;
+  return n / 1000;
+}
+
 function getMasterPlayersFromSheet() {
   const sheet = getSheet(CONFIG.STATS_SHEET);
   if (sheet.getLastRow() < 2) return [];
@@ -104,13 +113,67 @@ function getMasterPlayersFromSheet() {
     position: row[1],
     att: Number(row[2]) || 5,
     def: Number(row[3]) || 5,
-    winRate: Number(row[13]) || 0,
+    // N열: 승률 — 비율로 통일(클라이언트에서 ×100 표시)
+    winRate: normalizeWinRateRatio_(row[13]),
     ccp: Number(row[14]) || 0,
     mp: Number(row[18]) || 0,
     mpPerGame: Number(row[19]) || 0,
     games: 0,
     isMercenary: String(row[0] || '').indexOf('용병') === 0
   })).filter(p => p.name);
+}
+
+/**
+ * K열 이후 수식이 getLastRow()를 오염시켜도
+ * A~J(또는 지정 폭) 데이터 열 기준으로 다음 빈 행을 찾습니다.
+ * keyCol1Based: 값이 있으면 "데이터가 있는 행"으로 보는 열 (개인/감독=2 선수명·감독명)
+ */
+function ensureHeaderRow_(sheet, headers) {
+  const a1 = sheet.getRange(1, 1).getValue();
+  if (a1 === '' || a1 == null) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+}
+
+function nextDataRowByKey_(sheet, keyCol1Based, width, needRows) {
+  const last = sheet.getLastRow();
+  if (last < 1) return 2;
+  const cols = Math.max(width || keyCol1Based, keyCol1Based);
+  const values = sheet.getRange(1, 1, last, cols).getValues();
+  let lastFilled = 0; // 0-based; 헤더=0
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i][keyCol1Based - 1];
+    if (v !== '' && v != null) lastFilled = i;
+  }
+  // 헤더만 있으면 2행(노란색 빈 구간)부터
+  if (lastFilled <= 0) return 2;
+
+  const need = Math.max(1, Number(needRows) || 1);
+  // 헤더 아래·기존 데이터 위 빈 구간(노란 영역)이 충분하면 그곳부터
+  let firstEmpty = -1;
+  for (let i = 1; i < values.length; i++) {
+    const v = values[i][keyCol1Based - 1];
+    if (v === '' || v == null) {
+      firstEmpty = i;
+      break;
+    }
+  }
+  if (firstEmpty >= 0 && firstEmpty < lastFilled) {
+    let end = firstEmpty;
+    while (
+      end + 1 < values.length &&
+      (values[end + 1][keyCol1Based - 1] === '' || values[end + 1][keyCol1Based - 1] == null)
+    ) {
+      end++;
+    }
+    if (need <= end - firstEmpty + 1) return firstEmpty + 1;
+  }
+  return lastFilled + 2; // 1-based: 실제 데이터 다음
+}
+
+function writeRowsAt_(sheet, startRow, rows) {
+  if (!rows || !rows.length) return;
+  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
 }
 
 function getAppState() {
@@ -244,11 +307,9 @@ function updateAndArchiveSession(payload) {
     const matchHistory = payload.matchHistory || [];
     const teamStats = payload.teamStats || {};
 
-    // 1) 개인 기록실
+    // 1) 개인 기록실 — A~J만 보고 다음 행 (K열 이후 수식 무시)
     const archiveSheet = getSheet(CONFIG.PLAYER_ARCHIVE_SHEET);
-    if (archiveSheet.getRange(1, 1).getValue() === '') {
-      archiveSheet.appendRow(['경기일', '선수명', '경기수', '승', '무', '패', '득점', '도움', '수비', '선방']);
-    }
+    ensureHeaderRow_(archiveSheet, ['경기일', '선수명', '경기수', '승', '무', '패', '득점', '도움', '수비', '선방']);
     const rowsToAdd = Object.keys(playerStats)
       .map(name => {
         const s = playerStats[name] || {};
@@ -269,43 +330,69 @@ function updateAndArchiveSession(payload) {
       })
       .filter(Boolean);
     if (rowsToAdd.length) {
-      archiveSheet.getRange(archiveSheet.getLastRow() + 1, 1, rowsToAdd.length, 10).setValues(rowsToAdd);
+      writeRowsAt_(archiveSheet, nextDataRowByKey_(archiveSheet, 2, 10, rowsToAdd.length), rowsToAdd);
     }
 
     // 2) 감독 기록실
     const coachSheet = getSheet(CONFIG.COACH_ARCHIVE_SHEET);
-    if (coachSheet.getRange(1, 1).getValue() === '') {
-      coachSheet.appendRow(['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']);
-    }
+    ensureHeaderRow_(coachSheet, ['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']);
     const coachRows = [];
+    const coachSeen = {};
     Object.keys(coaches).forEach(team => {
       const coachName = coaches[team];
       if (!coachName) return;
+      const key = String(coachName) + '|' + String(team);
+      if (coachSeen[key]) return;
+      coachSeen[key] = true;
       const ts = teamStats[team] || {};
-      coachRows.push([
-        date,
-        coachName,
-        team,
-        Number(ts.matchesPlayed) || 0,
-        Number(ts.wins) || 0,
-        Number(ts.draws) || 0,
-        Number(ts.losses) || 0,
-        Number(ts.goalsFor) || 0,
-        Number(ts.goalsAgainst) || 0
-      ]);
+      let matchesPlayed = Number(ts.matchesPlayed) || 0;
+      let wins = Number(ts.wins) || 0;
+      let draws = Number(ts.draws) || 0;
+      let losses = Number(ts.losses) || 0;
+      let gf = Number(ts.goalsFor) || 0;
+      let ga = Number(ts.goalsAgainst) || 0;
+      // teamStats가 비어 있으면 matchHistory에서 집계
+      if (!matchesPlayed && matchHistory.length) {
+        matchHistory.forEach(h => {
+          if (!h || !h.a || !h.b) return;
+          if (h.a !== team && h.b !== team) return;
+          matchesPlayed++;
+          const my = h.a === team ? Number(h.scoreA) || 0 : Number(h.scoreB) || 0;
+          const opp = h.a === team ? Number(h.scoreB) || 0 : Number(h.scoreA) || 0;
+          gf += my;
+          ga += opp;
+          if (my > opp) wins++;
+          else if (my < opp) losses++;
+          else draws++;
+        });
+      }
+      coachRows.push([date, coachName, team, matchesPlayed, wins, draws, losses, gf, ga]);
     });
+    // coaches 객체가 비어도 winningCoaches / bestCoach 로 최소 기록
+    if (!coachRows.length) {
+      const winning = payload.winningCoaches || [];
+      winning.forEach(w => {
+        if (!w || !w.coachName) return;
+        const team = w.winnerTeam || '';
+        const key = String(w.coachName) + '|' + String(team);
+        if (coachSeen[key]) return;
+        coachSeen[key] = true;
+        coachRows.push([date, w.coachName, team, 1, 1, 0, 0, Number(w.scoreA) || 0, Number(w.scoreB) || 0]);
+      });
+      if (!coachRows.length && payload.bestCoach && payload.bestCoach.name) {
+        const bc = payload.bestCoach;
+        coachRows.push([date, bc.name, bc.team || '', 0, 0, 0, 0, 0, 0]);
+      }
+    }
     if (coachRows.length) {
-      coachSheet.getRange(coachSheet.getLastRow() + 1, 1, coachRows.length, 9).setValues(coachRows);
+      writeRowsAt_(coachSheet, nextDataRowByKey_(coachSheet, 2, 9, coachRows.length), coachRows);
     }
 
     // 3) 지난 팀 구성
     const pastTeamsSheet = getSheet(CONFIG.PAST_TEAMS_SHEET);
-    if (pastTeamsSheet.getRange(1, 1).getValue() === '') {
-      pastTeamsSheet.appendRow(['경기일', '경기번호', '팀명', '키퍼', '선수1', '선수2', '선수3', '선수4', '선수5', '선수6', '선수7', '경기결과', '감독']);
-    }
+    ensureHeaderRow_(pastTeamsSheet, ['경기일', '경기번호', '팀명', '키퍼', '선수1', '선수2', '선수3', '선수4', '선수5', '선수6', '선수7', '경기결과', '감독']);
     const teamRows = [];
     matchHistory.forEach(h => {
-      // mockup history: {id,num,a,b,scoreA,scoreB,rosterA,rosterB}
       if (h.a && h.b) {
         const pushTeam = (teamName, roster, score, oppScore) => {
           const players = (roster || teams[teamName] || []).slice(0, 7);
@@ -337,7 +424,7 @@ function updateAndArchiveSession(payload) {
       }
     });
     if (teamRows.length) {
-      pastTeamsSheet.getRange(pastTeamsSheet.getLastRow() + 1, 1, teamRows.length, teamRows[0].length).setValues(teamRows);
+      writeRowsAt_(pastTeamsSheet, nextDataRowByKey_(pastTeamsSheet, 3, 13, teamRows.length), teamRows);
     }
 
     // 4) 세션 아카이브 (지난 경기 결과 불러오기용)
