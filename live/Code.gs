@@ -307,7 +307,7 @@ function resetSession() {
 }
 
 function getAppBuild() {
-  return '2026-11-14-live-v4';
+  return '2026-11-14-live-v5';
 }
 
 function getInitialData() {

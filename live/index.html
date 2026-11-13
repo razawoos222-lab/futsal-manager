@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC GAS web app · mockup-parity UI · BUILD 2026-11-14-live-v4 -->
+<!-- JMFC GAS web app · mockup-parity UI · BUILD 2026-11-14-live-v5 -->
 <head>
   <base target="_top">
   <meta charset="UTF-8" />
@@ -287,6 +287,9 @@ let byName={};
 let maxCcpG=1;
 const IS_GAS = typeof google !== 'undefined' && google.script && google.script.run;
 let persistTimer=null;
+let persistRetryTimer=null;
+let gasBusy=false;
+let gasQueue=[];
 function normalizeWinRatePct(v){
   const n=Number(v);
   if(!isFinite(n)||n<=0) return 0;
@@ -316,16 +319,68 @@ function refreshPlayerIndex(){
   byName=Object.fromEntries(PLAYERS.map(p=>[p.name,p]));
   maxCcpG=Math.max(...PLAYERS.map(p=>p.ccpPerGame||0),1);
 }
+function isNetworkFail(err){
+  const m=String((err&&err.message)||err||'');
+  return /NetworkError|HTTP 0|연결 실패|Failed to fetch|network/i.test(m);
+}
+/** google.script.run 직렬 실행 + 네트워크 실패 시 재시도 (카카오/모바일 HTTP 0 완화) */
+function gasRun(fnName, args, opt){
+  const o=opt||{};
+  return new Promise((resolve,reject)=>{
+    gasQueue.push({fnName, args:args||[], resolve, reject, tries:0, max:o.maxRetries!=null?o.maxRetries:3, silent:!!o.silent});
+    pumpGasQueue();
+  });
+}
+function pumpGasQueue(){
+  if(gasBusy||!gasQueue.length||!IS_GAS) return;
+  gasBusy=true;
+  const job=gasQueue[0];
+  const runner=google.script.run
+    .withSuccessHandler(res=>{
+      gasQueue.shift();
+      gasBusy=false;
+      job.resolve(res);
+      pumpGasQueue();
+    })
+    .withFailureHandler(err=>{
+      job.tries++;
+      if(isNetworkFail(err)&&job.tries<=job.max){
+        gasBusy=false;
+        setTimeout(pumpGasQueue, 600*job.tries);
+        return;
+      }
+      gasQueue.shift();
+      gasBusy=false;
+      if(!job.silent) console.error(job.fnName, err);
+      job.reject(err);
+      pumpGasQueue();
+    });
+  try{
+    runner[job.fnName].apply(runner, job.args);
+  }catch(e){
+    gasQueue.shift();
+    gasBusy=false;
+    job.reject(e);
+    pumpGasQueue();
+  }
+}
 function persistState(force){
   if(!IS_GAS) return;
   state.updatedAt=Date.now();
   ensureCoachesInTeams();
   const payload=JSON.parse(JSON.stringify(state));
   payload.modal=null; payload.timerRunning=false;
-  const run=()=>google.script.run.withFailureHandler(err=>console.error('saveAppState',err)).saveAppState(payload);
+  const run=()=>{
+    gasRun('saveAppState',[payload],{maxRetries:4,silent:true}).catch(err=>{
+      // 배경 저장 실패는 시끄럽게 알리지 않고 한 번 더 예약
+      if(persistRetryTimer) clearTimeout(persistRetryTimer);
+      persistRetryTimer=setTimeout(()=>persistState(true), 2500);
+      console.error('saveAppState',err);
+    });
+  };
   if(force){ if(persistTimer) clearTimeout(persistTimer); run(); return; }
   if(persistTimer) clearTimeout(persistTimer);
-  persistTimer=setTimeout(run, 400);
+  persistTimer=setTimeout(run, 700);
 }
 function applyServerState(s){
   if(!s||typeof s!=='object') return;
@@ -354,8 +409,8 @@ function ensureCoachesInTeams(){
   });
 }
 function pullRemoteState(silent){
-  if(!IS_GAS||state.timerRunning) return;
-  google.script.run.withSuccessHandler(s=>{
+  if(!IS_GAS||state.timerRunning||gasBusy||gasQueue.length) return;
+  gasRun('getAppState',[],{maxRetries:1,silent:true}).then(s=>{
     if(!s||typeof s!=='object') return;
     const remoteAt=Number(s.updatedAt)||0;
     const localAt=Number(state.updatedAt)||0;
@@ -365,7 +420,7 @@ function pullRemoteState(silent){
       render();
       if(!silent) toast('다른 기기 변경 동기화됨');
     }
-  }).withFailureHandler(()=>{}).getAppState();
+  }).catch(()=>{});
 }
 
 function todayStr(){const d=new Date();const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;}
@@ -479,10 +534,15 @@ function saveSession(andNew){ensureCoachesInTeams();const best=coachLeaders()[0]
   saveLastAttending(state.attending);
   const finish=()=>{toast(andNew?`저장됨 · ${formatDateLabel(payload.sessionDate)}`:`저장 완료 · ${formatDateLabel(payload.sessionDate)}`);if(andNew)softNewSession(false);else persistState(true);};
   if(IS_GAS){
-    google.script.run.withSuccessHandler(res=>{
+    toast('시트 저장 중…', 8000);
+    gasRun('updateAndArchiveSession',[payload],{maxRetries:4,silent:true}).then(res=>{
       if(res&&res.success===false){ toast('시트 저장 실패: '+(res.message||'')); return; }
       finish();
-    }).withFailureHandler(err=>{toast('시트 저장 실패: '+(err&&err.message||err));}).updateAndArchiveSession(payload);
+    }).catch(err=>{
+      const msg=String((err&&err.message)||err||'');
+      if(isNetworkFail(err)) toast('연결 끊김(HTTP 0). 사파리/크롬으로 다시 열어 저장해 주세요');
+      else toast('시트 저장 실패: '+msg);
+    });
   } else finish();
 }
 function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');persistState(true);render();}
@@ -978,7 +1038,7 @@ function render(){
   requestAnimationFrame(restore);
   setTimeout(restore, 0);
 }
-const APP_BUILD='2026-11-14-live-v4';
+const APP_BUILD='2026-11-14-live-v5';
 function applyInitialPayload(data){
   PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
   refreshPlayerIndex();
@@ -996,8 +1056,10 @@ function applyInitialPayload(data){
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pullRemoteState(true); });
   window.addEventListener('focus',()=>pullRemoteState(true));
   setInterval(()=>pullRemoteState(true), 8000);
-  // 감독기록 동기화는 백그라운드 (부팅 속도에 영향 없음)
-  try{ google.script.run.withFailureHandler(()=>{}).syncCoachArchiveNow(); }catch(_){}
+  // 감독기록 동기화는 부팅 직후가 아니라 조금 뒤에 (동시 호출로 HTTP 0 나는 것 완화)
+  setTimeout(()=>{
+    try{ gasRun('syncCoachArchiveNow',[],{maxRetries:1,silent:true}).catch(()=>{}); }catch(_){}
+  }, 5000);
 }
 function bootFromServer(attempt){
   const tries=Number(attempt)||0;
