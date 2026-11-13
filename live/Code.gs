@@ -91,12 +91,25 @@ function getSheet(sheetName) {
 }
 
 function getCoachArchiveSheet_() {
+  const sheets = getCoachArchiveSheets_();
+  return sheets[0];
+}
+
+/** 매니저 시트에 감독 기록 탭이 2개(기록실_감독기록 + 감독기록)면 둘 다 반환 */
+function getCoachArchiveSheets_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  return (
-    ss.getSheetByName(CONFIG.COACH_ARCHIVE_SHEET) ||
-    ss.getSheetByName(CONFIG.COACH_ARCHIVE_SHEET_ALT) ||
-    ss.insertSheet(CONFIG.COACH_ARCHIVE_SHEET)
-  );
+  const names = [CONFIG.COACH_ARCHIVE_SHEET, CONFIG.COACH_ARCHIVE_SHEET_ALT];
+  const found = [];
+  const seen = {};
+  names.forEach(name => {
+    const sh = ss.getSheetByName(name);
+    if (sh && !seen[sh.getSheetId()]) {
+      seen[sh.getSheetId()] = true;
+      found.push(sh);
+    }
+  });
+  if (!found.length) found.push(ss.insertSheet(CONFIG.COACH_ARCHIVE_SHEET));
+  return found;
 }
 
 /** 시트 저장용 날짜: 2026-11-07 (하이픈, 기존 기록과 동일) */
@@ -398,9 +411,8 @@ function updateAndArchiveSession(payload) {
       writeRowsAt_(archiveSheet, nextDataRowByKey_(archiveSheet, 2, 10, rowsToAdd.length), rowsToAdd);
     }
 
-    // 2) 감독 기록실 (기록실_감독기록 또는 감독기록)
-    const coachSheet = getCoachArchiveSheet_();
-    ensureHeaderRow_(coachSheet, ['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']);
+    // 2) 감독 기록실 — 기록실_감독기록 / 감독기록 둘 다 있으면 모두 갱신
+    const coachSheets = getCoachArchiveSheets_();
     const coachRows = [];
     const coachSeen = {};
     Object.keys(coaches).forEach(team => {
@@ -448,8 +460,11 @@ function updateAndArchiveSession(payload) {
       }
     }
     if (coachRows.length) {
-      clearRowsForDate_(coachSheet, 1, 9, date);
-      writeRowsAt_(coachSheet, nextDataRowByKey_(coachSheet, 2, 9, coachRows.length), coachRows);
+      coachSheets.forEach(coachSheet => {
+        ensureHeaderRow_(coachSheet, ['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']);
+        clearRowsForDate_(coachSheet, 1, 9, date);
+        writeRowsAt_(coachSheet, nextDataRowByKey_(coachSheet, 2, 9, coachRows.length), coachRows);
+      });
     }
 
     // 3) 지난 팀 구성
@@ -700,22 +715,32 @@ function writeCoachArchiveSheet_(sheet, builtRows, replaceDates) {
 
 function syncCoachArchiveFromAssignments_() {
   const built = buildCoachArchiveRowsFromAssignments_();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const local = getCoachArchiveSheet_();
-  const n = writeCoachArchiveSheet_(local, built.rows || [], built.dates || []);
+  const locals = getCoachArchiveSheets_();
+  let n = 0;
+  locals.forEach(local => {
+    n = writeCoachArchiveSheet_(local, built.rows || [], built.dates || []);
+  });
 
   let remote = 0;
   try {
     if (CONFIG.STATS_SPREADSHEET_ID) {
       const statsSs = SpreadsheetApp.openById(CONFIG.STATS_SPREADSHEET_ID);
-      let remoteSheet = statsSs.getSheetByName(CONFIG.COACH_ARCHIVE_SHEET);
-      if (!remoteSheet) remoteSheet = statsSs.insertSheet(CONFIG.COACH_ARCHIVE_SHEET);
-      // 통계대시보드에는 배정 기반 전체 행을 그대로 기록(기존 빈 시트 가정)
-      remoteSheet.clear();
-      remoteSheet.getRange(1, 1, 1, 9).setValues([['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']]);
-      if (built.rows && built.rows.length) {
-        remoteSheet.getRange(2, 1, built.rows.length, 9).setValues(built.rows);
-      }
+      // 통계 시트도 동일 이름 탭이 있으면 모두 맞춤
+      const remoteNames = [CONFIG.COACH_ARCHIVE_SHEET, CONFIG.COACH_ARCHIVE_SHEET_ALT];
+      const remoteSheets = [];
+      remoteNames.forEach(name => {
+        let sh = statsSs.getSheetByName(name);
+        if (!sh && name === CONFIG.COACH_ARCHIVE_SHEET) sh = statsSs.insertSheet(name);
+        if (sh) remoteSheets.push(sh);
+      });
+      if (!remoteSheets.length) remoteSheets.push(statsSs.insertSheet(CONFIG.COACH_ARCHIVE_SHEET));
+      remoteSheets.forEach(remoteSheet => {
+        remoteSheet.clear();
+        remoteSheet.getRange(1, 1, 1, 9).setValues([['경기일', '감독명', '팀', '경기수', '승', '무', '패', '득점', '실점']]);
+        if (built.rows && built.rows.length) {
+          remoteSheet.getRange(2, 1, built.rows.length, 9).setValues(built.rows);
+        }
+      });
       remote = built.rows ? built.rows.length : 0;
     }
   } catch (e) {
@@ -725,6 +750,7 @@ function syncCoachArchiveFromAssignments_() {
   SpreadsheetApp.flush();
   return {
     success: true,
+    localSheets: locals.map(s => s.getName()),
     localRows: n,
     builtRows: (built.rows || []).length,
     remoteRows: remote,

@@ -47,10 +47,13 @@
     h2{font-size:1.1rem;font-weight:900;margin-bottom:8px;color:#111827;letter-spacing:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
     h2 .h2-date{font-size:0.82rem;font-weight:800;color:var(--muted);letter-spacing:0}
     .sub{font-size:0.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45;letter-spacing:0}
-    .field{width:100%;min-height:46px;border-radius:999px;border:var(--glass-border);padding:8px 16px;font:inherit;font-weight:700;margin-bottom:10px;background:var(--glass);box-shadow:var(--press);color:var(--text);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
-    .field.date-compact{min-height:42px;height:42px;padding:0 14px;font-size:0.88rem;font-weight:800;margin-bottom:10px;line-height:42px}
+    .field{width:100%;max-width:100%;min-width:0;min-height:46px;border-radius:999px;border:var(--glass-border);padding:8px 16px;font:inherit;font-weight:700;margin-bottom:10px;background:var(--glass);box-shadow:var(--press);color:var(--text);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-sizing:border-box;display:block}
+    .date-shell{width:100%;max-width:100%;box-sizing:border-box;margin-bottom:12px;padding:6px;border-radius:999px;background:#f3f4f6;border:1px solid var(--line);box-shadow:var(--press);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+    .date-shell .field.date-compact{width:100%;max-width:100%;min-width:0;min-height:42px;height:42px;margin:0;padding:0 14px;font-size:0.88rem;font-weight:800;line-height:42px;border:none;background:#fff;box-shadow:none;-webkit-appearance:none;appearance:none}
+    input[type="date"].field.date-compact{width:100% !important;max-width:100% !important;min-width:0 !important;display:block;box-sizing:border-box}
+    input[type="date"].field.date-compact::-webkit-date-and-time-value{text-align:left;min-width:100%;width:100%}
     .label-sm{display:block;font-size:0.78rem;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:0}
-    .seg{display:flex;gap:6px;padding:6px;border-radius:999px;margin-bottom:12px;background:#f3f4f6;border:1px solid var(--line);box-shadow:var(--press);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+    .seg{display:flex;gap:6px;padding:6px;border-radius:999px;margin-bottom:12px;background:#f3f4f6;border:1px solid var(--line);box-shadow:var(--press);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);width:100%;box-sizing:border-box}
     .seg button{flex:1;min-height:42px;border:none;background:transparent;font-weight:800;font-size:0.88rem;font-family:inherit;color:#4b5563;cursor:pointer;border-radius:999px}
     .seg button.on{background:#2563eb;color:#fff;box-shadow:var(--raise-sm)}
     .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
@@ -524,7 +527,7 @@ function teamPlayerTable(t){const coach=state.coaches[t];const names=rosterOrder
 
 function renderAttendance(){const list=[...PLAYERS].sort((a,b)=>(b.games||0)-(a.games||0)||a.name.localeCompare(b.name,'ko'));return `<h2>참석 조사</h2>
 <label class="label-sm">경기 날짜 <span style="color:#111;font-weight:900">${formatDateLabel(state.sessionDate)}</span></label>
-<input type="date" class="field date-compact" id="session-date" value="${state.sessionDate}" />
+<div class="date-shell"><input type="date" class="field date-compact" id="session-date" value="${state.sessionDate}" /></div>
 <label class="label-sm">팀 구성</label>
 <div class="seg">${[2,3,4].map(n=>`<button type="button" class="${state.teamMode===n?'on':''}" data-act="set-mode" data-mode="${n}">${n}팀</button>`).join('')}</div>
 <p class="sub" id="att-count">등록 ${PLAYERS.length}명 · 선택 ${state.attending.length}명 · ${state.teamMode}팀${state.teamMode===4?' (BLACK 포함)':''}</p>
