@@ -126,6 +126,19 @@ function safeExecute(func) {
   }
 }
 
+/** 읽기용: 짧은 tryLock — 잠금 실패해도 로드는 진행 (초기 화면 지연/실패 완화) */
+function safeRead_(func) {
+  const lock = LockService.getScriptLock();
+  const got = lock.tryLock(3000);
+  try {
+    return { success: true, data: func() };
+  } catch (e) {
+    return { success: false, message: e && e.message ? e.message : String(e) };
+  } finally {
+    if (got) lock.releaseLock();
+  }
+}
+
 /** 시트 승률 → 0~100 퍼센트 숫자 */
 function normalizeWinRatePct_(v) {
   const n = Number(v);
@@ -281,9 +294,9 @@ function resetSession() {
 }
 
 function getInitialData() {
-  return safeExecute(() => {
-    // 감독_배정_2026 + 지난_팀_구성 → 기록실_감독기록 자동 동기화 (순위 앱용)
-    try { syncCoachArchiveFromAssignments_(); } catch (e) { console.error('coach sync', e); }
+  // 부팅 경로에서는 무거운 감독기록 동기화를 하지 않음 (타임아웃·초기화 실패 방지)
+  // 동기화는 세션 저장 시 + 클라이언트 boot 후 syncCoachArchiveNow()로 백그라운드 실행
+  return safeRead_(() => {
     const pastSessions = listPastSessions_();
     return {
       masterPlayers: getMasterPlayersFromSheet(),

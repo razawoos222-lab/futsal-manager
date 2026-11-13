@@ -404,23 +404,34 @@ function sheetDateStr(iso){const s=String(iso||state.sessionDate||todayStr()).tr
 function fmtTime(sec){const s=Math.max(0,Math.floor(Number(sec)||0));const m=Math.floor(s/60);const r=s%60;return `${m}:${String(r).padStart(2,'0')}`;}
 function syncMatchElapsed(){state.matchElapsedSec=Math.max(0,(Number(state.duration)||0)-(Number(state.secondsLeft)||0));}
 function elapsedClock(){syncMatchElapsed();return fmtTime(state.matchElapsedSec);}
-function playBeepBurst(seconds){
+function unlockAudio(){
   try{
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
     if(!audioCtx) audioCtx=new AC();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+  }catch(_){}
+}
+function playBeepBurst(seconds){
+  try{
+    unlockAudio();
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    if(!audioCtx) audioCtx=new AC();
     const ctx=audioCtx; if(ctx.state==='suspended') ctx.resume();
-    const endAt=ctx.currentTime+Math.max(0.5,seconds);
+    const dur=Math.max(0.5,Number(seconds)||1);
+    const endAt=ctx.currentTime+dur;
     let t=ctx.currentTime;
+    let freq=880;
     while(t<endAt){
       const o=ctx.createOscillator(); const g=ctx.createGain();
-      o.type='square'; o.frequency.value=880;
+      o.type='square'; o.frequency.value=freq;
       g.gain.value=0.0001;
       o.connect(g); g.connect(ctx.destination);
       g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(0.18,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.2,t+0.02);
       g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
       o.start(t); o.stop(t+0.25);
       t+=0.35;
+      freq = freq===880 ? 660 : 880;
     }
   }catch(_){}
 }
@@ -578,6 +589,7 @@ function modalHtml(){
   if(m.type==='confirm-end-session'){return `<div class="modal-overlay"><div class="modal-card"><h3>전체 세션 종료</h3><p class="msub">오늘의 모든 경기를 끝내고<br>결과 화면으로 갈까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-end-session">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
   if(m.type==='confirm-reset'){return `<div class="modal-overlay"><div class="modal-card"><h3>기록 리셋</h3><p class="msub">현재 경기의 득점·타임라인을<br>모두 지울까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-reset">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
   if(m.type==='confirm-reset-new'){return `<div class="modal-overlay"><div class="modal-card"><h3>기록 리셋 & NEW</h3><p class="msub">저장하지 않은 기록이 사라집니다.<br>새 세션을 시작할까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-reset-new">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
+  if(m.type==='confirm-save-new'){return `<div class="modal-overlay"><div class="modal-card"><h3>기록 저장 & NEW</h3><p class="msub">오늘 기록을 시트에 저장하고<br>새 세션을 시작할까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-save-new">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
   if(m.type==='add'){
     const target=m.targetTeam||state.playing[0];
     const wait=waitingTeams();
@@ -715,8 +727,10 @@ function stopTimer(){state.timerRunning=false;if(timerId){clearInterval(timerId)
 function updateTimerUI(){syncMatchElapsed();const text=document.getElementById('timer-text'); if(text) text.textContent=fmtTime(state.secondsLeft); const prog=document.getElementById('timer-prog'); if(prog){const circ=2*Math.PI*46; const ratio=state.duration>0?Math.max(0,Math.min(1,state.secondsLeft/state.duration)):0; prog.style.strokeDasharray=String(circ); prog.style.strokeDashoffset=String(circ*(1-ratio));}}
 function toggleTimer(){
   if(state.timerRunning){stopTimer();persistState();render();return;}
+  unlockAudio();
   state.timerRunning=true; state.matchLive=true;
-  if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
+  // 이미 2분 이하로 남은 채 재개하면 즉시 2분 전 알림 처리 완료로 간주
+  if(state.secondsLeft<=120) state.alerted2min=true;
   timerId=setInterval(()=>{
     if(state.secondsLeft<=0){
       stopTimer();
@@ -728,10 +742,19 @@ function toggleTimer(){
     }
     state.secondsLeft--;
     syncMatchElapsed();
-    if(state.secondsLeft===120&&!state.alerted2min){
+    // ===120만 보면 틱 스킵 시 놓치므로 <=120
+    if(state.secondsLeft<=120&&!state.alerted2min){
       state.alerted2min=true;
       playBeepBurst(3);
       toast('종료 2분 전',3000);
+    }
+    if(state.secondsLeft<=0){
+      stopTimer();
+      playBeepBurst(5);
+      toast('경기 시간 종료',5000);
+      persistState();
+      render();
+      return;
     }
     updateTimerUI();
   },1000);
@@ -874,7 +897,8 @@ function bind(){
       const wait=waitingTeams()[0]; if(wait&&!state.teams[wait].includes(out)) state.teams[wait].push(out); ensureStat(inn,team); ensureCoachesInTeams(); state.modal=null; toast(`${out} ↔ ${inn}`); render();}
     else if(act==='do-sub-remove'){const out=state.modal.out; const team=state.modal.team; if(!out) return; if(state.coaches[team]===out) return toast('감독은 코트 아웃 불가'); state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); const wait=waitingTeams()[0]; if(wait) state.teams[wait].push(out); state.modal=null; toast(`${out} 코트 아웃`); render();}
     else if(act==='steps-scroll'){const box=document.getElementById('steps'); if(box) box.scrollBy({left:Number(el.dataset.dir)*140,behavior:'smooth'});} else if(act==='go-step'){const s=el.dataset.screen; if(!FLOW.includes(s)&&s!=='edit') return; if(state.screen==='match'&&s!=='match'){/* keep matchLive */} go(s);} else if(act==='go'){ if(el.dataset.screen==='matchSelect'&&state.screen==='match') state.matchLive=true; go(el.dataset.screen);}
-    else if(act==='save-new') saveSession(true);
+    else if(act==='save-new'){state.modal={type:'confirm-save-new'}; render();}
+    else if(act==='confirm-save-new'){state.modal=null; saveSession(true);}
     else if(act==='reset-new'){state.modal={type:'confirm-reset-new'}; render();}
     else if(act==='confirm-reset-new'){state.modal=null; if(IS_GAS){ google.script.run.withSuccessHandler(res=>{const s=(res&&res.data)?res.data:res; applyServerState(s||{}); softNewSession(true);}).withFailureHandler(()=>softNewSession(true)).resetSession(); } else softNewSession(true); }
     else if(act==='save-edit'){document.querySelectorAll('tr[data-edit-name]').forEach(row=>{const n=row.dataset.editName; const s=ensureStat(n); row.querySelectorAll('input[data-f]').forEach(inp=>{s[inp.dataset.f]=Math.max(0,Number(inp.value)||0);});}); toast('수정 반영'); go('results');}
@@ -931,7 +955,12 @@ function render(){
   renderSteps();
   const map={attendance:renderAttendance,coach:renderCoach,draft:renderDraft,lineup:renderLineup,matchSelect:renderMatchSelect,match:renderMatch,results:renderResults,edit:renderEdit};
   if(main) main.innerHTML=(map[state.screen]||renderAttendance)();
-  const host=document.getElementById('modal-host'); if(host) host.innerHTML=modalHtml();
+  let host=document.getElementById('modal-host');
+  if(host){
+    // .phone overflow:hidden 때문에 fixed 모달이 가려질 수 있어 body로 승격
+    if(host.parentElement!==document.body) document.body.appendChild(host);
+    host.innerHTML=modalHtml();
+  }
   bind();
   if(state.screen==='draft') bindDraftDnD();
   const restore=()=>{
@@ -946,7 +975,27 @@ function render(){
   requestAnimationFrame(restore);
   setTimeout(restore, 0);
 }
-function bootFromServer(){
+function applyInitialPayload(data){
+  PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
+  refreshPlayerIndex();
+  if(data.appState) applyServerState(data.appState);
+  if(Array.isArray(data.pastSessions)){
+    try{
+      const map=readArchive();
+      data.pastSessions.forEach(p=>{ if(p&&p.sessionDate) map[p.sessionDate]=Object.assign(map[p.sessionDate]||{}, p); });
+      writeArchive(map);
+    }catch(_){}
+  }
+  render();
+  toast('준비 완료 · 선수 '+PLAYERS.length+'명');
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pullRemoteState(true); });
+  window.addEventListener('focus',()=>pullRemoteState(true));
+  setInterval(()=>pullRemoteState(true), 8000);
+  // 감독기록 동기화는 백그라운드 (부팅 속도에 영향 없음)
+  try{ google.script.run.withFailureHandler(()=>{}).syncCoachArchiveNow(); }catch(_){}
+}
+function bootFromServer(attempt){
+  const tries=Number(attempt)||0;
   // Always full-bleed in GAS
   document.body.style.padding='0'; document.body.style.background='#fff';
   const phone=document.getElementById('phone');
@@ -955,31 +1004,22 @@ function bootFromServer(){
     // local preview fallback: keep empty roster message
     PLAYERS=[]; refreshPlayerIndex(); render(); toast('GAS 밖에서 미리보기 · 시트 연동 없음'); return;
   }
-  toast('불러오는 중…', 5000);
+  toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중…', 8000);
   google.script.run.withSuccessHandler(res=>{
     const data=(res&&res.data&&!res.masterPlayers)?res.data:res;
-    if(res&&res.success===false){ toast('초기 로드 실패: '+(res.message||'')); render(); return; }
-    PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
-    refreshPlayerIndex();
-    if(data.appState) applyServerState(data.appState);
-    if(Array.isArray(data.pastSessions)){
-      try{
-        const map=readArchive();
-        data.pastSessions.forEach(p=>{ if(p&&p.sessionDate) map[p.sessionDate]=Object.assign(map[p.sessionDate]||{}, p); });
-        writeArchive(map);
-      }catch(_){}
+    if(res&&res.success===false){
+      if(tries<2){ setTimeout(()=>bootFromServer(tries+1), 1200); return; }
+      toast('초기 로드 실패: '+(res.message||'')); render(); return;
     }
-    render();
-    toast('준비 완료 · 선수 '+PLAYERS.length+'명');
-    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pullRemoteState(true); });
-    window.addEventListener('focus',()=>pullRemoteState(true));
-    setInterval(()=>pullRemoteState(true), 8000);
+    applyInitialPayload(data||{});
   }).withFailureHandler(err=>{
+    if(tries<2){ setTimeout(()=>bootFromServer(tries+1), 1200); return; }
     toast('초기 로드 실패: '+(err&&err.message||err));
     render();
   }).getInitialData();
 }
-bootFromServer();
+document.addEventListener('pointerdown', unlockAudio, {once:false, passive:true});
+bootFromServer(0);
 </script>
 </body>
 </html>
