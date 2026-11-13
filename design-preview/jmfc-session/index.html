@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC Session · v7.14</title>
+  <title>JMFC Session · v7.15</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -357,7 +357,7 @@ function loadDemo(name){
   if(screen==='attendance'){state.screen='attendance';state.coaches={};state.teams=emptyTeams();state.teamStats=emptyTeamStats();state.playerStats={};}
   else if(screen==='coach'){state.screen='coach';state.coaches={};state.coachPickTeam='RED';state.teams=emptyTeams();state.teamStats=emptyTeamStats();state.playerStats={};}
   else if(screen==='draft'){state.screen='draft';state.teams=emptyTeams();teamNames().forEach(t=>{if(state.coaches[t])state.teams[t].push(state.coaches[t]);});rebuildDraftSlots();const pool=remainingPool();[0,1,2,3].forEach(i=>{if(state.draftSlots[i]&&pool[i])state.draftSlots[i].name=pool[i];});applyDraftSlotsToTeams();}
-  else if(screen==='lineup'){state.screen='lineup';}
+  else if(screen==='lineup'){shuffleTeamRostersInPlace();state.screen='lineup';}
   else if(screen==='matchSelect'){state.screen='matchSelect';state.playing=['BLUE','YELLOW'];state.duration=600;state.matchHistory=[{id:1,num:1,a:'RED',b:'BLUE',scoreA:1,scoreB:0,timeline:[{time:'1:12',player:'이호준',team:'RED',stat:'goal'}]}];}
   else if(screen==='match'){state.screen='match';state.playing=['RED','BLUE'];state.score={A:1,B:0};state.secondsLeft=480;state.duration=600;state.matchTab='lineup';state.matchCount=1;state.timeline=[{time:'1:12',player:'이호준',team:'RED',stat:'goal'},{time:'3:40',player:'김민수',team:'BLUE',stat:'assist'}];}
   else state.screen='attendance';
@@ -383,6 +383,13 @@ function navRow(prev,next,nextDisabled,nextAct,nextLabel,asStart){const na=nextA
 function formatMvpNames(names){if(!names||!names.length)return '-';const lines=[];for(let i=0;i<names.length;i+=2)lines.push(names.slice(i,i+2).join(' · '));return lines.join('<br>');}
 
 function rosterOrdered(t){const coach=state.coaches[t]; const names=[...(state.teams[t]||[])]; if(!coach) return names; return [coach,...names.filter(n=>n!==coach)];}
+function shuffleTeamRostersInPlace(){
+  teamNames().forEach(t=>{
+    const coach=state.coaches[t];
+    const rest=shuffle((state.teams[t]||[]).filter(n=>n!==coach));
+    state.teams[t]=coach?[coach,...rest]:rest;
+  });
+}
 function teamCardHtml(t,opts){const o=opts||{};const roster=rosterOrdered(t);const coach=state.coaches[t];const wr=calcTeamWinRate(state.teams[t]||[]);const nameSpans=(roster.length?roster:[null]).map(n=>{if(!n)return '<span style="grid-column:1/-1;color:#6b7280">비어 있음</span>';if(n===coach)return `<span class="name-coach" title="${n}" data-player="${n}" data-team="${t}">${n}<span class="cap">C</span></span>`;return `<span title="${n}" data-player="${n}" data-team="${t}" draggable="true">${n}</span>`;}).join('');const acts=o.editable?`<div class="card-acts"><button type="button" data-act="draft-add" data-team="${t}">추가하기</button><button type="button" data-act="draft-del" data-team="${t}">삭제하기</button></div>`:'';return `<div class="team-stat-card ${t}" data-drop-team="${t}"><div class="head"><h4 class="t-${t}">TEAM ${t}</h4><span class="val">팀승률 ${wr}</span></div><div class="meta"><span>인원 ${roster.length}명</span>${o.editable?'<span style="font-size:0.7rem;color:#6b7280">드래그로 팀 이동</span>':''}</div><div class="names">${nameSpans}</div>${acts}</div>`;}
 
 function standingsRows(){const active=teamNames();return active.map(t=>{const s=state.teamStats[t]||{matchesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0};const gd=s.goalsFor-s.goalsAgainst;const pts=s.wins*3+s.draws;const wr=(s.wins+s.losses)>0?Math.round(s.wins/(s.wins+s.losses)*100)+'%':'-';return {t,...s,gd,pts,wr};}).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.goalsFor-a.goalsFor).map((r,i)=>({...r,rank:i+1}));}
@@ -429,7 +436,7 @@ return `<h2>드래프트</h2>
 <div class="team-cards">${teamNames().map(t=>teamCardHtml(t,{editable:true})).join('')}</div>
 ${navRow('coach',null,!!pool.length,'data-act="to-lineup"','다음 →')}`;}
 
-function renderLineup(){return `<h2>${state.teamMode}팀 라인업</h2><p class="sub">${formatDateLabel(state.sessionDate)} · 팀승률(용병 제외)</p><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
+function renderLineup(){return `<h2>${state.teamMode}팀 라인업</h2><p class="sub">${formatDateLabel(state.sessionDate)} · 팀승률(용병 제외) · 표시순서는 랜덤(감독 고정)</p><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
 
 function renderMatchSelect(){const picks=state.playing;const opts=Array.from({length:6},(_,i)=>{const m=i+7;return `<option value="${m*60}" ${state.duration===m*60?'selected':''}>${m}분</option>`;}).join('');
 const histItems=(state.matchHistory||[]).map(h=>`<button type="button" class="hist-item" data-act="edit-match" data-id="${h.id}"><b>Match #${h.num}</b><div class="scoreline"><span class="t-${h.a}">${h.a}</span> ${h.scoreA}:${h.scoreB} <span class="t-${h.b}">${h.b}</span></div><span>탭 · 다시 보기/수정</span></button>`).join('');
@@ -635,7 +642,7 @@ function bind(){
     else if(act==='do-draft-del'){const name=el.dataset.name; const team=el.dataset.team; if(state.coaches[team]===name) return toast('감독은 삭제 불가'); state.teams[team]=(state.teams[team]||[]).filter(n=>n!==name); syncDraftSlotsFromTeams(); state.modal=null; toast(`${name} 삭제`); render();}
     else if(act==='clear-pick'){state.draftSlots[Number(el.dataset.idx)].name=null; applyDraftSlotsToTeams(); render();}
     else if(act==='pick-player'){const idx=currentDraftIdx(); if(idx<0) return toast('빈 칸 없음'); state.draftSlots[idx].name=el.dataset.name; applyDraftSlotsToTeams(); render();}
-    else if(act==='to-lineup'){applyDraftSlotsToTeams(); if(remainingPool().length) return toast('선수를 모두 배정하세요'); Object.entries(state.teams).forEach(([t,names])=>names.forEach(n=>ensureStat(n,t))); snapshotBaseTeams(); go('lineup');}
+    else if(act==='to-lineup'){applyDraftSlotsToTeams(); if(remainingPool().length) return toast('선수를 모두 배정하세요'); Object.entries(state.teams).forEach(([t,names])=>names.forEach(n=>ensureStat(n,t))); shuffleTeamRostersInPlace(); snapshotBaseTeams(); toast('라인업 순서 랜덤 섞음'); go('lineup');}
     else if(act==='toggle-play'){const t=el.dataset.team; if(state.playing.includes(t)) state.playing=state.playing.filter(x=>x!==t); else if(state.playing.length<2) state.playing.push(t); else toast('2팀만 선택'); render();}
     else if(act==='start-match'){if(state.playing.length!==2) return toast('2팀을 선택하세요'); restoreBaseTeams(); const d=document.getElementById('duration'); if(d) state.duration=Number(d.value); state.secondsLeft=state.duration; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.matchTab='lineup'; stopTimer(); go('match');}
     else if(act==='edit-match'){const id=Number(el.dataset.id); const h=state.matchHistory.find(x=>x.id===id); if(!h) return; state.editingMatchId=h.id; state.playing=[h.a,h.b]; state.score={A:h.scoreA,B:h.scoreB}; state.timeline=[...(h.timeline||[])]; state.matchTab='lineup'; state.secondsLeft=state.duration; stopTimer(); go('match'); toast(`Match #${h.num} 수정`);}
