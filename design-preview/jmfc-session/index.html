@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC Session · v7.15</title>
+  <title>JMFC Session · v7.16</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -258,6 +258,7 @@
   </div>
 <script>
 const STORAGE_KEY='jmfc_session_v2';
+const ARCHIVE_KEY='jmfc_sessions_archive_v1';
 const LAST_ATT_KEY='jmfc_last_attending_v1';
 const TEAM_ALL=['RED','BLUE','YELLOW','BLACK'];
 const DETAIL_ORDER=['RED','BLUE','YELLOW','BLACK'];
@@ -336,10 +337,41 @@ function elapsedClock(){const elapsed=Math.max(0,(state.duration||0)-(state.seco
 
 function saveLastAttending(names){try{localStorage.setItem(LAST_ATT_KEY,JSON.stringify({savedAt:new Date().toISOString(),names:[...new Set((names||[]).filter(Boolean))],sessionDate:state.sessionDate}));}catch(_){}}
 function loadLastAttending(){try{const raw=localStorage.getItem(LAST_ATT_KEY);if(!raw){toast('지난 경기 참석자가 없습니다');return;}const data=JSON.parse(raw);const names=(data.names||[]).filter(n=>byName[n]);if(!names.length){toast('불러올 참석자가 없습니다');return;}state.attending=names;toast(`지난 경기 참석 ${names.length}명 불러옴`);render();}catch(_){toast('불러오기 실패');}}
+function readArchive(){try{return JSON.parse(localStorage.getItem(ARCHIVE_KEY)||'{}')||{};}catch(_){return {};}}
+function writeArchive(map){try{localStorage.setItem(ARCHIVE_KEY,JSON.stringify(map));}catch(_){}}
+function listSavedSessions(){const map=readArchive();const rows=Object.values(map).filter(Boolean);try{const last=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(last&&last.sessionDate&&!map[last.sessionDate]) rows.push(last);}catch(_){}
+  const byDate={};rows.forEach(p=>{if(!p||!p.sessionDate)return;const prev=byDate[p.sessionDate];if(!prev||String(p.savedAt||'')>String(prev.savedAt||'')) byDate[p.sessionDate]=p;});
+  return Object.values(byDate).sort((a,b)=>String(b.sessionDate).localeCompare(String(a.sessionDate)));}
+function applySavedPayload(data){
+  if(!data) return false;
+  stopTimer();
+  state.sessionDate=data.sessionDate||todayStr();
+  state.teamMode=Number(data.teamMode)||3;
+  state.attending=[...(data.attending||[])];
+  state.coaches={...(data.coaches||{})};
+  state.teams=data.teams?JSON.parse(JSON.stringify(data.teams)):emptyTeams();
+  state.playerStats=data.playerStats?JSON.parse(JSON.stringify(data.playerStats)):{};
+  state.teamStats=data.teamStats?JSON.parse(JSON.stringify(data.teamStats)):emptyTeamStats();
+  state.matchHistory=Array.isArray(data.matchHistory)?JSON.parse(JSON.stringify(data.matchHistory)):[];
+  state.matchCount=Number(data.matchCount)||Math.max(1,(state.matchHistory.length||0)+1);
+  state.baseTeams=data.baseTeams?JSON.parse(JSON.stringify(data.baseTeams)):JSON.parse(JSON.stringify(state.teams));
+  state.draftSlots=[]; state.playing=[]; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.modal=null;
+  state.sessionLabel=formatDateLabel(state.sessionDate)+' · 세션 불러옴';
+  return true;
+}
+function loadSavedSession(date){
+  const map=readArchive();
+  let data=date?map[date]:null;
+  if(!data){try{const last=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(last&&(!date||last.sessionDate===date)) data=last;}catch(_){}}
+  if(!data){toast('저장된 세션 없음');return;}
+  if(!applySavedPayload(data)){toast('불러오기 실패');return;}
+  toast(`${formatDateLabel(state.sessionDate)} 세션 불러옴`);
+  go('results');
+}
 function winningCoachRows(){return (state.matchHistory||[]).map(h=>{let w=null;if(h.scoreA>h.scoreB)w=h.a;else if(h.scoreB>h.scoreA)w=h.b;if(!w)return null;return {sessionDate:state.sessionDate,matchNum:h.num,winnerTeam:w,coachName:state.coaches[w]||null,scoreA:h.scoreA,scoreB:h.scoreB,a:h.a,b:h.b};}).filter(x=>x&&x.coachName);}
-function saveSession(andNew){const best=coachLeaders()[0]||null;const payload={savedAt:new Date().toISOString(),sessionDate:state.sessionDate,teamMode:state.teamMode,attending:state.attending,coaches:state.coaches,teams:state.teams,playerStats:state.playerStats,teamStats:state.teamStats,matchCount:state.matchCount,matchHistory:state.matchHistory,bestCoach:best?{name:best.name,team:best.team,pts:best.pts}:null,winningCoaches:winningCoachRows(),sheetHint:'기록실_감독기록 + 우승감독(winningCoaches)'};localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));try{localStorage.setItem('jmfc_winning_coaches_v1',JSON.stringify(payload.winningCoaches));}catch(_){}
-saveLastAttending(state.attending);toast(andNew?`저장 · 우승감독 ${payload.winningCoaches.length}건`:`저장 완료 · 우승감독 포함`);if(andNew)softNewSession(false);}
-function softNewSession(clearStorage){stopTimer();if(clearStorage)localStorage.removeItem(STORAGE_KEY);Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');render();}
+function saveSession(andNew){const best=coachLeaders()[0]||null;const payload={savedAt:new Date().toISOString(),sessionDate:state.sessionDate,teamMode:state.teamMode,attending:state.attending,coaches:state.coaches,teams:state.teams,playerStats:state.playerStats,teamStats:state.teamStats,matchCount:state.matchCount,matchHistory:state.matchHistory,baseTeams:state.baseTeams,bestCoach:best?{name:best.name,team:best.team,pts:best.pts}:null,winningCoaches:winningCoachRows(),sheetHint:'기록실_감독기록 + 우승감독(winningCoaches)'};try{localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));const map=readArchive();if(payload.sessionDate){map[payload.sessionDate]=payload;writeArchive(map);}localStorage.setItem('jmfc_winning_coaches_v1',JSON.stringify(payload.winningCoaches));}catch(_){toast('저장 실패 · 브라우저 저장소 확인');return;}
+saveLastAttending(state.attending);toast(andNew?`저장됨 · ${formatDateLabel(payload.sessionDate)} 불러오기 가능`:`저장 완료 · ${formatDateLabel(payload.sessionDate)}`);if(andNew)softNewSession(false);}
+function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');render();}
 
 function seedNov7Base(){
   state.teamMode=NOV7.teamMode; state.sessionDate=NOV7.sessionDate; state.attending=[...NOV7.attending];
@@ -398,13 +430,14 @@ function topList(kind){return Object.entries(state.playerStats).map(([name,s])=>
 function mvpNamesOnly(list){if(!list.length)return '-';const top=list[0].v;return list.filter(x=>x.v===top).map(x=>x.name).join(' · ');}
 function teamPlayerTable(t){const coach=state.coaches[t];const names=rosterOrdered(t);const list=names.map(n=>{const s=ensureStat(n,t);return {name:n,isCoach:n===coach,...s,mp:mpOf(s)};});const coachRow=list.find(p=>p.isCoach);const rest=list.filter(p=>!p.isCoach).sort((a,b)=>b.mp-a.mp||a.name.localeCompare(b.name,'ko'));const ordered=coachRow?[coachRow,...rest]:rest;return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득</th><th>도</th><th>수</th><th>선</th><th>MP</th></tr></thead><tbody>${ordered.map(p=>`<tr><td class="player-cell">${p.name}${p.isCoach?'<span class="cap">C</span>':''}</td><td>${p.goal||0}</td><td>${p.assist||0}</td><td>${p.defense||0}</td><td>${p.save||0}</td><td class="mp">${p.mp}</td></tr>`).join('')||'<tr><td colspan="6">없음</td></tr>'}</tbody></table></div>`;}
 
-function renderAttendance(){const list=[...PLAYERS].sort((a,b)=>(b.games||0)-(a.games||0)||a.name.localeCompare(b.name,'ko'));return `<h2>참석 조사</h2>
+function renderAttendance(){const list=[...PLAYERS].sort((a,b)=>(b.games||0)-(a.games||0)||a.name.localeCompare(b.name,'ko'));const saved=listSavedSessions();const savedHint=saved.length?`저장 ${saved.length}건 · 최근 ${formatDateLabel(saved[0].sessionDate)}`:'저장된 세션 없음';return `<h2>참석 조사</h2>
 <label class="label-sm">경기 날짜</label>
 <input type="date" class="field date-compact" id="session-date" value="${state.sessionDate}" />
 <label class="label-sm">팀 구성</label>
 <div class="seg">${[2,3,4].map(n=>`<button type="button" class="${state.teamMode===n?'on':''}" data-act="set-mode" data-mode="${n}">${n}팀</button>`).join('')}</div>
 <p class="sub">등록 ${PLAYERS.length}명 · 선택 ${state.attending.length}명 · ${state.teamMode}팀${state.teamMode===4?' (BLACK 포함)':''}</p>
-<div class="chip-row one-line"><button type="button" class="mini" data-act="load-last-att">지난경기 참석자</button><button type="button" class="mini" data-act="select-all">전체선택(용병제외)</button><button type="button" class="mini" data-act="clear-att">전체해제</button></div>
+<div class="chip-row one-line" style="grid-template-columns:1fr 1fr 1fr 1fr"><button type="button" class="mini" data-act="open-load-session">세션 불러오기</button><button type="button" class="mini" data-act="load-last-att">지난경기 참석자</button><button type="button" class="mini" data-act="select-all">전체선택(용병제외)</button><button type="button" class="mini" data-act="clear-att">전체해제</button></div>
+<p class="sub" style="margin-top:-4px">${savedHint}</p>
 <div class="chip-grid">${list.map(p=>`<button type="button" class="chip ${state.attending.includes(p.name)?'on':'off'} ${p.isMercenary?'merc':''}" data-act="toggle-att" data-name="${p.name}">${p.name}${p.isMercenary?' · 용병':''}</button>`).join('')}</div>
 ${navRow(null,'coach',state.attending.length<state.teamMode,'data-act="to-coach"','참석 완료 →')}`;}
 
@@ -475,6 +508,12 @@ function modalHtml(){
       <div class="pool-list">${waitPlayers.map(x=>`<button type="button" data-act="do-add" data-name="${x.n}" data-from="${x.t}"><span class="team-dot ${x.t}"></span><span class="nm">${x.n}</span></button>`).join('')||'<span class="sub">대기 선수 없음</span>'}</div>
       <p class="label-sm">전체 명단 (미참석 포함)</p>
       <div class="pool-list">${allClubNames().filter(n=>!onTarget.has(n)&&!waitSet.has(n)).map(n=>{const from=teamOf(n);return `<button type="button" data-act="do-add" data-name="${n}" data-from="${from}">${from?`<span class="team-dot ${from}"></span>`:''}<span class="nm">${n}</span></button>`;}).join('')||'<span class="sub">추가 가능 인원 없음</span>'}</div>
+      <button class="btn btn-sec" data-act="close-modal">닫기</button></div></div>`;
+  }
+  if(m.type==='load-session'){
+    const rows=listSavedSessions();
+    return `<div class="modal-overlay"><div class="modal-card"><h3>세션 불러오기</h3><p class="msub">저장한 날짜를 고르면 결과 화면으로 복원됩니다</p>
+      <div class="pool-list">${rows.map(p=>{const n=(p.matchHistory||[]).length;const att=(p.attending||[]).length;return `<button type="button" data-act="do-load-session" data-date="${p.sessionDate}"><span class="nm">${formatDateLabel(p.sessionDate)} · ${p.teamMode||'?'}팀 · 경기 ${n} · 참석 ${att}</span></button>`;}).join('')||'<span class="sub">아직 저장된 세션이 없습니다. 결과에서 「기록 저장 & NEW 세션」을 누르세요.</span>'}</div>
       <button class="btn btn-sec" data-act="close-modal">닫기</button></div></div>`;
   }
   if(m.type==='draft-add'){
@@ -626,6 +665,8 @@ function bind(){
     if(act==='toggle-att'){const n=el.dataset.name; if(state.attending.includes(n)) state.attending=state.attending.filter(x=>x!==n); else state.attending.push(n); render();}
     else if(act==='set-mode'){state.teamMode=Number(el.dataset.mode); Object.keys(state.coaches).forEach(t=>{if(!teamNames().includes(t)) delete state.coaches[t];}); render();}
     else if(act==='load-last-att') loadLastAttending();
+    else if(act==='open-load-session'){state.modal={type:'load-session'}; render();}
+    else if(act==='do-load-session'){loadSavedSession(el.dataset.date);}
     else if(act==='select-all'){state.attending=PLAYERS.filter(p=>!p.isMercenary).map(p=>p.name); render();}
     else if(act==='clear-att'){state.attending=[]; render();}
     else if(act==='to-coach'){if(state.attending.length<state.teamMode) return toast('인원 부족'); saveLastAttending(state.attending); state.coachPickTeam=teamNames()[0]; go('coach');}
