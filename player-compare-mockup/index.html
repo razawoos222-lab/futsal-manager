@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JMFC · 본인 기록 분기 비교 목업</title>
+  <style>
+    :root {
+      --bg0: #0b1220;
+      --bg1: #121a2b;
+      --panel: rgba(255, 255, 255, 0.04);
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #e8eef9;
+      --muted: #94a3b8;
+      --a: #38bdf8;
+      --b: #f59e0b;
+      --up: #34d399;
+      --down: #fb7185;
+      --flat: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(56, 189, 248, 0.18), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(245, 158, 11, 0.14), transparent 50%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--a);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      margin: 0 0 28px;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 54ch;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr auto;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 16px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(8px);
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    select, input, button {
+      width: 100%;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.65);
+      color: var(--text);
+      padding: 0 12px;
+      font: inherit;
+    }
+
+    button {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 18px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .player-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+
+    .period-pair {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .period-pair strong { color: var(--text); }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot .a { background: var(--a); }
+    .dot .b { background: var(--b); }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .kpi {
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(2, 6, 23, 0.35);
+      border: 1px solid var(--line);
+    }
+
+    .kpi .label { font-size: 12px; color: var(--muted); }
+    .kpi .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
+    .kpi .delta { font-size: 12px; margin-top: 4px; }
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+    .flat { color: var(--flat); }
+
+    .chart-list { display: grid; gap: 14px; }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 88px 1fr 72px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .metric-name {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .bars { display: grid; gap: 6px; }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 28px 1fr 36px;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .track {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.15);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      width: 0;
+      transition: width 700ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    .fill.a { background: linear-gradient(90deg, #38bdf8, #60a5fa); }
+    .fill.b { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+    .delta-pill {
+      text-align: right;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .note {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px dashed rgba(148, 163, 184, 0.35);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 820px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+      .controls button { grid-column: 1 / -1; margin-top: 0; }
+      .hero { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">MOCKUP · 구현 전 확인용</div>
+    <h1>본인 기록 분기 비교</h1>
+    <p class="sub">
+      다른 선수와 비교하지 않습니다. 선택한 선수 한 명의 두 분기 기록만 나란히 보고
+      증감(Δ)을 확인하는 화면입니다. 예시: 김기호 · 2026년 1분기 vs 2025년 4분기.
+    </p>
+
+    <div class="controls">
+      <div>
+        <label for="player">선수</label>
+        <input id="player" value="김기호" readonly />
+      </div>
+      <div>
+        <label for="periodA">기준 분기 (A)</label>
+        <select id="periodA">
+          <option value="2026-Q1" selected>2026년 1분기</option>
+          <option value="2025-Q4">2025년 4분기</option>
+          <option value="2025-Q3">2025년 3분기</option>
+        </select>
+      </div>
+      <div>
+        <label for="periodB">비교 분기 (B)</label>
+        <select id="periodB">
+          <option value="2025-Q4" selected>2025년 4분기</option>
+          <option value="2026-Q1">2026년 1분기</option>
+          <option value="2025-Q3">2025년 3분기</option>
+        </select>
+      </div>
+      <div>
+        <button type="button" id="runCompare">비교</button>
+      </div>
+    </div>
+
+    <div class="hero">
+      <section class="panel">
+        <div class="legend">
+          <span class="dot"><i class="a"></i> 기준 분기 A</span>
+          <span class="dot"><i class="b"></i> 비교 분기 B</span>
+        </div>
+        <p class="player-name" id="displayName">김기호</p>
+        <p class="period-pair" id="displayPeriods">
+          <strong>2026년 1분기</strong> vs <strong>2025년 4분기</strong>
+        </p>
+        <div class="chart-list" id="chartList"></div>
+      </section>
+
+      <aside class="panel">
+        <p class="player-name" style="font-size:1.1rem;">핵심 증감</p>
+        <p class="period-pair">A − B (기준 − 비교)</p>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="note">
+          목업 데이터입니다. 확정되면 Stats 웹앱 선수비교 탭에 연결하고,
+          실제 분기 통계는 <code>getDashboardData(period)</code>로 불러옵니다.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // 목업 전용 샘플 — 실제 시트 연동 전
+    const SAMPLE = {
+      '김기호': {
+        '2026-Q1': { games: 12, goals: 9, assists: 4, defenses: 6, saves: 1, winRate: 0.70, ccp: 48, attackPoints: 13, defensePoints: 7, mp: 33 },
+        '2025-Q4': { games: 14, goals: 6, assists: 5, defenses: 8, saves: 0, winRate: 0.58, ccp: 41, attackPoints: 11, defensePoints: 8, mp: 30 },
+        '2025-Q3': { games: 10, goals: 5, assists: 3, defenses: 4, saves: 1, winRate: 0.55, ccp: 34, attackPoints: 8, defensePoints: 5, mp: 21 }
+      }
+    };
+
+    const METRICS = [
+      { key: 'goals', label: '득점' },
+      { key: 'assists', label: '도움' },
+      { key: 'attackPoints', label: '공격P' },
+      { key: 'defenses', label: '수비' },
+      { key: 'defensePoints', label: '수비P' },
+      { key: 'ccp', label: 'CCP' },
+      { key: 'mp', label: 'MP' },
+      { key: 'winRate', label: '승률', pct: true }
+    ];
+
+    const LABELS = {
+      '2026-Q1': '2026년 1분기',
+      '2025-Q4': '2025년 4분기',
+      '2025-Q3': '2025년 3분기'
+    };
+
+    function fmt(v, pct) {
+      if (pct) return (v * 100).toFixed(1) + '%';
+      return String(v);
+    }
+
+    function deltaClass(d) {
+      if (Math.abs(d) < 1e-9) return 'flat';
+      return d > 0 ? 'up' : 'down';
+    }
+
+    function deltaText(d, pct) {
+      if (Math.abs(d) < 1e-9) return '±0';
+      const sign = d > 0 ? '+' : '';
+      if (pct) return sign + (d * 100).toFixed(1) + '%p';
+      return sign + (Number.isInteger(d) ? d : d.toFixed(1));
+    }
+
+    function render() {
+      const player = document.getElementById('player').value.trim() || '김기호';
+      const aKey = document.getElementById('periodA').value;
+      const bKey = document.getElementById('periodB').value;
+      const bag = SAMPLE[player] || SAMPLE['김기호'];
+      const a = bag[aKey];
+      const b = bag[bKey];
+
+      document.getElementById('displayName').textContent = player;
+      document.getElementById('displayPeriods').innerHTML =
+        `<strong>${LABELS[aKey]}</strong> vs <strong>${LABELS[bKey]}</strong>`;
+
+      const maxByMetric = {};
+      METRICS.forEach(m => {
+        const av = m.pct ? a[m.key] * 100 : a[m.key];
+        const bv = m.pct ? b[m.key] * 100 : b[m.key];
+        maxByMetric[m.key] = Math.max(av, bv, 1);
+      });
+
+      const list = document.getElementById('chartList');
+      list.innerHTML = METRICS.map(m => {
+        const av = m.pct ? a[m.key] * 100 : a[m.key];
+        const bv = m.pct ? b[m.key] * 100 : b[m.key];
+        const max = maxByMetric[m.key];
+        const d = a[m.key] - b[m.key];
+        return `
+          <div class="metric">
+            <div class="metric-name">${m.label}</div>
+            <div class="bars">
+              <div class="bar-row">
+                <span>A</span>
+                <div class="track"><div class="fill a" style="width:${(av / max) * 100}%"></div></div>
+                <span>${fmt(a[m.key], m.pct)}</span>
+              </div>
+              <div class="bar-row">
+                <span>B</span>
+                <div class="track"><div class="fill b" style="width:${(bv / max) * 100}%"></div></div>
+                <span>${fmt(b[m.key], m.pct)}</span>
+              </div>
+            </div>
+            <div class="delta-pill ${deltaClass(d)}">${deltaText(d, m.pct)}</div>
+          </div>
+        `;
+      }).join('');
+
+      const focus = [
+        { key: 'goals', label: '득점' },
+        { key: 'assists', label: '도움' },
+        { key: 'ccp', label: 'CCP' },
+        { key: 'winRate', label: '승률', pct: true }
+      ];
+
+      document.getElementById('kpiGrid').innerHTML = focus.map(m => {
+        const d = a[m.key] - b[m.key];
+        return `
+          <div class="kpi">
+            <div class="label">${m.label}</div>
+            <div class="value">${fmt(a[m.key], m.pct)} <span style="color:var(--muted);font-size:.85rem;">/ ${fmt(b[m.key], m.pct)}</span></div>
+            <div class="delta ${deltaClass(d)}">${deltaText(d, m.pct)}</div>
+          </div>
+        `;
+      }).join('');
+
+      // retrigger bar animation
+      requestAnimationFrame(() => {
+        list.querySelectorAll('.fill').forEach(el => {
+          const w = el.style.width;
+          el.style.width = '0';
+          requestAnimationFrame(() => { el.style.width = w; });
+        });
+      });
+    }
+
+    document.getElementById('runCompare').addEventListener('click', render);
+    document.getElementById('periodA').addEventListener('change', render);
+    document.getElementById('periodB').addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>
