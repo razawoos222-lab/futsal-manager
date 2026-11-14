@@ -25,12 +25,16 @@ async function serveLocalMock() {
   if (!MOCK) throw new Error('no mock html found under design-preview/ or live/');
   const html = readFileSync(MOCK);
   const server = createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': contentType('.html') });
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Disposition': 'inline',
+      'Cache-Control': 'no-store',
+    });
     res.end(html);
   });
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const { port } = server.address();
-  return { server, url: `http://127.0.0.1:${port}/` };
+  return { server, url: `http://127.0.0.1:${port}/index.html` };
 }
 
 const local = argUrl ? null : await serveLocalMock();
