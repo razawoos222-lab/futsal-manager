@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>JMFC 2026 감독별 팀성적</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; background:#f4f6f8; color:#15202b; }
+  header { position:sticky; top:0; z-index:6; background:#1f3a5f; color:#fff; padding:14px 16px; }
+  header h1 { margin:0; font-size:18px; }
+  header p { margin:6px 0 0; font-size:12px; opacity:.85; }
+  .panel { background:#fff; border-bottom:1px solid #e3e8ee; padding:12px 16px; position:sticky; top:62px; z-index:5; }
+  .panel-head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .panel-head strong { font-size:14px; }
+  .panel-head .count { font-size:13px; font-weight:700; color:#1f3a5f; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .actions button, .actions a {
+    display:inline-block; padding:8px 12px; border-radius:10px; text-decoration:none;
+    font-size:13px; font-weight:700; border:none; cursor:pointer; font-family:inherit;
+  }
+  .pdf { background:#1f3a5f; color:#fff; }
+  .ghost { background:#e8eef5; color:#1f3a5f; }
+  .checks {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    gap:8px;
+    max-height:220px;
+    overflow:auto;
+    padding:4px 2px 2px;
+  }
+  .checks label {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border:1px solid #e3e8ee; border-radius:10px;
+    background:#f8fafc; font-size:13px; font-weight:700; cursor:pointer; user-select:none;
+  }
+  .checks label:has(input:checked) { background:#e8f0fe; border-color:#93b4e8; }
+  .checks input { width:18px; height:18px; accent-color:#1f3a5f; flex:0 0 auto; }
+  .checks .nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .checks .rk { color:#6b7280; font-size:11px; font-weight:700; }
+  .note { margin:12px 16px; font-size:12px; color:#556070; line-height:1.45; }
+  .meta { margin:0 16px 8px; font-size:13px; font-weight:700; color:#1f3a5f; }
+  .wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 0 24px; background:#fff; }
+  table { border-collapse:collapse; width:max-content; min-width:100%; font-size:13px; }
+  th, td { padding:10px 8px; border-bottom:1px solid #e3e8ee; text-align:center; white-space:nowrap; }
+  th { background:#1f3a5f; color:#fff; position:sticky; top:0; }
+  td:nth-child(2), th:nth-child(2) { text-align:left; position:sticky; left:0; background:#fff; }
+  th:nth-child(2) { background:#1f3a5f; }
+  tbody tr.medal-1 td, tbody tr.medal-1 td:nth-child(2) { background:#fff4d6; }
+  tbody tr.medal-2 td, tbody tr.medal-2 td:nth-child(2) { background:#eef2f7; }
+  tbody tr.medal-3 td, tbody tr.medal-3 td:nth-child(2) { background:#f5ebe0; }
+  .empty { padding:28px; text-align:center; color:#6b7280; font-weight:700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>JMFC 2026 감독별 팀성적</h1>
+  <p>감독 팀 기준 · 승점순 · 체크한 감독만 표시</p>
+</header>
+
+<div class="panel">
+  <div class="panel-head">
+    <strong>감독 선택 <span class="count" id="checkCount">0명</span></strong>
+    <div class="actions">
+      <button type="button" class="ghost" id="btnAll">전체 선택</button>
+      <button type="button" class="ghost" id="btnClear">전체 해제</button>
+      <a class="pdf" href="./JMFC_2026_coach_team_stats.pdf" download>PDF 다운로드</a>
+    </div>
+  </div>
+  <div class="checks" id="coachChecks"></div>
+</div>
+
+<p class="note">집계: 감독 지정일 → 주 소속팀. 경기/승무패/득/실/승점=팀 스코어. 도·수·선=해당 팀 선수 합. 승률=승÷(승+패). 이광일 10/24 제외.</p>
+<p class="meta" id="shownMeta"></p>
+
+<div class="wrap">
+<table>
+<thead><tr><th>순위</th><th>감독</th><th>세션</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>도</th><th>수</th><th>선</th><th>실</th><th>득실</th><th>승점</th><th>승률</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<script>
+const ROWS = [
+  {rank:1,name:"배철호",sessions:7,games:56,wins:23,draws:17,losses:16,gf:76,ast:59,def:8,sv:11,ga:58,gd:18,pts:86,wr:"59.0%"},
+  {rank:2,name:"김명래",sessions:6,games:50,wins:23,draws:15,losses:12,gf:67,ast:46,def:7,sv:13,ga:55,gd:12,pts:84,wr:"65.7%"},
+  {rank:3,name:"김기호",sessions:6,games:50,wins:21,draws:11,losses:18,gf:68,ast:51,def:7,sv:14,ga:64,gd:4,pts:74,wr:"53.8%"},
+  {rank:4,name:"김남현",sessions:5,games:39,wins:17,draws:10,losses:12,gf:65,ast:50,def:4,sv:12,ga:50,gd:15,pts:61,wr:"58.6%"},
+  {rank:5,name:"김민수",sessions:5,games:40,wins:14,draws:16,losses:10,gf:46,ast:35,def:1,sv:7,ga:45,gd:1,pts:58,wr:"58.3%"},
+  {rank:6,name:"정세진",sessions:5,games:40,wins:15,draws:12,losses:13,gf:40,ast:28,def:4,sv:9,ga:42,gd:-2,pts:57,wr:"53.6%"},
+  {rank:7,name:"이광일",sessions:5,games:32,wins:15,draws:11,losses:6,gf:45,ast:25,def:6,sv:11,ga:29,gd:16,pts:56,wr:"71.4%"},
+  {rank:8,name:"배수천",sessions:4,games:34,wins:11,draws:13,losses:10,gf:32,ast:29,def:1,sv:17,ga:33,gd:-1,pts:46,wr:"52.4%"},
+  {rank:9,name:"송환규",sessions:4,games:32,wins:12,draws:10,losses:10,gf:32,ast:25,def:1,sv:6,ga:32,gd:0,pts:46,wr:"54.5%"},
+  {rank:10,name:"김상덕",sessions:6,games:48,wins:10,draws:15,losses:23,gf:41,ast:37,def:12,sv:12,ga:59,gd:-18,pts:45,wr:"30.3%"},
+  {rank:11,name:"양승현",sessions:5,games:39,wins:11,draws:12,losses:16,gf:41,ast:32,def:1,sv:12,ga:50,gd:-9,pts:45,wr:"40.7%"},
+  {rank:12,name:"안재욱",sessions:4,games:34,wins:10,draws:15,losses:9,gf:25,ast:22,def:2,sv:14,ga:26,gd:-1,pts:45,wr:"52.6%"},
+  {rank:13,name:"신용주",sessions:4,games:32,wins:10,draws:12,losses:10,gf:29,ast:19,def:5,sv:18,ga:31,gd:-2,pts:42,wr:"50.0%"},
+  {rank:14,name:"이호섭",sessions:4,games:32,wins:10,draws:12,losses:10,gf:32,ast:25,def:2,sv:3,ga:34,gd:-2,pts:42,wr:"50.0%"},
+  {rank:15,name:"여도영",sessions:2,games:15,wins:12,draws:2,losses:1,gf:37,ast:29,def:1,sv:9,ga:8,gd:29,pts:38,wr:"92.3%"},
+  {rank:16,name:"장용호",sessions:4,games:35,wins:8,draws:11,losses:16,gf:41,ast:30,def:4,sv:10,ga:57,gd:-16,pts:35,wr:"33.3%"},
+  {rank:17,name:"신승진",sessions:3,games:24,wins:10,draws:5,losses:9,gf:43,ast:32,def:4,sv:3,ga:35,gd:8,pts:35,wr:"52.6%"},
+  {rank:18,name:"황민구",sessions:3,games:24,wins:9,draws:8,losses:7,gf:25,ast:19,def:3,sv:7,ga:22,gd:3,pts:35,wr:"56.2%"},
+  {rank:19,name:"이호준",sessions:3,games:23,wins:9,draws:6,losses:8,gf:26,ast:21,def:3,sv:1,ga:30,gd:-4,pts:33,wr:"52.9%"},
+  {rank:20,name:"이윤수",sessions:3,games:25,wins:7,draws:7,losses:11,gf:20,ast:13,def:1,sv:5,ga:29,gd:-9,pts:28,wr:"38.9%"},
+  {rank:21,name:"권성민",sessions:4,games:33,wins:6,draws:9,losses:18,gf:26,ast:23,def:4,sv:17,ga:47,gd:-21,pts:27,wr:"25.0%"},
+  {rank:22,name:"최호진",sessions:3,games:24,wins:5,draws:12,losses:7,gf:21,ast:18,def:1,sv:4,ga:21,gd:0,pts:27,wr:"41.7%"},
+  {rank:23,name:"신윤호",sessions:2,games:18,wins:7,draws:5,losses:6,gf:21,ast:6,def:1,sv:5,ga:20,gd:1,pts:26,wr:"53.8%"},
+  {rank:24,name:"이장영",sessions:3,games:22,wins:6,draws:7,losses:9,gf:30,ast:23,def:3,sv:7,ga:28,gd:2,pts:25,wr:"40.0%"},
+  {rank:25,name:"조덕기",sessions:3,games:24,wins:4,draws:11,losses:9,gf:18,ast:11,def:6,sv:9,ga:24,gd:-6,pts:23,wr:"30.8%"},
+  {rank:26,name:"이영중",sessions:2,games:17,wins:5,draws:1,losses:11,gf:13,ast:12,def:3,sv:7,ga:22,gd:-9,pts:16,wr:"31.2%"},
+  {rank:27,name:"최한호",sessions:1,games:8,wins:0,draws:3,losses:5,gf:5,ast:3,def:1,sv:2,ga:15,gd:-10,pts:3,wr:"0.0%"}
+];
+
+const box = document.getElementById('coachChecks');
+const tbody = document.getElementById('tbody');
+const shownMeta = document.getElementById('shownMeta');
+const checkCount = document.getElementById('checkCount');
+
+function gdText(n){ return (n>0?'+':'') + n; }
+
+function medalClass(rank){
+  if (rank === 1) return 'medal-1';
+  if (rank === 2) return 'medal-2';
+  if (rank === 3) return 'medal-3';
+  return '';
+}
+
+function checkedNames(){
+  return Array.from(box.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.value);
+}
+
+function setAll(on){
+  box.querySelectorAll('input[type="checkbox"]').forEach(el => { el.checked = !!on; });
+  render();
+}
+
+function render(){
+  const picked = checkedNames();
+  checkCount.textContent = picked.length + '명';
+  const list = ROWS.filter(r => picked.includes(r.name));
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="15" class="empty">체크한 감독이 없습니다 · 위에서 선택하세요</td></tr>';
+    shownMeta.textContent = '0명 표시';
+    return;
+  }
+  tbody.innerHTML = list.map(r => {
+    const cls = medalClass(r.rank);
+    return `<tr class="${cls}"><td>${r.rank}</td><td>${r.name}</td><td>${r.sessions}</td><td>${r.games}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td><td>${r.gf}</td><td>${r.ast}</td><td>${r.def}</td><td>${r.sv}</td><td>${r.ga}</td><td>${gdText(r.gd)}</td><td>${r.pts}</td><td>${r.wr}</td></tr>`;
+  }).join('');
+  shownMeta.textContent = `${picked.length}명 표시 · ${picked.join(', ')}`;
+}
+
+box.innerHTML = ROWS.map(r =>
+  `<label><input type="checkbox" value="${r.name}" checked><span class="rk">${r.rank}</span><span class="nm">${r.name}</span></label>`
+).join('');
+
+box.addEventListener('change', render);
+document.getElementById('btnAll').addEventListener('click', () => setAll(true));
+document.getElementById('btnClear').addEventListener('click', () => setAll(false));
+
+render();
+</script>
+</body>
+</html>

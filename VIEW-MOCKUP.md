@@ -1,13 +1,10 @@
-# JMFC 목업 — 여기만 누르세요
+# JMFC 세션 목업 — 여기만 누르세요
 
-## 1. 메인 목업 (v6.6 · main)
+## 최종 세션 HTML (v7.17)
 
-**[▶ JMFC 화면 목업 (01–13)](https://raw.githack.com/razawoos222-lab/futsal-manager/main/design-preview/jmfc-mockup.html?v=6.6)**
+**[▶ JMFC 세션 열기 (직접 조작)](https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/team-power-preview-7fc5/design-preview/jmfc-session/index.html?v=7.17)**
 
-**[▶ HTML 목록 허브](https://raw.githack.com/razawoos222-lab/futsal-manager/main/design-preview/index.html)**
+1. 링크 클릭 → **「Open the page」** → 참석부터 결과까지 탭으로 조작
 
-1. 링크 클릭 → **「Open the page」** → 확인
-
-### v6.6
-- 팀 순위 표 헤더 가로: 순위 · 경기 · 득 · 실 · 득실 · 승률 · 승점
-- 열 간격 정렬
+### 파일
+- `design-preview/jmfc-session/index.html`
