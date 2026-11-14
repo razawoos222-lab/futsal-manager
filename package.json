@@ -1,0 +1,13 @@
+{
+  "name": "futsal-manager",
+  "private": true,
+  "description": "JMFC futsal manager — tooling helpers (Playwright smoke)",
+  "scripts": {
+    "playwright:install": "npx playwright install chromium",
+    "smoke:mockup": "node scripts/playwright-smoke.mjs"
+  },
+  "devDependencies": {
+    "@playwright/mcp": "latest",
+    "playwright": "latest"
+  }
+}
