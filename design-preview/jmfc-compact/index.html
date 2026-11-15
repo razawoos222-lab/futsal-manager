@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC compact UI MOCKUP · offline playable · v10-draft-results -->
+<!-- JMFC compact UI MOCKUP · offline playable · v11-draft-stripe-kebab -->
 <head>
   
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC · FORM/CLUB 목업 v10</title>
+  <title>JMFC · FORM/CLUB 목업 v11</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -137,27 +137,29 @@
     .draft-pool .chip{min-height:44px;padding:10px 6px;font-size:0.86rem}
     .draft-pool .sub.one-line{white-space:nowrap;overflow:visible;font-size:0.9rem;font-weight:800;color:#24272B;margin:8px 0 4px}
     .draft-list{max-height:none;overflow:visible;padding-right:0}
-    .draft-row{display:grid;grid-template-columns:28px 22px 36px 1fr auto;gap:8px;align-items:center;margin-bottom:8px;cursor:grab;padding:8px 10px;border-radius:16px;background:var(--glass-strong);border:var(--glass-border);box-shadow:var(--raise-sm)}
-    .draft-row.dragging{opacity:.55}
-    .draft-row.current{border-color:#20334D;background:rgba(32,51,77,.08)}
-    .draft-row .drag-handle{border:none;background:transparent;color:#64748b;font-size:1.1rem;line-height:1;padding:0;cursor:grab;font-family:inherit;min-height:28px}
-    .draft-row .num{font-size:0.72rem;font-weight:900;color:#374151;text-align:center}
-    .team-dot-btn{width:36px;height:36px;border-radius:999px;border:1.5px dashed #64748b;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-family:inherit}
-    .team-dot-btn .dot{width:14px;height:14px;border-radius:50%;display:block}
-    .team-dot-btn .dot.RED,.team-chip .dot.RED{background:var(--red)}
-    .team-dot-btn .dot.BLUE,.team-chip .dot.BLUE{background:var(--blue)}
-    .team-dot-btn .dot.YELLOW,.team-chip .dot.YELLOW{background:var(--yellow-fill)}
-    .team-dot-btn .dot.BLACK,.team-chip .dot.BLACK{background:#4b5563}
+    .draft-row{display:grid;grid-template-columns:16px 28px 1fr auto;gap:0 10px;align-items:center;margin-bottom:8px;padding:0 8px 0 0;min-height:52px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:var(--raise-sm);overflow:hidden;position:relative}
+    .draft-row.current{border-color:#20334D;box-shadow:0 0 0 2px rgba(32,51,77,.15)}
+    .draft-row .team-stripe{align-self:stretch;width:16px;border:none;padding:0;cursor:pointer;min-height:52px}
+    .draft-row .team-stripe.RED{background:var(--red)}
+    .draft-row .team-stripe.BLUE{background:var(--blue)}
+    .draft-row .team-stripe.YELLOW{background:var(--yellow-fill)}
+    .draft-row .team-stripe.BLACK{background:#4b5563}
+    .draft-row .num{font-size:0.8rem;font-weight:900;color:#374151;text-align:center}
+    .draft-row .pname{font-size:0.95rem;font-weight:900;color:#111827;text-align:left;white-space:nowrap;overflow:visible;min-width:0;padding:10px 0}
+    .draft-row .pname.empty{color:#6b7280;font-weight:700}
+    .draft-kebab{position:relative;justify-self:end}
+    .draft-kebab > summary{list-style:none;cursor:pointer;width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:900;color:#24272B;background:#E5E7E9;border:none;user-select:none}
+    .draft-kebab > summary::-webkit-details-marker{display:none}
+    .draft-kebab[open] > summary{background:#24272B;color:#C6F135}
+    .kebab-menu{position:absolute;right:0;top:44px;z-index:20;display:flex;gap:6px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 28px rgba(15,23,42,.18)}
+    .kebab-menu button{width:44px;height:44px;border:none;border-radius:12px;background:#24272B;color:#C6F135;font-size:1.15rem;font-weight:900;cursor:pointer;font-family:inherit;line-height:1}
+    .kebab-menu button.danger{background:#D94B40;color:#fff}
+    .draft-acts .mini.neon.lg{min-height:48px;font-size:0.95rem;font-weight:900;padding:12px 10px;background:#24272B!important;color:#C6F135!important;border-color:#24272B!important;border-radius:999px}
     .team-chip{display:inline-flex;align-items:center;gap:4px;border:1.5px dashed #64748b;background:#f8fafc;border-radius:999px;padding:4px 8px 4px 6px;cursor:pointer;font-family:inherit;min-height:28px}
     .team-chip .dot{width:12px;height:12px;border-radius:50%;display:block;flex-shrink:0}
+    .team-chip .dot.RED{background:var(--red)}.team-chip .dot.BLUE{background:var(--blue)}
+    .team-chip .dot.YELLOW{background:var(--yellow-fill)}.team-chip .dot.BLACK{background:#4b5563}
     .team-chip .chip-lab{font-size:0.62rem;font-weight:800;color:#475569;letter-spacing:0;white-space:nowrap}
-    .draft-row .pname{font-size:0.95rem;font-weight:900;color:#111827;text-align:left;white-space:nowrap;overflow:visible;text-overflow:clip;min-width:0;letter-spacing:0}
-    .draft-row .pname.empty{color:#6b7280;font-weight:700}
-    .draft-row .clear-x{justify-self:end;flex-shrink:0}
-    .draft-acts .mini.neon.lg{min-height:48px;font-size:0.95rem;font-weight:900;padding:12px 10px;background:#24272B!important;color:#C6F135!important;border-color:#24272B!important;border-radius:999px}
-    .sheet-team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 8px}
-    .sheet-team-grid button{min-height:56px;border-radius:16px;border:2px solid var(--line);background:#fff;font-weight:900;font-size:1rem;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
-    .sheet-team-grid button.on{border-color:#20334D;background:rgba(32,51,77,.08)}
     .team-cards{display:flex;flex-direction:column;gap:12px;margin:14px 0}
     .team-stat-card{padding:14px;border-radius:18px;border:var(--glass-border);background:var(--glass);min-height:96px;box-shadow:var(--raise);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
     .team-stat-card.drag-over{outline:2px dashed #2563eb;outline-offset:2px}
@@ -312,9 +314,10 @@
     .toast{position:absolute;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%) translateY(12px);background:rgba(17,24,39,.94);color:#fff;padding:12px 16px;border-radius:14px;font-weight:700;font-size:0.86rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;max-width:calc(100% - 28px);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);letter-spacing:0;border:1px solid rgba(255,255,255,.12)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + var(--safe-b));z-index:100}
-    .modal-card{width:100%;max-width:420px;max-height:min(78dvh,640px);overflow:auto;background:#fff;border-radius:22px 22px 18px 18px;padding:16px;box-shadow:0 -8px 40px rgba(15,23,42,.25)}
-    .modal-card::before{content:"";display:block;height:8px;border-radius:999px;background:var(--modal-accent);margin:0 40px 14px}
-    .modal-card h3{font-size:1.05rem;font-weight:900;text-align:center;margin-bottom:8px;color:#111827;letter-spacing:0}
+    .modal-card{width:100%;max-width:420px;max-height:min(78dvh,640px);overflow:auto;background:#fff;border-radius:22px 22px 18px 18px;padding:18px 16px 16px;box-shadow:0 -8px 40px rgba(15,23,42,.25);position:relative}
+    .modal-card::before{content:"";display:block;height:6px;border-radius:999px;background:var(--modal-accent);margin:4px 48px 14px}
+    .modal-x{position:absolute;top:12px;right:12px;width:40px;height:40px;border:none;border-radius:999px;background:#24272B;color:#C6F135;font-size:1.35rem;font-weight:900;line-height:1;cursor:pointer;z-index:5;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.18);font-family:inherit;padding:0}
+    .modal-card h3{font-size:1.05rem;font-weight:900;text-align:center;margin:4px 40px 8px;color:#111827;letter-spacing:0}
     .modal-card .msub{font-size:0.8rem;color:#4b5563;text-align:center;margin-bottom:12px;line-height:1.4;letter-spacing:0}
     .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .modal-btns button{min-height:52px;border:none;border-radius:999px;font-weight:900;font-size:0.9rem;font-family:inherit;cursor:pointer}
@@ -755,15 +758,21 @@ function renderCoach(){const names=teamNames();Object.keys(state.coaches).forEac
 ${navRow('attendance',null,filled<names.length,'data-act="to-draft"','다음 →')}`;}
 
 function renderDraft(){applyDraftSlotsToTeams();const cur=currentDraftIdx();const pool=remainingPool();
-const pickRows=state.draftSlots.map((s,i)=>`<div class="draft-row ${i===cur?'current':''}" draggable="true" data-idx="${i}">
-  <button type="button" class="drag-handle" aria-label="드래그로 순서 변경">⠿</button>
+const pickRows=state.draftSlots.map((s,i)=>{
+  const filled=!!s.name;
+  const kebab=filled?`<details class="draft-kebab"><summary aria-label="메뉴">⋮</summary><div class="kebab-menu">
+    <button type="button" data-act="slot-up" data-idx="${i}" title="위로">↑</button>
+    <button type="button" data-act="slot-down" data-idx="${i}" title="아래로">↓</button>
+    <button type="button" class="danger" data-act="clear-pick" data-idx="${i}" title="제거">🗑</button>
+  </div></details>`:'<span style="width:40px"></span>';
+  return `<div class="draft-row ${i===cur?'current':''}" data-idx="${i}">
+  <button type="button" class="team-stripe ${s.team}" data-act="cycle-team" data-idx="${i}" title="탭해서 팀 변경" aria-label="팀 변경"></button>
   <div class="num">${i+1}</div>
-  <button type="button" class="team-dot-btn" data-act="open-team-sheet" data-idx="${i}" title="팀 변경"><span class="dot ${s.team}"></span></button>
-  <span class="pname ${s.name?'':'empty'}" title="${s.name||''}">${s.name||(i===cur?'← 픽':'대기')}</span>
-  ${s.name?`<button type="button" class="mini clear-x" data-act="clear-pick" data-idx="${i}" style="padding:6px 10px;font-size:0.75rem">✕</button>`:'<span></span>'}
-</div>`).join('')||'<p class="sub">배정할 선수 없음</p>';
+  <span class="pname ${filled?'':'empty'}" title="${s.name||''}">${s.name||(i===cur?'← 픽':'대기')}</span>
+  ${kebab}
+</div>`;}).join('')||'<p class="sub">배정할 선수 없음</p>';
 return `<h2>드래프트</h2>
-<p class="sub">남은 선수 탭으로 픽 · 색 점으로 팀 변경 · ⠿ 드래그로 순서 · 팀 카드는 아래</p>
+<p class="sub">선수 탭으로 픽 · 왼쪽 색 띠 탭=팀 변경 · ⋮ = 위/아래/제거</p>
 <div class="chip-row one-line draft-acts" style="grid-template-columns:1fr 1fr"><button type="button" class="mini neon lg" data-act="random-assign">랜덤 배정</button><button type="button" class="mini neon lg" data-act="clear-draft-names">배정 초기화</button></div>
 <div class="draft-board">
   <div class="section-card draft-pool" style="margin:0"><h3>남은 선수 · 연속 선택</h3>
@@ -806,13 +815,6 @@ function modalHtml(){
   if(m.type==='confirm-reset'){return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>기록 리셋</h3><p class="msub">현재 경기의 득점·타임라인을<br>모두 지울까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-reset">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
   if(m.type==='confirm-reset-new'){return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>기록 리셋 & NEW</h3><p class="msub">저장하지 않은 기록이 사라집니다.<br>새 세션을 시작할까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-reset-new">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
   if(m.type==='confirm-save-new'){return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>기록 저장 & NEW</h3><p class="msub">오늘 기록을 시트에 저장하고<br>새 세션을 시작할까요?</p><div class="modal-btns"><button class="ok" data-act="confirm-save-new">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;}
-  if(m.type==='team-sheet'){
-    const idx=Number(m.idx); const cur=(state.draftSlots[idx]&&state.draftSlots[idx].team)||teamNames()[0];
-    const nm=(state.draftSlots[idx]&&state.draftSlots[idx].name)||`픽 #${idx+1}`;
-    return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>팀 변경</h3><p class="msub">${nm}</p>
-      <div class="sheet-team-grid">${teamNames().map(tm=>`<button type="button" class="${cur===tm?'on':''}" data-act="set-slot-team" data-idx="${idx}" data-team="${tm}"><span class="dot ${tm}" style="width:14px;height:14px;border-radius:50%;display:inline-block;background:${tm==='RED'?'#dc2626':tm==='BLUE'?'#2563eb':tm==='YELLOW'?'#EAB308':'#4b5563'}"></span>TEAM ${tm}</button>`).join('')}</div>
-      </div></div>`;
-  }
   if(m.type==='player-sheet'){
     const isCoach=state.coaches[m.team]===m.name;
     return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>${m.name}${isCoach?' · 감독':''}</h3><p class="msub"><span class="t-${m.team}">TEAM ${m.team}</span> · 로스터 작업</p>
@@ -1106,8 +1108,8 @@ function bind(){
     else if(act==='random-assign'){randomAssignNonCoaches(); render();}
     else if(act==='clear-draft-names'){state.draftSlots.forEach(s=>s.name=null); applyDraftSlotsToTeams(); rebuildDraftSlots(); render();}
     else if(act==='cycle-team'){cycleSlotTeam(Number(el.dataset.idx),1); render();}
-    else if(act==='open-team-sheet'){state.modal={type:'team-sheet',idx:Number(el.dataset.idx)}; render();}
-    else if(act==='set-slot-team'){const idx=Number(el.dataset.idx); const tm=el.dataset.team; if(state.draftSlots[idx]){state.draftSlots[idx].team=tm; applyDraftSlotsToTeams();} state.modal=null; toast(`픽 #${idx+1} → ${tm}`); render();}
+    else if(act==='slot-up'){moveSlot(Number(el.dataset.idx),-1); render();}
+    else if(act==='slot-down'){moveSlot(Number(el.dataset.idx),1); render();}
     else if(act==='draft-add'){state.modal={type:'draft-add',team:el.dataset.team}; render();}
     else if(act==='draft-add-target'){state.modal={...state.modal,team:el.dataset.team}; render();}
     else if(act==='do-draft-add'){const name=el.dataset.name; const to=el.dataset.to||state.modal.team; if(!state.attending.includes(name)) state.attending.push(name); movePlayerToTeam(name,to); state.modal=null; toast(`${name} → ${to}`); render();}
@@ -1265,12 +1267,6 @@ async function captureResultsShot(){
   }
 }
 function bindDraftDnD(){
-  document.querySelectorAll('.draft-row[draggable]').forEach(row=>{
-    row.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/draft-idx', row.dataset.idx); row.classList.add('dragging');});
-    row.addEventListener('dragend',()=>row.classList.remove('dragging'));
-    row.addEventListener('dragover',e=>e.preventDefault());
-    row.addEventListener('drop',e=>{e.preventDefault(); const from=Number(e.dataTransfer.getData('text/draft-idx')); const to=Number(row.dataset.idx); if(!Number.isNaN(from)&&!Number.isNaN(to)){reorderDraftSlot(from,to); render();}});
-  });
   document.querySelectorAll('.team-stat-card .names > span[data-player][draggable]').forEach(el=>{
     el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/player', el.dataset.player); e.dataTransfer.setData('text/from-team', el.dataset.team);});
   });
