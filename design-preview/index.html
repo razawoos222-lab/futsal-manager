@@ -70,8 +70,8 @@
     <header>
       <img src="assets/jmfc-logo.png" alt="JMFC" />
       <h1>JMFC FOOTBALL<br>HTML 목업 모음</h1>
-    <span class="ver">최신 v6.6</span>
-    <p class="sub">팀 순위 표 헤더 가로 · 축약 라벨</p>
+    <span class="ver">UI Fix · 2026.11.15</span>
+    <p class="sub">MVP 상단정렬 · C 표시 · 버튼 라벨/글씨크기 통일</p>
     </header>
 
     <p class="hint">
@@ -80,14 +80,24 @@
     </p>
 
     <section>
-      <h2>메인 — 꼭 볼 것</h2>
-      <a class="card primary" href="jmfc-mockup.html?v=6.6">
-        <h3>📱 화면 목업 전체 (01–13 + 06-B)</h3>
-        <p>팀 순위 표 헤더 가로 · 경기/득/실/득실 축약</p>
+      <h2>메인 — 꼭 볼 것 (UI Fix)</h2>
+      <a class="card primary" href="jmfc-session/index.html?v=uifix">
+        <h3>📱 세션 목업 (클릭 가능 · 결과/경기)</h3>
+        <p>MVP 상단고정 · 선수표 C 표시 · 경기의 시작 / 경기시작 · 글씨크기 통일</p>
+        <span class="tag">jmfc-session · UI Fix</span>
+      </a>
+      <a class="card primary" href="jmfc-compact/index.html?v=uifix">
+        <h3>📱 컴팩트 세션 목업</h3>
+        <p>동일 UI Fix 반영 · 새 경기시작 → 경기의 시작</p>
+        <span class="tag">jmfc-compact · UI Fix</span>
+      </a>
+      <a class="card" href="jmfc-mockup.html?v=6.6">
+        <h3>화면 목업 전체 (01–13 + 06-B)</h3>
+        <p>정적 플로우 목업 · v6.6</p>
         <span class="tag">jmfc-mockup.html · v6.6</span>
       </a>
-      <a class="card primary" href="jmfc-process.html?v=6.4">
-        <h3>↔️ 전체 프로세스 Flow (STEP 01–12)</h3>
+      <a class="card" href="jmfc-process.html?v=6.4">
+        <h3>전체 프로세스 Flow (STEP 01–12)</h3>
         <p>v6.4 TEAM RED/BLUE/YELLOW 명칭 통일</p>
         <span class="tag">jmfc-process.html · v6.4</span>
       </a>
@@ -108,11 +118,13 @@
     </section>
 
     <section>
-      <h2>v6.6 반영 내용 요약</h2>
+      <h2>UI Fix 반영 내용</h2>
       <div class="changelog">
         <ul>
-          <li>팀 순위 표: 헤더 <strong>전부 가로</strong> · 경기/득/실/득실 축약</li>
-          <li>열 간격 <code>colgroup</code>으로 정렬</li>
+          <li>ATTACK / BEST COACH / DEFENSE: 세로 가운데정렬 제거 → <strong>상단 고정 + 동일 높이</strong></li>
+          <li>선수기록·라인업: <code>…</code> 제거, 득/도/수/선/MP 폭 축소 → <strong>C</strong> 표시</li>
+          <li>경기선택 CTA → <strong>경기의 시작</strong> · 타이머 → <strong>경기시작</strong></li>
+          <li>전체세션종료·기록리셋 글씨크기 통일</li>
         </ul>
       </div>
     </section>
