@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC compact UI MOCKUP · offline playable · v12-draft-tap-roster -->
+<!-- JMFC compact UI MOCKUP · offline playable · v12b-toast-random-lineup -->
 <head>
   
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC · FORM/CLUB 목업 v12</title>
+  <title>JMFC · FORM/CLUB 목업 v12b</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -304,7 +304,7 @@
     .timeline{max-height:160px;overflow-y:auto;font-size:0.78rem;line-height:1.45;margin-top:10px;letter-spacing:0}
     .timeline li{border-bottom:1px solid rgba(148,163,184,.35);padding:7px 0;list-style:none;font-weight:700}
     .hint{font-size:0.7rem;color:var(--muted);text-align:center;margin:8px 0 4px;line-height:1.45;letter-spacing:0}
-    .toast{position:absolute;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%) translateY(12px);background:rgba(17,24,39,.94);color:#fff;padding:12px 16px;border-radius:14px;font-weight:700;font-size:0.86rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;max-width:calc(100% - 28px);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);letter-spacing:0;border:1px solid rgba(255,255,255,.12)}
+    .toast{position:absolute;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%) translateY(12px);background:rgba(17,24,39,.94);color:#fff;padding:14px 18px;border-radius:14px;font-weight:700;font-size:0.9rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;width:max-content;max-width:calc(100% - 24px);min-width:min(260px,calc(100% - 24px));text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);letter-spacing:0;border:1px solid rgba(255,255,255,.12);white-space:normal;overflow-wrap:anywhere;word-break:keep-all;line-height:1.45}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + var(--safe-b));z-index:100}
     .modal-card{width:100%;max-width:420px;max-height:min(78dvh,640px);overflow:auto;background:#fff;border-radius:22px 22px 18px 18px;padding:18px 16px 16px;box-shadow:0 -8px 40px rgba(15,23,42,.25);position:relative}
@@ -555,7 +555,7 @@ let audioCtx=null;
 function teamNames(){return TEAM_ALL.slice(0,Number(state.teamMode)||3);}
 function activeDetailOrder(){return DETAIL_ORDER.filter(t=>teamNames().includes(t));}
 function activeStandingsOrder(){return STANDINGS_ORDER.filter(t=>teamNames().includes(t));}
-function toast(msg,ms){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms||2600);}
+function toast(msg,ms){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms||3800);}
 function go(screen){if(state.screen==='match'&&screen!=='match') stopTimer(); render._jumpTop=true;state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;state.drawerOpen=false;persistState();render();}
 function ensureStat(name,homeTeam){if(!state.playerStats[name])state.playerStats[name]={goal:0,assist:0,defense:0,save:0,wins:0,draws:0,losses:0,homeTeam:homeTeam||null};if(homeTeam&&!state.playerStats[name].homeTeam)state.playerStats[name].homeTeam=homeTeam;return state.playerStats[name];}
 function snapshotBaseTeams(){state.baseTeams=JSON.parse(JSON.stringify(state.teams));}
@@ -721,6 +721,7 @@ function navRow(prev,next,nextDisabled,nextAct,nextLabel,asStart){const na=nextA
 function formatMvpNames(names){if(!names||!names.length)return '-';const lines=[];for(let i=0;i<names.length;i+=2)lines.push(names.slice(i,i+2).join(' · '));return lines.slice(0,3).join('<br>');}
 
 function rosterOrdered(t){const coach=state.coaches[t]; const names=[...(state.teams[t]||[])]; if(!coach) return names; return [coach,...names.filter(n=>n!==coach)];}
+function shuffleNonCoachRosters(){teamNames().forEach(t=>{const coach=state.coaches[t];const rest=shuffle((state.teams[t]||[]).filter(n=>n!==coach));state.teams[t]=coach?[coach,...rest]:rest;});}
 function shuffleTeamRostersInPlace(){
   teamNames().forEach(t=>{
     const coach=state.coaches[t];
@@ -1110,7 +1111,7 @@ function bind(){
     else if(act==='do-draft-add'){const name=el.dataset.name; const to=el.dataset.to||state.modal.team; if(!state.attending.includes(name)) state.attending.push(name); movePlayerToTeam(name,to); state.modal=null; toast(`${name} → ${to}`); render();}
     else if(act==='draft-del'){state.modal={type:'draft-del',team:el.dataset.team}; render();}
     else if(act==='do-draft-del'){const name=el.dataset.name; const team=el.dataset.team; if(state.coaches[team]===name) return toast('감독은 삭제 불가'); state.teams[team]=(state.teams[team]||[]).filter(n=>n!==name); syncDraftSlotsFromTeams(); state.modal=null; toast(`${name} 삭제`); render();}
-    else if(act==='to-lineup'){applyDraftSlotsToTeams(); if(remainingPool().length) return toast('선수를 모두 배정하세요'); ensureCoachesInTeams(); Object.entries(state.teams).forEach(([tt,names])=>names.forEach(n=>ensureStat(n,tt))); ensureCoachesInTeams(); snapshotBaseTeams(); toast('픽 순서 그대로 라인업'); go('lineup');}
+    else if(act==='to-lineup'){applyDraftSlotsToTeams(); if(remainingPool().length) return toast('선수를 모두 배정하세요'); ensureCoachesInTeams(); Object.entries(state.teams).forEach(([tt,names])=>names.forEach(n=>ensureStat(n,tt))); ensureCoachesInTeams(); shuffleNonCoachRosters(); snapshotBaseTeams(); toast('라인업 순서 랜덤 섞음'); go('lineup');}
     else if(act==='toggle-play'){const t=el.dataset.team; if(state.playing.includes(t)) state.playing=state.playing.filter(x=>x!==t); else if(state.playing.length<2) state.playing.push(t); else toast('2팀만 선택'); render();}
     else if(act==='start-match'){if(state.playing.length!==2) return toast('2팀을 선택하세요'); restoreBaseTeams(); ensureCoachesInTeams(); const d=document.getElementById('duration'); if(d) state.duration=Number(d.value); state.secondsLeft=state.duration; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.matchTab='lineup'; state.matchLive=true; state.alerted2min=false; state.matchElapsedSec=0; stopTimer(); go('match');}
     else if(act==='resume-match'){if(state.playing.length!==2) return toast('재개할 경기가 없습니다'); ensureCoachesInTeams(); state.matchLive=true; go('match');}
