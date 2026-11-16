@@ -608,7 +608,7 @@ function hasSessionPin(){return !!loadSessionPin();}
 function pinMatches(code){const c=String(code||''); if(c===MASTER_PIN) return true; const pin=loadSessionPin(); return !!pin && c===pin;}
 function openPinModal(purpose,title,message){state.modal={type:'pin',purpose,title,message,digits:'',error:''}; render();}
 function openDraftEntryPin(){
-  if(!hasSessionPin()) openPinModal('set-pin','핀번호 설정','이번 세션 핀번호 4자리를 정하세요\n(세션 리셋 전까지 유지 · 마스터 0503)');
+  if(!hasSessionPin()) openPinModal('set-pin','핀번호 설정','이번 세션 핀번호 4자리를 정하세요<br>세션 리셋 전까지 유지');
   else openPinModal('enter-draft','드래프트 입장','핀번호 4자리를 누르세요');
 }
 function buildSessionPayload(){
