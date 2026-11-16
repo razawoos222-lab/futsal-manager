@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC compact UI MOCKUP · offline playable · v12b-toast-random-lineup -->
+<!-- JMFC compact UI MOCKUP · offline playable · v13-draft-plan-b -->
 <head>
   
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC · FORM/CLUB 목업 v12b</title>
+  <title>JMFC · FORM/CLUB 목업 v13</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -133,6 +133,24 @@
     .section-card{border:var(--glass-border);border-radius:18px;padding:12px;background:var(--glass);margin-bottom:12px;box-shadow:var(--raise-sm);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
     .section-card h3{font-size:0.88rem;font-weight:900;margin-bottom:8px;color:#111827;letter-spacing:0}
     .draft-board{display:flex;flex-direction:column;gap:10px}
+    .draft-top{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
+    .draft-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+    .draft-toggle .lab{font-size:0.88rem;font-weight:900;color:#111827}
+    .draft-toggle .sublab{display:block;font-size:0.72rem;font-weight:700;color:#64748b;margin-top:2px}
+    .toggle-sw{position:relative;width:52px;height:30px;border-radius:999px;border:none;background:#E5E7E9;cursor:pointer;flex-shrink:0;padding:0;font-family:inherit}
+    .toggle-sw.on{background:#20334D}
+    .toggle-sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .toggle-sw.on::after{transform:translateX(22px)}
+    .draft-team-picks{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+    .draft-team-pick{min-height:52px;border-radius:14px;border:2px solid var(--line);background:#fff;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;-webkit-tap-highlight-color:transparent}
+    .draft-team-pick .tn{font-size:0.78rem;font-weight:900;letter-spacing:0}
+    .draft-team-pick .cnt{font-size:0.72rem;font-weight:800;color:#64748b}
+    .draft-team-pick.on{border-color:#20334D;background:rgba(32,51,77,.08);box-shadow:0 0 0 2px rgba(32,51,77,.12)}
+    .draft-team-pick.RED.on{border-color:var(--red);background:rgba(217,75,64,.1)}
+    .draft-team-pick.BLUE.on{border-color:var(--blue);background:rgba(59,130,246,.1)}
+    .draft-team-pick.YELLOW.on{border-color:#ca8a04;background:rgba(234,179,8,.12)}
+    .draft-team-pick.BLACK.on{border-color:#4b5563;background:rgba(75,85,99,.12)}
+    .draft-team-pick.locked{opacity:.55}
     .draft-roster{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
     .draft-tile{display:grid;grid-template-columns:14px 26px 1fr;align-items:center;gap:0 8px;min-height:56px;padding:0 10px 0 0;border-radius:14px;background:#fff;border:1.5px solid var(--line);box-shadow:var(--raise-sm);overflow:hidden;cursor:pointer;font-family:inherit;text-align:left;width:100%;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     .draft-tile:active{transform:scale(.98)}
@@ -540,7 +558,7 @@ function statLabel(stat){return ({goal:'득점',assist:'도움',defense:'수비'
 const state={
   screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,
   teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),
-  draftSlots:[],
+  draftSlots:[],snakeMode:false,draftPickTeam:null,
   playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',
   score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],
   matchHistory:[],editingMatchId:null,
@@ -684,7 +702,7 @@ function saveSession(andNew){ensureCoachesInTeams();const best=coachLeaders()[0]
     });
   } else finish();
 }
-function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');persistState(true);render();}
+function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');persistState(true);render();}
 
 function seedNov7Base(){}
 function loadNov7(silent){toast('GAS 모드에서는 샘플 로드 없음');}
@@ -697,6 +715,11 @@ function rebuildDraftSlots(){const left=remainingPool();const keep=state.draftSl
 function applyDraftSlotsToTeams(){const base=emptyTeams();teamNames().forEach(t=>{const c=state.coaches[t];if(c)base[t].push(c);});state.draftSlots.forEach(s=>{if(s.name&&s.team&&!base[s.team].includes(s.name))base[s.team].push(s.name);});state.teams=base;ensureCoachesInTeams();}
 function syncDraftSlotsFromTeams(){const coaches=new Set(Object.values(state.coaches||{}));const picks=[];teamNames().forEach(t=>{(state.teams[t]||[]).forEach(n=>{if(!coaches.has(n)) picks.push({team:t,name:n});});});const left=state.attending.filter(n=>!coaches.has(n)&&!picks.some(p=>p.name===n));left.forEach((_,i)=>picks.push({team:snakeTeamAt(picks.length),name:null}));state.draftSlots=picks.map((s,i)=>({team:s.team||snakeTeamAt(i),name:s.name||null}));}
 function currentDraftIdx(){return state.draftSlots.findIndex(s=>!s.name);}
+function ensureDraftPickTeam(){const names=teamNames();if(!state.draftPickTeam||!names.includes(state.draftPickTeam)){const idx=currentDraftIdx();state.draftPickTeam=state.snakeMode?(idx>=0?snakeTeamAt(idx):names[0]):(names[0]);}return state.draftPickTeam;}
+function syncSnakePickTeam(){if(!state.snakeMode)return;const idx=currentDraftIdx();const names=teamNames();state.draftPickTeam=idx>=0?snakeTeamAt(idx):(names[0]);}
+function teamPickCounts(){const counts=Object.fromEntries(teamNames().map(t=>[t,0]));const coaches=new Set(Object.values(state.coaches||{}));teamNames().forEach(t=>{(state.teams[t]||[]).forEach(n=>{if(!coaches.has(n)) counts[t]++;});});return counts;}
+function assignDraftPlayer(name,team){let idx=currentDraftIdx();if(idx<0){rebuildDraftSlots();idx=currentDraftIdx();}if(idx<0){toast('모두 배정됨');return false;}state.draftSlots[idx].name=name;state.draftSlots[idx].team=team;applyDraftSlotsToTeams();if(state.snakeMode)syncSnakePickTeam();toast(`${name} → ${team}`);return true;}
+function unassignDraftPlayer(name){const before=state.draftSlots.findIndex(s=>s.name===name);if(before<0)return false;state.draftSlots=state.draftSlots.filter(s=>s.name!==name);applyDraftSlotsToTeams();rebuildDraftSlots();if(state.snakeMode)syncSnakePickTeam();toast(`${name} 픽 취소`);return true;}
 function cycleSlotTeam(idx,dir){const names=teamNames();const cur=state.draftSlots[idx].team;const i=Math.max(0,names.indexOf(cur));state.draftSlots[idx].team=names[(i+dir+names.length)%names.length];applyDraftSlotsToTeams(); toast(`픽 #${idx+1} → ${state.draftSlots[idx].team}`);}
 function moveSlot(idx,dir){const j=idx+dir;if(j<0||j>=state.draftSlots.length)return;const arr=state.draftSlots;const tmp=arr[idx];arr[idx]=arr[j];arr[j]=tmp;applyDraftSlotsToTeams();}
 function reorderDraftSlot(from,to){if(from===to||from<0||to<0)return;const arr=state.draftSlots;const [item]=arr.splice(from,1);arr.splice(to,0,item);applyDraftSlotsToTeams();}
@@ -753,8 +776,15 @@ function renderCoach(){const names=teamNames();Object.keys(state.coaches).forEac
 ${navRow('attendance',null,filled<names.length,'data-act="to-draft"','다음 →')}`;}
 
 function renderDraft(){applyDraftSlotsToTeams();const pool=remainingPool();const players=draftablePlayers();
+const active=ensureDraftPickTeam();const counts=teamPickCounts();
 const meta=new Map();state.draftSlots.forEach((s,i)=>{if(s.name)meta.set(s.name,{order:i+1,team:s.team,idx:i});});
 const next=currentDraftIdx();
+const teamBtns=teamNames().map(tm=>{
+  const on=active===tm?'on':'';
+  const locked=state.snakeMode&&active!==tm?'locked':'';
+  return `<button type="button" class="draft-team-pick ${tm} ${on} ${locked}" data-act="set-draft-team" data-team="${tm}" ${state.snakeMode&&active!==tm?'disabled':''}>
+  <span class="tn t-${tm}">TEAM ${tm}</span><span class="cnt">${counts[tm]}명</span></button>`;
+}).join('');
 const tiles=players.map(n=>{
   const m=meta.get(n);
   if(m)return `<button type="button" class="draft-tile picked" data-act="tap-draft-player" data-name="${n}">
@@ -764,8 +794,18 @@ const tiles=players.map(n=>{
   <span class="stripe"></span><span class="ord empty">·</span><span class="pname" title="${n}">${n}</span>
 </button>`;
 }).join('')||'<p class="sub">배정할 선수 없음</p>';
+const hint=state.snakeMode
+  ? `스네이크 ON · 다음 픽 #${next>=0?next+1:'완료'} → TEAM ${active} · 배정된 선수 탭=취소`
+  : `활성 팀 ${active}에 배정 · 배정된 선수 다시 탭=픽 취소 · 한 줄 2명`;
 return `<h2>드래프트</h2>
-<p class="draft-hint">탭 = 픽 순서(#${next>=0?next+1:'완료'}) · 다시 탭 = 팀 색 변경 · 한 줄 2명</p>
+<p class="draft-hint">${hint}</p>
+<div class="draft-top">
+  <div class="draft-toggle">
+    <div><span class="lab">스네이크 드래프트</span><span class="sublab">${state.snakeMode?'픽 순서로 팀이 자동 전환':'원하는 팀을 고른 뒤 선수 탭'}</span></div>
+    <button type="button" class="toggle-sw ${state.snakeMode?'on':''}" data-act="toggle-snake" aria-pressed="${state.snakeMode}" aria-label="스네이크 토글"></button>
+  </div>
+  <div class="draft-team-picks">${teamBtns}</div>
+</div>
 <div class="chip-row one-line draft-acts" style="grid-template-columns:1fr 1fr"><button type="button" class="mini neon lg" data-act="random-assign">랜덤 배정</button><button type="button" class="mini neon lg" data-act="clear-draft-names">배정 초기화</button></div>
 <div class="draft-board">
   <div class="section-card" style="margin:0"><h3>선수 명단 · ${meta.size}/${players.length} 배정</h3>
@@ -1094,17 +1134,17 @@ function bind(){
     else if(act==='to-coach'){if(state.attending.length<state.teamMode) return toast('인원 부족'); saveLastAttending(state.attending); state.coachPickTeam=teamNames()[0]; go('coach');}
     else if(act==='pick-slot'){state.coachPickTeam=el.dataset.team; render();}
     else if(act==='set-coach-name'){const n=el.dataset.name; const t=state.coachPickTeam||teamNames().find(x=>!state.coaches[x]); if(!t)return; Object.keys(state.coaches).forEach(k=>{if(state.coaches[k]===n) delete state.coaches[k];}); state.coaches[t]=n; ensureCoachesInTeams(); state.coachPickTeam=teamNames().find(x=>!state.coaches[x])||t; render();}
-    else if(act==='to-draft'){if(!teamNames().every(t=>state.coaches[t])) return toast('감독을 모두 지정하세요'); state.teams=emptyTeams(); teamNames().forEach(t=>{if(state.coaches[t]) state.teams[t].push(state.coaches[t]);}); ensureCoachesInTeams(); rebuildDraftSlots(); go('draft');}
-    else if(act==='random-assign'){randomAssignNonCoaches(); render();}
-    else if(act==='clear-draft-names'){state.draftSlots.forEach(s=>s.name=null); applyDraftSlotsToTeams(); rebuildDraftSlots(); render();}
+    else if(act==='to-draft'){if(!teamNames().every(t=>state.coaches[t])) return toast('감독을 모두 지정하세요'); state.teams=emptyTeams(); teamNames().forEach(t=>{if(state.coaches[t]) state.teams[t].push(state.coaches[t]);}); ensureCoachesInTeams(); rebuildDraftSlots(); state.draftPickTeam=state.snakeMode?snakeTeamAt(0):teamNames()[0]; go('draft');}
+    else if(act==='random-assign'){randomAssignNonCoaches(); if(state.snakeMode) syncSnakePickTeam(); render();}
+    else if(act==='clear-draft-names'){state.draftSlots.forEach(s=>s.name=null); applyDraftSlotsToTeams(); rebuildDraftSlots(); if(state.snakeMode) syncSnakePickTeam(); else state.draftPickTeam=teamNames()[0]; render();}
+    else if(act==='toggle-snake'){state.snakeMode=!state.snakeMode; if(state.snakeMode) syncSnakePickTeam(); else ensureDraftPickTeam(); toast(state.snakeMode?'스네이크 ON':'스네이크 OFF'); render();}
+    else if(act==='set-draft-team'){if(state.snakeMode) return toast('스네이크 ON · 팀이 자동입니다'); state.draftPickTeam=el.dataset.team; render();}
     else if(act==='tap-draft-player'){
       const name=el.dataset.name;
-      let idx=state.draftSlots.findIndex(s=>s.name===name);
-      if(idx>=0){cycleSlotTeam(idx,1); render(); return;}
-      idx=currentDraftIdx();
-      if(idx<0){rebuildDraftSlots(); idx=currentDraftIdx();}
-      if(idx<0) return toast('모두 배정됨');
-      state.draftSlots[idx].name=name; applyDraftSlotsToTeams(); render();
+      const idx=state.draftSlots.findIndex(s=>s.name===name);
+      if(idx>=0){unassignDraftPlayer(name); render(); return;}
+      const team=ensureDraftPickTeam();
+      assignDraftPlayer(name, team); render();
     }
     else if(act==='draft-add'){state.modal={type:'draft-add',team:el.dataset.team}; render();}
     else if(act==='draft-add-target'){state.modal={...state.modal,team:el.dataset.team}; render();}
