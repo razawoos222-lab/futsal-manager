@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC compact UI MOCKUP · offline playable · v15-ko-pin-autosave -->
+<!-- JMFC compact UI MOCKUP · offline playable · v16-draft-polish-pin -->
 <head>
   
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC · FORM/CLUB 목업 v15</title>
+  <title>JMFC · FORM/CLUB 목업 v16</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -142,28 +142,38 @@
     .toggle-sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
     .toggle-sw.on::after{transform:translateX(22px)}
     .draft-team-picks{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
-    .draft-team-pick{min-height:52px;border-radius:14px;border:2px solid var(--line);background:#fff;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;-webkit-tap-highlight-color:transparent}
-    .draft-team-pick .tn{font-size:0.78rem;font-weight:900;letter-spacing:0}
-    .draft-team-pick .cnt{font-size:0.72rem;font-weight:800;color:#64748b}
-    .draft-team-pick.on{border-color:#20334D;background:rgba(32,51,77,.08);box-shadow:0 0 0 2px rgba(32,51,77,.12)}
-    .draft-team-pick.RED.on{border-color:var(--red);background:rgba(217,75,64,.1)}
-    .draft-team-pick.BLUE.on{border-color:var(--blue);background:rgba(59,130,246,.1)}
-    .draft-team-pick.YELLOW.on{border-color:#ca8a04;background:rgba(234,179,8,.12)}
-    .draft-team-pick.BLACK.on{border-color:#4b5563;background:rgba(75,85,99,.12)}
-    .draft-team-pick.locked{opacity:.55}
-    .draft-roster{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
-    .draft-tile{display:grid;grid-template-columns:14px 26px 1fr;align-items:center;gap:0 8px;min-height:56px;padding:0 10px 0 0;border-radius:14px;background:#fff;border:1.5px solid var(--line);box-shadow:var(--raise-sm);overflow:hidden;cursor:pointer;font-family:inherit;text-align:left;width:100%;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    .draft-team-pick{min-height:48px;border-radius:14px;border:1px solid var(--line);background:#fff;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;-webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s}
+    .draft-team-pick .swatch{width:18px;height:4px;border-radius:999px;background:#CBD5E1}
+    .draft-team-pick.RED .swatch{background:var(--red)}
+    .draft-team-pick.BLUE .swatch{background:var(--blue)}
+    .draft-team-pick.YELLOW .swatch{background:var(--yellow-fill)}
+    .draft-team-pick.BLACK .swatch{background:#4b5563}
+    .draft-team-pick .tn{font-size:0.72rem;font-weight:900;letter-spacing:0;color:#24272B}
+    .draft-team-pick .cnt{font-size:0.68rem;font-weight:800;color:#64748b}
+    .draft-team-pick.on{border-color:#24272B;background:#24272B}
+    .draft-team-pick.on .tn{color:#C6F135}
+    .draft-team-pick.on .cnt{color:rgba(198,241,53,.75)}
+    .draft-team-pick.on .swatch{background:#C6F135}
+    .draft-team-pick.locked{opacity:.4}
+    .draft-roster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+    .draft-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:14px 6px 12px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:none;cursor:pointer;font-family:inherit;text-align:center;width:100%;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     .draft-tile:active{transform:scale(.98)}
-    .draft-tile.picked{border-color:#20334D}
-    .draft-tile .stripe{align-self:stretch;width:14px;min-height:56px;background:#E5E7E9}
-    .draft-tile .stripe.RED{background:var(--red)}
-    .draft-tile .stripe.BLUE{background:var(--blue)}
-    .draft-tile .stripe.YELLOW{background:var(--yellow-fill)}
-    .draft-tile .stripe.BLACK{background:#4b5563}
-    .draft-tile .ord{font-size:0.85rem;font-weight:900;color:#20334D;text-align:center;min-width:1.2em}
-    .draft-tile .ord.empty{color:#9ca3af;font-weight:800}
-    .draft-tile .pname{font-size:0.95rem;font-weight:900;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-    .draft-tile.unpicked .pname{color:#4b5563;font-weight:800}
+    .draft-tile.unpicked{background:#F8F9FA;border-color:#D1D5DB}
+    .draft-tile.picked{background:#fff;border-color:#24272B}
+    .draft-tile.picked.tm-RED{background:linear-gradient(165deg,rgba(217,75,64,.10),#fff 48%);border-color:rgba(217,75,64,.28)}
+    .draft-tile.picked.tm-BLUE{background:linear-gradient(165deg,rgba(37,99,235,.10),#fff 48%);border-color:rgba(37,99,235,.28)}
+    .draft-tile.picked.tm-YELLOW{background:linear-gradient(165deg,rgba(234,179,8,.14),#fff 48%);border-color:rgba(202,138,4,.32)}
+    .draft-tile.picked.tm-BLACK{background:linear-gradient(165deg,rgba(36,39,43,.08),#fff 48%);border-color:rgba(36,39,43,.28)}
+    .draft-tile .ord{position:absolute;top:7px;left:8px;font-size:0.62rem;font-weight:900;color:#94A3B8;letter-spacing:0}
+    .draft-tile.picked .ord{color:#24272B}
+    .draft-tile .ord.empty{opacity:.35}
+    .draft-tile .pname{font-size:0.84rem;font-weight:900;color:#24272B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;letter-spacing:0}
+    .draft-tile.unpicked .pname{color:#64748B;font-weight:800}
+    .draft-tile .team-tag{display:inline-flex;align-items:center;justify-content:center;min-width:1.6rem;padding:2px 7px;border-radius:999px;font-size:0.58rem;font-weight:900;letter-spacing:.02em;background:#E5E7E9;color:#64748B}
+    .draft-tile.picked.tm-RED .team-tag{background:rgba(217,75,64,.92);color:#fff}
+    .draft-tile.picked.tm-BLUE .team-tag{background:rgba(37,99,235,.92);color:#fff}
+    .draft-tile.picked.tm-YELLOW .team-tag{background:rgba(202,138,4,.95);color:#fff}
+    .draft-tile.picked.tm-BLACK .team-tag{background:#24272B;color:#C6F135}
     .draft-hint{font-size:0.78rem;font-weight:800;color:#64748b;margin:0 0 8px;line-height:1.35}
     .draft-acts .mini.neon.lg{min-height:48px;font-size:0.95rem;font-weight:900;padding:12px 10px;background:#24272B!important;color:#C6F135!important;border-color:#24272B!important;border-radius:999px}
     .team-chip{display:inline-flex;align-items:center;gap:4px;border:1.5px dashed #64748b;background:#f8fafc;border-radius:999px;padding:4px 8px 4px 6px;cursor:pointer;font-family:inherit;min-height:28px}
@@ -783,7 +793,7 @@ function saveSession(andNew){
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));const map=readArchive();if(payload.sessionDate){map[payload.sessionDate]=payload;writeArchive(map);}localStorage.setItem('jmfc_winning_coaches_v1',JSON.stringify(payload.winningCoaches||[]));}catch(_){ }
   saveLastAttending(state.attending);
   toast(IS_GAS?'저장 중… 시트에 올리는 중':'로컬 저장 중…', 10000);
-  const finish=()=>{saveBusy=false; toast(andNew?`저장 완료 · ${formatDateLabel(payload.sessionDate)} · 새 세션`:`저장 완료 · ${formatDateLabel(payload.sessionDate)}`,4500); if(andNew) softNewSession(false); else persistState(true);};
+  const finish=()=>{saveBusy=false; if(andNew){ toast(`저장 완료 · ${formatDateLabel(payload.sessionDate)}`,3500); softNewSession(false); } else { toast(`저장 완료 · ${formatDateLabel(payload.sessionDate)}`,4500); persistState(true); } };
   const fail=(msg)=>{saveBusy=false; toast(msg||'저장 실패',5000);};
   if(IS_GAS){
     gasRun('updateAndArchiveSession',[payload],{maxRetries:4,silent:true}).then(res=>{
@@ -796,7 +806,7 @@ function saveSession(andNew){
     });
   } else { setTimeout(finish, 280); }
 }
-function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,sessionPin:null,draftCompleted:false,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});clearSessionPinStore();toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작 · 핀은 드래프트에서 다시 설정');persistState(true);render();}
+function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,sessionPin:null,draftCompleted:false,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});clearSessionPinStore();toast(clearStorage?'기록 리셋 · 새 세션 · 핀 다시 설정':'새 세션 · 드래프트에서 핀 다시 설정',4500);persistState(true);render();}
 
 function seedNov7Base(){}
 function loadNov7(silent){toast('GAS 모드에서는 샘플 로드 없음');}
@@ -874,24 +884,25 @@ function renderDraft(){applyDraftSlotsToTeams();const pool=remainingPool();const
 const active=ensureDraftPickTeam();const counts=teamPickCounts();
 const meta=new Map();state.draftSlots.forEach((s,i)=>{if(s.name)meta.set(s.name,{order:i+1,team:s.team,idx:i});});
 const next=currentDraftIdx();
+const teamShort={RED:'RED',BLUE:'BLUE',YELLOW:'YEL',BLACK:'BLK'};
 const teamBtns=teamNames().map(tm=>{
   const on=active===tm?'on':'';
   const locked=state.snakeMode&&active!==tm?'locked':'';
   return `<button type="button" class="draft-team-pick ${tm} ${on} ${locked}" data-act="set-draft-team" data-team="${tm}" ${state.snakeMode&&active!==tm?'disabled':''}>
-  <span class="tn t-${tm}">TEAM ${tm}</span><span class="cnt">${counts[tm]}명</span></button>`;
+  <span class="swatch" aria-hidden="true"></span><span class="tn">TEAM ${tm}</span><span class="cnt">${counts[tm]}명</span></button>`;
 }).join('');
 const tiles=players.map(n=>{
   const m=meta.get(n);
-  if(m)return `<button type="button" class="draft-tile picked" data-act="tap-draft-player" data-name="${n}">
-  <span class="stripe ${m.team}"></span><span class="ord">${m.order}</span><span class="pname" title="${n}">${n}</span>
+  if(m)return `<button type="button" class="draft-tile picked tm-${m.team}" data-act="tap-draft-player" data-name="${n}">
+  <span class="ord">${m.order}</span><span class="pname" title="${n}">${n}</span><span class="team-tag">${teamShort[m.team]||m.team}</span>
 </button>`;
   return `<button type="button" class="draft-tile unpicked" data-act="tap-draft-player" data-name="${n}">
-  <span class="stripe"></span><span class="ord empty">·</span><span class="pname" title="${n}">${n}</span>
+  <span class="ord empty">·</span><span class="pname" title="${n}">${n}</span><span class="team-tag">대기</span>
 </button>`;
 }).join('')||'<p class="sub">배정할 선수 없음</p>';
 const hint=state.snakeMode
-  ? `스네이크 ON · 다음 픽 #${next>=0?next+1:'완료'} → TEAM ${active} · 배정된 선수 탭=취소`
-  : `활성 팀 ${active}에 배정 · 배정된 선수 다시 탭=픽 취소 · 한 줄 2명`;
+  ? `스네이크 ON · 다음 #${next>=0?next+1:'완료'} → ${active} · 배정 탭=취소 · 한 줄 3명`
+  : `활성 ${active} · 탭=배정 · 다시 탭=취소 · 한 줄 3명`;
 return `<h2>드래프트</h2>
 <p class="draft-hint">${hint}</p>
 <div class="draft-top">
