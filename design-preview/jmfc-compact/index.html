@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC compact UI MOCKUP · offline playable · v17-draft-glow-yellow -->
+<!-- JMFC compact UI MOCKUP · offline playable · v18-border-mvp-fix -->
 <head>
   
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC · FORM/CLUB 목업 v17</title>
+  <title>JMFC · FORM/CLUB 목업 v18</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -92,7 +92,7 @@
     .hist-panel[hidden],.timeline-panel[hidden]{display:none!important}
     .shot-host{position:fixed;left:-9999px;top:0;width:390px;background:#fff;padding:16px;z-index:-1}
     .results-compact .mvp-row{gap:6px;margin-bottom:8px}
-    .results-compact .mvp-row .result-hero{height:118px;min-height:118px;max-height:118px;padding:10px 4px}
+    .results-compact .mvp-row .result-hero{height:118px;min-height:118px;max-height:118px;padding:10px 4px 8px}
     .results-compact .award-g{gap:6px;margin-bottom:8px}
     .results-compact .award{padding:8px;font-size:0.7rem}
     .results-compact .result-card{padding:8px;margin-bottom:8px}
@@ -164,10 +164,10 @@
     .draft-tile:active{transform:scale(.98)}
     .draft-tile.unpicked{background:#F8F9FA;border-color:#D1D5DB;box-shadow:none}
     .draft-tile.picked{background:#fff}
-    .draft-tile.picked.tm-RED{border-color:var(--red);box-shadow:0 0 0 1.5px rgba(225,29,72,.35),0 0 12px rgba(225,29,72,.45)}
-    .draft-tile.picked.tm-BLUE{border-color:var(--blue);box-shadow:0 0 0 1.5px rgba(37,99,235,.35),0 0 12px rgba(37,99,235,.45)}
-    .draft-tile.picked.tm-YELLOW{border-color:var(--yellow-fill);box-shadow:0 0 0 1.5px rgba(245,184,0,.45),0 0 14px rgba(245,184,0,.55)}
-    .draft-tile.picked.tm-BLACK{border-color:#24272B;box-shadow:0 0 0 1.5px rgba(36,39,43,.28),0 0 12px rgba(36,39,43,.35)}
+    .draft-tile.picked.tm-RED{border-color:var(--red);box-shadow:none}
+    .draft-tile.picked.tm-BLUE{border-color:var(--blue);box-shadow:none}
+    .draft-tile.picked.tm-YELLOW{border-color:var(--yellow-fill);box-shadow:none}
+    .draft-tile.picked.tm-BLACK{border-color:#24272B;box-shadow:none}
     .draft-tile .ord{position:absolute;top:5px;left:7px;font-size:0.6rem;font-weight:900;color:#94A3B8;letter-spacing:0;line-height:1}
     .draft-tile.picked .ord{color:#64748B}
     .draft-tile .ord.empty{opacity:.35}
@@ -283,9 +283,10 @@
     .result-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
     .nav-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
     .mvp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch}
-    .mvp-row .result-hero{padding:14px 6px;min-width:0;height:128px;min-height:128px;max-height:128px;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;box-sizing:border-box}
-    .mvp-row .eyebrow{font-size:calc(0.72rem + 1pt);letter-spacing:0;white-space:nowrap;text-align:center;flex-shrink:0;font-family:inherit}
-    .mvp-row .mvp-names{font-size:calc(0.78rem + 1pt) !important;margin-top:8px;white-space:normal;overflow:hidden;line-height:1.35;font-weight:900;text-align:center;max-height:3.6em;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+    .mvp-row .result-hero{padding:12px 6px 10px;min-width:0;height:128px;min-height:128px;max-height:128px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;overflow:hidden;box-sizing:border-box}
+    .mvp-row .eyebrow{font-size:calc(0.72rem + 1pt);letter-spacing:0;white-space:nowrap;text-align:center;flex-shrink:0;font-family:inherit;height:1.35em;line-height:1.35;margin:0 0 8px;display:flex;align-items:center;justify-content:center}
+    .mvp-row .mvp-names{font-size:calc(0.78rem + 1pt) !important;margin-top:0;white-space:normal;overflow:hidden;line-height:1.35;font-weight:900;text-align:center;flex:1;width:100%;display:flex;align-items:flex-start;justify-content:center;min-height:0}
+    .mvp-row .mvp-names > span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;width:100%}
     .result-hero{padding:12px 8px;border-radius:16px;background:linear-gradient(160deg,#0c0c0e,#1a1a22 55%,#121218);border:1px solid #c9a22755;box-shadow:none;min-height:0}
     .eyebrow{font-family:inherit;font-size:calc(0.78rem + 1pt);font-weight:900;letter-spacing:0;color:#f5e6b8;text-align:center}
     .mvp-names{text-align:center;font-size:calc(0.82rem + 1pt);font-weight:900;color:#fff;margin-top:8px;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;letter-spacing:0}
@@ -1087,10 +1088,10 @@ function coachLeaders(){return Object.entries(state.coaches).map(([team,name])=>
 function renderResults(){
   const atk=topList('atk'), dfn=topList('dfn'), coach=coachLeaders();
   const mvpCard=(list,eyebrow)=>{
-    if(!list.length) return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names">-</div></div>`;
+    if(!list.length) return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names"><span>-</span></div></div>`;
     const top=list[0].v; const arr=list.filter(x=>x.v===top).map(x=>x.name);
     const names=formatMvpNames(arr);
-    return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names" title="${arr.join(' · ')}">${names||'-'}</div></div>`;
+    return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names" title="${arr.join(' · ')}"><span>${names||'-'}</span></div></div>`;
   };
   const topAward=(kind,label)=>{
     const list=topList(kind); if(!list.length) return `<div class="award"><b>${label} -</b><span class="award-names">-</span></div>`;
@@ -1119,7 +1120,6 @@ ${standingsTableHtml()}
 ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','class="result-card stats-card')).join('')}
 </div>
 </div>
-${(()=>{const rows=listSavedSessions(); if(!rows.length) return `<button type="button" class="collapse-toggle" data-act="toggle-hist"><span>지난 세션 없음</span><span class="chev"> </span></button>`; return `<button type="button" class="collapse-toggle" data-act="toggle-hist"><span>지난 세션 ${rows.length}개</span><span class="chev">${state.histOpen?'접기 ▲':'펼치기 ▼'}</span></button><div class="hist-panel" ${state.histOpen?'':'hidden'}><p class="sub">날짜를 탭하면 그 세션 결과로 전환</p><div class="past-sessions">${rows.map(p=>{const n=(p.matchHistory||[]).length; const att=(p.attending||[]).length; const on=p.sessionDate===state.sessionDate?' on':''; return `<button type="button" class="past-btn${on}" data-act="do-load-session" data-date="${p.sessionDate}"><b>${formatDateLabel(p.sessionDate)}</b><span>${p.teamMode||'?'}팀 · 경기 ${n}회 · 참석 ${att}명</span></button>`;}).join('')}</div></div>`;})()}
 <div class="result-btns"><button class="btn btn-cta" data-act="shot-results">결과 스샷 2장 저장</button><button class="btn btn-green" data-act="go" data-screen="edit">기록 수정하기</button><button class="btn btn-cta" data-act="save-new">기록 저장 & NEW 세션</button><button class="btn btn-danger btn-end-session" data-act="reset-new">기록 리셋 & NEW 세션</button></div>
 <div class="nav-row"><button class="btn btn-sec" data-act="go" data-screen="${state.matchLive?'match':'matchSelect'}">← 이전</button><button class="btn btn-sec" data-act="toggle-drawer">메뉴</button></div>`;
 }
