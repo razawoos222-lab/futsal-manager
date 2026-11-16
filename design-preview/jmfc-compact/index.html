@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC compact UI MOCKUP · offline playable · v13-draft-plan-b -->
+<!-- JMFC compact UI MOCKUP · offline playable · v14-pin-shots-labels -->
 <head>
   
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JMFC · FORM/CLUB 목업 v13</title>
+  <title>JMFC · FORM/CLUB 목업 v14</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -322,6 +322,21 @@
     .timeline{max-height:160px;overflow-y:auto;font-size:0.78rem;line-height:1.45;margin-top:10px;letter-spacing:0}
     .timeline li{border-bottom:1px solid rgba(148,163,184,.35);padding:7px 0;list-style:none;font-weight:700}
     .hint{font-size:0.7rem;color:var(--muted);text-align:center;margin:8px 0 4px;line-height:1.45;letter-spacing:0}
+
+    .pin-dots{display:flex;justify-content:center;gap:10px;margin:12px 0 16px}
+    .pin-dots span{width:14px;height:14px;border-radius:50%;border:2px solid #20334D;background:transparent}
+    .pin-dots span.on{background:#20334D}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto}
+    .pin-pad button{min-height:52px;border-radius:14px;border:1px solid var(--line);background:#F3F4F6;font-size:1.25rem;font-weight:900;font-family:inherit;cursor:pointer;color:#111}
+    .pin-pad button.ghost{background:#fff;color:#64748b;font-size:0.85rem}
+    .pin-err{color:#D94B40;font-size:0.8rem;font-weight:800;text-align:center;min-height:1.2em;margin-top:8px}
+    .shot-light,.shot-light *{color-scheme:light !important}
+    .shot-light{background:#ffffff !important;color:#111827 !important;padding:8px !important}
+    .shot-light .result-card,.shot-light .result-hero,.shot-light .award,.shot-light .mvp-mini{background:#fff !important}
+    .shot-light table.data{font-size:0.92rem}
+    .shot-light .mvp-row .result-hero{height:128px;min-height:128px;max-height:128px}
+    .shot-light h2{font-size:1.2rem !important}
+    .shot-light h3{font-size:1rem !important}
     .toast{position:absolute;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%) translateY(12px);background:rgba(17,24,39,.94);color:#fff;padding:14px 18px;border-radius:14px;font-weight:700;font-size:0.9rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;width:max-content;max-width:calc(100% - 24px);min-width:min(260px,calc(100% - 24px));text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);letter-spacing:0;border:1px solid rgba(255,255,255,.12);white-space:normal;overflow-wrap:anywhere;word-break:keep-all;line-height:1.45}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + var(--safe-b));z-index:100}
@@ -515,6 +530,8 @@ function applyServerState(s){
   if(!state.coaches) state.coaches={};
   if(!state.attending) state.attending=[];
   if(!state.matchHistory) state.matchHistory=[];
+  if(!state.sessionPin) ensureSessionPin(false);
+  if(typeof state.draftCompleted!=='boolean') state.draftCompleted=false;
   state.modal=null; state.timerRunning=false;
   ensureCoachesInTeams();
   // 타이머 중 원격 덮어쓰기로 시계가 튀지 않게
@@ -558,7 +575,7 @@ function statLabel(stat){return ({goal:'득점',assist:'도움',defense:'수비'
 const state={
   screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,
   teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),
-  draftSlots:[],snakeMode:false,draftPickTeam:null,
+  draftSlots:[],snakeMode:false,draftPickTeam:null,sessionPin:null,draftCompleted:false,
   playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',
   score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],
   matchHistory:[],editingMatchId:null,
@@ -574,6 +591,61 @@ function teamNames(){return TEAM_ALL.slice(0,Number(state.teamMode)||3);}
 function activeDetailOrder(){return DETAIL_ORDER.filter(t=>teamNames().includes(t));}
 function activeStandingsOrder(){return STANDINGS_ORDER.filter(t=>teamNames().includes(t));}
 function toast(msg,ms){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms||3800);}
+
+const MASTER_PIN='0503';
+const PIN_STORE_KEY='jmfc_session_pin_v1';
+function genSessionPin(){return String(Math.floor(Math.random()*10000)).padStart(4,'0');}
+function persistSessionPin(){try{localStorage.setItem(PIN_STORE_KEY,JSON.stringify({pin:state.sessionPin,date:state.sessionDate,draftCompleted:!!state.draftCompleted}));}catch(_){}}
+function ensureSessionPin(announce){
+  if(!state.sessionPin||String(state.sessionPin).length!==4){
+    try{const saved=JSON.parse(localStorage.getItem(PIN_STORE_KEY)||'null'); if(saved&&saved.pin&&String(saved.pin).length===4&&saved.date===state.sessionDate){state.sessionPin=String(saved.pin); if(saved.draftCompleted) state.draftCompleted=true;}}catch(_){}
+  }
+  if(!state.sessionPin||String(state.sessionPin).length!==4){ state.sessionPin=genSessionPin(); }
+  persistSessionPin();
+  if(announce) toast('세션 PIN '+state.sessionPin+' (마스터 0503)', 5000);
+  return state.sessionPin;
+}
+function pinMatches(code){const c=String(code||''); return c===MASTER_PIN || c===String(state.sessionPin||'');}
+function openPinModal(purpose,title,message){state.modal={type:'pin',purpose,title,message,digits:'',error:''}; render();}
+function payloadHasLineup(p){
+  if(!p) return false;
+  const teams=p.baseTeams||p.teams||{};
+  const coaches=p.coaches||{};
+  let n=0; Object.entries(teams).forEach(([tm,names])=>{(names||[]).forEach(x=>{if(x&&x!==coaches[tm]) n++;});});
+  if(n>0) return true;
+  if(p.draftCompleted) return true;
+  return (p.draftSlots||[]).some(s=>s&&s.name);
+}
+function findLineupConflict(date){
+  if(state.sessionDate===date && payloadHasLineup({teams:state.teams,coaches:state.coaches,baseTeams:state.baseTeams,draftSlots:state.draftSlots,draftCompleted:state.draftCompleted})) return {source:'live'};
+  try{const map=readArchive(); if(map[date]&&payloadHasLineup(map[date])) return {source:'archive',payload:map[date]};}catch(_){}
+  try{const last=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(last&&last.sessionDate===date&&payloadHasLineup(last)) return {source:'storage',payload:last};}catch(_){}
+  return null;
+}
+function wipeLineupForDate(date){
+  try{const map=readArchive(); if(map[date]){delete map[date]; writeArchive(map);}}catch(_){}
+  try{const last=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(last&&last.sessionDate===date) localStorage.removeItem(STORAGE_KEY);}catch(_){}
+  if(state.sessionDate===date){
+    state.teams=emptyTeams(); state.coaches={}; state.draftSlots=[]; state.baseTeams=null; state.draftCompleted=false;
+    state.playerStats={}; state.teamStats=emptyTeamStats(); state.matchHistory=[]; state.matchCount=1; state.playing=[];
+    persistSessionPin();
+  }
+}
+function finishDraftToLineup(){
+  applyDraftSlotsToTeams();
+  if(remainingPool().length){ toast('선수를 모두 배정하세요'); return false; }
+  ensureCoachesInTeams();
+  Object.entries(state.teams).forEach(([tt,names])=>names.forEach(n=>ensureStat(n,tt)));
+  ensureCoachesInTeams();
+  shuffleNonCoachRosters();
+  snapshotBaseTeams();
+  state.draftCompleted=true;
+  persistSessionPin();
+  toast('드래프트 확정 · 라인업 랜덤');
+  go('lineup');
+  return true;
+}
+
 function go(screen){if(state.screen==='match'&&screen!=='match') stopTimer(); render._jumpTop=true;state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;state.drawerOpen=false;persistState();render();}
 function ensureStat(name,homeTeam){if(!state.playerStats[name])state.playerStats[name]={goal:0,assist:0,defense:0,save:0,wins:0,draws:0,losses:0,homeTeam:homeTeam||null};if(homeTeam&&!state.playerStats[name].homeTeam)state.playerStats[name].homeTeam=homeTeam;return state.playerStats[name];}
 function snapshotBaseTeams(){state.baseTeams=JSON.parse(JSON.stringify(state.teams));}
@@ -702,7 +774,7 @@ function saveSession(andNew){ensureCoachesInTeams();const best=coachLeaders()[0]
     });
   } else finish();
 }
-function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});toast(clearStorage?'기록 리셋 · 새 세션':'새 세션 시작');persistState(true);render();}
+function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,sessionPin:null,draftCompleted:false,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});ensureSessionPin(false);toast((clearStorage?'기록 리셋 · 새 세션':'새 세션 시작')+' · PIN '+state.sessionPin,4500);persistState(true);render();}
 
 function seedNov7Base(){}
 function loadNov7(silent){toast('GAS 모드에서는 샘플 로드 없음');}
@@ -813,7 +885,7 @@ return `<h2>드래프트</h2>
   </div>
 </div>
 <div class="team-cards">${teamNames().map(t=>teamCardHtml(t,{editable:true})).join('')}</div>
-${navRow('coach',null,!!pool.length,'data-act="to-lineup"','다음 →')}`;}
+${navRow('coach',null,!!pool.length,'data-act="to-lineup"','드래프트 완료')}`;}
 
 function renderLineup(){return `<div class="lineup-shot" id="lineup-shot-root"><h2>${state.teamMode}팀 라인업 <span class="h2-date">${formatDateLabel(state.sessionDate)}</span></h2><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div></div><div class="result-btns" style="margin-top:8px"><button class="btn btn-cta" data-act="shot-lineup">라인업 한장 저장</button></div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
 
@@ -909,6 +981,24 @@ function modalHtml(){
       <div class="pool-list">${(state.teams[team]||[]).map(n=>`<button type="button" data-act="do-remove" data-name="${n}" data-team="${team}"><span class="nm">${n}</span></button>`).join('')||'<span class="sub">선수 없음</span>'}</div>
       </div></div>`;
   }
+  if(m.type==='confirm-wipe-lineup'){
+    return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>기존 라인업</h3><p class="msub">기존 라인업이 있습니다.<br>기존 라인업을 지우시겠습니까?</p><div class="modal-btns"><button class="ok" data-act="wipe-lineup-yes">예</button><button class="no" data-act="close-modal">아니오</button></div></div></div>`;
+  }
+  if(m.type==='pin'){
+    const dig=String(m.digits||'');
+    const dots=[0,1,2,3].map(i=>`<span class="${i<dig.length?'on':''}"></span>`).join('');
+    const keys=['1','2','3','4','5','6','7','8','9','','0','←'];
+    const pad=keys.map(k=>{
+      if(k==='') return '<span></span>';
+      if(k==='←') return `<button type="button" class="ghost" data-act="pin-del">←</button>`;
+      return `<button type="button" data-act="pin-digit" data-digit="${k}">${k}</button>`;
+    }).join('');
+    return `<div class="modal-overlay"><div class="modal-card"><button type="button" class="modal-x" data-act="close-modal" aria-label="닫기">×</button><h3>${m.title||'PIN'}</h3><p class="msub">${m.message||'핀번호 4자리를 입력하세요'}</p>
+      <div class="pin-dots">${dots}</div>
+      <div class="pin-pad">${pad}</div>
+      <p class="pin-err">${m.error||''}</p>
+      </div></div>`;
+  }
   if(m.type==='sub'){
     const team=m.team||state.playing[0];
     const out=m.out;
@@ -945,7 +1035,7 @@ function renderMatch(){
     body=standingsTableHtml();
   } else {
     const mvp3=(kind,title)=>{const list=topList(kind).slice(0,3);const rows=list.map((p,i)=>`<div class="row"><span class="rk r${i+1}">${i+1}</span><span class="nm">${p.name}</span><span>${p.v}P</span></div>`).join('')||'<p class="sub">기록 없음</p>';return `<h3 style="margin-top:${kind==='dfn'?'14px':'0'}">${title}</h3>${rows}`;};
-    body=`<div class="result-card mvp-mini">${mvp3('atk','Attack MVP TOP3')}${mvp3('dfn','Defense MVP TOP3')}</div>
+    body=`<div class="result-card mvp-mini">${mvp3('atk','Attacking MVP TOP3')}${mvp3('dfn','Defensive MVP TOP3')}</div>
     <h3 style="font-size:0.92rem;font-weight:900;margin:4px 0 8px">팀별 선수 스탯</h3>
     ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','class="result-card stats-card')).join('')}`;
   }
@@ -980,22 +1070,21 @@ function renderResults(){
 <h2>오늘의 경기 결과</h2>
 <p class="sub" style="font-size:0.72rem">${formatDateLabel(state.sessionDate)} · ${state.teamMode}팀</p>
 <div class="mvp-row">
-${mvpCard(atk,'ATTACK MVP')}
-${mvpCard(coach,'BEST COACH')}
-${mvpCard(dfn,'DEFENSE MVP')}
+${mvpCard(atk,'ATTACKING MVP')}
+${mvpCard(coach,'COACH OF THE DAY')}
+${mvpCard(dfn,'DEFENSIVE MVP')}
 </div>
 <div class="award-g">
 ${topAward('goal','TOP SCORER')}
-${topAward('assist','TOP ASSIST')}
-${topAward('defense','TOP DEFENSE')}
-${topAward('save','TOP SAVE')}
+${topAward('assist','MOST ASSISTS')}
+${topAward('defense','TOP DEFENDER')}
+${topAward('save','MOST SAVES')}
 </div>
 <h3 style="font-size:calc(0.88rem + 1pt);font-weight:900;margin:2px 0 8px">팀 순위</h3>
 ${standingsTableHtml()}
 </div>
 <div id="results-page2">
 ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','class="result-card stats-card')).join('')}
-<p class="hint">공격P=득점×2+도움×2 · 수비P=수비+선방 · MP=공격P+수비P</p>
 </div>
 </div>
 ${(()=>{const rows=listSavedSessions(); if(!rows.length) return `<button type="button" class="collapse-toggle" data-act="toggle-hist"><span>지난 세션 없음</span><span class="chev"> </span></button>`; return `<button type="button" class="collapse-toggle" data-act="toggle-hist"><span>지난 세션 ${rows.length}개</span><span class="chev">${state.histOpen?'접기 ▲':'펼치기 ▼'}</span></button><div class="hist-panel" ${state.histOpen?'':'hidden'}><p class="sub">날짜를 탭하면 그 세션 결과로 전환</p><div class="past-sessions">${rows.map(p=>{const n=(p.matchHistory||[]).length; const att=(p.attending||[]).length; const on=p.sessionDate===state.sessionDate?' on':''; return `<button type="button" class="past-btn${on}" data-act="do-load-session" data-date="${p.sessionDate}"><b>${formatDateLabel(p.sessionDate)}</b><span>${p.teamMode||'?'}팀 · 경기 ${n}회 · 참석 ${att}명</span></button>`;}).join('')}</div></div>`;})()}
@@ -1131,10 +1220,11 @@ function bind(){
     else if(act==='do-load-session'){loadSavedSession(el.dataset.date);}
     else if(act==='select-all'){state.attending=PLAYERS.filter(p=>!p.isMercenary).map(p=>p.name); render();}
     else if(act==='clear-att'){state.attending=[]; render();}
-    else if(act==='to-coach'){if(state.attending.length<state.teamMode) return toast('인원 부족'); saveLastAttending(state.attending); state.coachPickTeam=teamNames()[0]; go('coach');}
+    else if(act==='to-coach'){if(state.attending.length<state.teamMode) return toast('인원 부족'); ensureSessionPin(false); const conflict=findLineupConflict(state.sessionDate); if(conflict){ state.modal={type:'confirm-wipe-lineup'}; render(); return; } saveLastAttending(state.attending); state.coachPickTeam=teamNames()[0]; go('coach');}
+    else if(act==='wipe-lineup-yes'){ openPinModal('wipe-lineup','라인업 삭제','기존 라인업을 지우려면 핀번호 4자리를 누르세요'); }
     else if(act==='pick-slot'){state.coachPickTeam=el.dataset.team; render();}
     else if(act==='set-coach-name'){const n=el.dataset.name; const t=state.coachPickTeam||teamNames().find(x=>!state.coaches[x]); if(!t)return; Object.keys(state.coaches).forEach(k=>{if(state.coaches[k]===n) delete state.coaches[k];}); state.coaches[t]=n; ensureCoachesInTeams(); state.coachPickTeam=teamNames().find(x=>!state.coaches[x])||t; render();}
-    else if(act==='to-draft'){if(!teamNames().every(t=>state.coaches[t])) return toast('감독을 모두 지정하세요'); state.teams=emptyTeams(); teamNames().forEach(t=>{if(state.coaches[t]) state.teams[t].push(state.coaches[t]);}); ensureCoachesInTeams(); rebuildDraftSlots(); state.draftPickTeam=state.snakeMode?snakeTeamAt(0):teamNames()[0]; go('draft');}
+    else if(act==='to-draft'){if(!teamNames().every(t=>state.coaches[t])) return toast('감독을 모두 지정하세요'); ensureSessionPin(false); openPinModal('enter-draft','드래프트 입장','핀번호 4자리를 누르세요');}
     else if(act==='random-assign'){randomAssignNonCoaches(); if(state.snakeMode) syncSnakePickTeam(); render();}
     else if(act==='clear-draft-names'){state.draftSlots.forEach(s=>s.name=null); applyDraftSlotsToTeams(); rebuildDraftSlots(); if(state.snakeMode) syncSnakePickTeam(); else state.draftPickTeam=teamNames()[0]; render();}
     else if(act==='toggle-snake'){state.snakeMode=!state.snakeMode; if(state.snakeMode) syncSnakePickTeam(); else ensureDraftPickTeam(); toast(state.snakeMode?'스네이크 ON':'스네이크 OFF'); render();}
@@ -1151,7 +1241,7 @@ function bind(){
     else if(act==='do-draft-add'){const name=el.dataset.name; const to=el.dataset.to||state.modal.team; if(!state.attending.includes(name)) state.attending.push(name); movePlayerToTeam(name,to); state.modal=null; toast(`${name} → ${to}`); render();}
     else if(act==='draft-del'){state.modal={type:'draft-del',team:el.dataset.team}; render();}
     else if(act==='do-draft-del'){const name=el.dataset.name; const team=el.dataset.team; if(state.coaches[team]===name) return toast('감독은 삭제 불가'); state.teams[team]=(state.teams[team]||[]).filter(n=>n!==name); syncDraftSlotsFromTeams(); state.modal=null; toast(`${name} 삭제`); render();}
-    else if(act==='to-lineup'){applyDraftSlotsToTeams(); if(remainingPool().length) return toast('선수를 모두 배정하세요'); ensureCoachesInTeams(); Object.entries(state.teams).forEach(([tt,names])=>names.forEach(n=>ensureStat(n,tt))); ensureCoachesInTeams(); shuffleNonCoachRosters(); snapshotBaseTeams(); toast('라인업 순서 랜덤 섞음'); go('lineup');}
+    else if(act==='to-lineup'){applyDraftSlotsToTeams(); if(remainingPool().length) return toast('선수를 모두 배정하세요'); openPinModal('confirm-draft','드래프트 확정','드래프트 확정하시려면 핀번호 4개를 누르세요');}
     else if(act==='toggle-play'){const t=el.dataset.team; if(state.playing.includes(t)) state.playing=state.playing.filter(x=>x!==t); else if(state.playing.length<2) state.playing.push(t); else toast('2팀만 선택'); render();}
     else if(act==='start-match'){if(state.playing.length!==2) return toast('2팀을 선택하세요'); restoreBaseTeams(); ensureCoachesInTeams(); const d=document.getElementById('duration'); if(d) state.duration=Number(d.value); state.secondsLeft=state.duration; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.matchTab='lineup'; state.matchLive=true; state.alerted2min=false; state.matchElapsedSec=0; stopTimer(); go('match');}
     else if(act==='resume-match'){if(state.playing.length!==2) return toast('재개할 경기가 없습니다'); ensureCoachesInTeams(); state.matchLive=true; go('match');}
@@ -1192,7 +1282,28 @@ function bind(){
     else if(act==='do-sub'){const out=state.modal.out; const inn=el.dataset.name; const from=el.dataset.from; const team=state.modal.team; if(!out) return; const outWasCoach=state.coaches[team]===out; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); if(from) state.teams[from]=(state.teams[from]||[]).filter(n=>n!==inn); Object.keys(state.teams).forEach(tt=>{state.teams[tt]=(state.teams[tt]||[]).filter(n=>n!==inn);}); if(!state.teams[team].includes(inn)) state.teams[team].push(inn);
       const wait=waitingTeams()[0]; if(wait&&!state.teams[wait].includes(out)) state.teams[wait].push(out); ensureStat(inn,team); if(outWasCoach){ state.coaches[team]=inn; } ensureCoachesInTeams(); state.modal=null; toast(outWasCoach?`${out} ↔ ${inn} (감독 이양)`:`${out} ↔ ${inn}`); render();}
     else if(act==='do-sub-remove'){const out=state.modal.out; const team=state.modal.team; if(!out) return; const outWasCoach=state.coaches[team]===out; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); if(outWasCoach) delete state.coaches[team]; const wait=waitingTeams()[0]; if(wait) state.teams[wait].push(out); state.modal=null; toast(`${out} 코트 아웃`); render();}
-    else if(act==='steps-scroll'){const box=document.getElementById('steps'); if(box) box.scrollBy({left:Number(el.dataset.dir)*140,behavior:'smooth'});} else if(act==='go-step'){const s=el.dataset.screen; if(!FLOW.includes(s)&&s!=='edit') return; if(state.screen==='match'&&s!=='match'){/* keep matchLive */} go(s);} else if(act==='go'){ if(el.dataset.screen==='matchSelect'&&state.screen==='match') state.matchLive=true; go(el.dataset.screen);}
+    else if(act==='steps-scroll'){const box=document.getElementById('steps'); if(box) box.scrollBy({left:Number(el.dataset.dir)*140,behavior:'smooth'});}
+    else if(act==='go-step'){const s=el.dataset.screen; if(!FLOW.includes(s)&&s!=='edit') return; if(s==='draft'&&state.screen!=='draft'&&state.draftCompleted){ openPinModal('reenter-draft','드래프트 재입장','핀번호 4자리를 입력하세요'); return; } go(s);}
+    else if(act==='go'){ const s=el.dataset.screen; if(s==='matchSelect'&&state.screen==='match') state.matchLive=true; if(s==='draft'&&state.screen!=='draft'&&state.draftCompleted){ openPinModal('reenter-draft','드래프트 재입장','핀번호 4자리를 입력하세요'); return; } go(s);}
+    else if(act==='pin-digit'){
+      if(!state.modal||state.modal.type!=='pin') return;
+      const d=String(state.modal.digits||'');
+      if(d.length>=4) return;
+      state.modal.digits=d+el.dataset.digit; state.modal.error='';
+      if(state.modal.digits.length===4){
+        if(!pinMatches(state.modal.digits)){ state.modal.digits=''; state.modal.error='핀번호가 틀렸습니다. 다시 입력하세요'; render(); return; }
+        const purpose=state.modal.purpose; state.modal=null;
+        if(purpose==='enter-draft'){
+          state.teams=emptyTeams(); teamNames().forEach(tm=>{if(state.coaches[tm]) state.teams[tm].push(state.coaches[tm]);}); ensureCoachesInTeams(); rebuildDraftSlots(); state.draftPickTeam=state.snakeMode?snakeTeamAt(0):teamNames()[0]; state.draftCompleted=false; persistSessionPin(); go('draft');
+        } else if(purpose==='confirm-draft'){ finishDraftToLineup(); }
+        else if(purpose==='reenter-draft'){ go('draft'); }
+        else if(purpose==='wipe-lineup'){ wipeLineupForDate(state.sessionDate); saveLastAttending(state.attending); state.coachPickTeam=teamNames()[0]; toast('기존 라인업 삭제됨'); go('coach'); }
+        else render();
+        return;
+      }
+      render();
+    }
+    else if(act==='pin-del'){ if(state.modal&&state.modal.type==='pin'){ state.modal.digits=String(state.modal.digits||'').slice(0,-1); state.modal.error=''; render(); } }
     else if(act==='save-new'){state.modal={type:'confirm-save-new'}; render();}
     else if(act==='confirm-save-new'){state.modal=null; saveSession(true);}
     else if(act==='reset-new'){state.modal={type:'confirm-reset-new'}; render();}
@@ -1251,16 +1362,19 @@ async function captureNode(node, opts){
   if(host){
     host.innerHTML='';
     host.setAttribute('aria-hidden','false');
-    host.style.cssText='position:fixed;left:0;top:0;width:min(390px,100vw);background:#fff;padding:16px;z-index:90;pointer-events:none;opacity:0;';
+    host.style.cssText='position:fixed;left:0;top:0;width:min(420px,100vw);background:#ffffff;padding:12px;z-index:90;pointer-events:none;opacity:0;color-scheme:light;';
     const clone=node.cloneNode(true);
+    clone.classList.add('shot-light');
     clone.style.width='100%';
+    clone.style.background='#ffffff';
+    clone.style.colorScheme='light';
     host.appendChild(clone);
     target=clone;
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     cleanup=()=>{host.innerHTML=''; host.style.cssText='position:fixed;left:-9999px;top:0;width:390px;background:#fff;padding:16px;z-index:-1'; host.setAttribute('aria-hidden','true');};
   }
   try{
-    return await html2canvas(target, Object.assign({backgroundColor:'#ffffff',scale:Math.min(2, window.devicePixelRatio||2),useCORS:true,allowTaint:true,logging:false,scrollX:0,scrollY:0,windowWidth:target.scrollWidth,windowHeight:target.scrollHeight,ignoreElements:(el)=>el.id==='toast'||el.id==='shot-preview'||(el.classList&&(el.classList.contains('drawer')||el.classList.contains('drawer-backdrop')||el.classList.contains('hamburger')||el.classList.contains('screen-chip')||el.classList.contains('nav-row')||el.classList.contains('result-btns')))}, opts||{}));
+    return await html2canvas(target, Object.assign({backgroundColor:'#ffffff',scale:Math.min(2.5, (window.devicePixelRatio||2)*1.15),useCORS:true,allowTaint:true,logging:false,scrollX:0,scrollY:0,windowWidth:Math.max(target.scrollWidth,390),windowHeight:Math.max(target.scrollHeight,1),onclone:(doc)=>{try{doc.documentElement.style.colorScheme='light'; doc.body.style.background='#ffffff';}catch(_){}},ignoreElements:(el)=>el.id==='toast'||el.id==='shot-preview'||(el.classList&&(el.classList.contains('drawer')||el.classList.contains('drawer-backdrop')||el.classList.contains('hamburger')||el.classList.contains('screen-chip')||el.classList.contains('nav-row')||el.classList.contains('result-btns')||el.classList.contains('hist-panel')||el.classList.contains('collapse-toggle')))}, opts||{}));
   } finally { cleanup(); }
 }
 async function captureLineupShot(){
@@ -1379,8 +1493,9 @@ function bootFromServer(attempt){
     // phone frame for mockup browsing
     document.body.style.padding='16px'; document.body.style.background='linear-gradient(160deg,#e8eef8,#f7f8fb)';
     if(phone){ phone.style.borderRadius='28px'; phone.style.border='1px solid #cbd5e1'; phone.style.boxShadow='0 20px 50px rgba(15,23,42,.18)'; phone.style.minHeight='720px'; phone.style.maxWidth='430px'; phone.style.margin='0 auto'; }
+    ensureSessionPin(false);
     render();
-    toast('FORM/CLUB 팔레트 목업 · 참석부터 조작', 4000);
+    toast('목업 · 세션 PIN '+state.sessionPin+' (마스터 0503)', 5000);
     return;
   }
   toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중… · '+APP_BUILD, 8000);
