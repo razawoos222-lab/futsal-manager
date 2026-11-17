@@ -17,7 +17,7 @@
       --bg:#E5E7E9; --surf:#F3F4F5; --text:#24272B; --muted:#5B6168;
       --line:#C8CCD0; --accent:#24272B; --accent-soft:#D6D9DC;
       --danger:#D94B40; --neon:#C6F135; --own:#C6F135; --modal-accent:#C6F135;
-      --red:#E11D48; --blue:#2563EB; --yellow-text:#B45309; --yellow-fill:#F5B800; --accent-yellow:#F7E947; --black:#24272B;
+      --red:#E11D48; --blue:#2563EB; --yellow-text:#F7E947; --yellow-fill:#F7E947; --black:#24272B;
       --end-session-bg:#D94B40; --end-session-fg:#FFFFFF;
       --glass:rgba(255,255,255,.88); --glass-strong:#FFFFFF;
       --glass-border:1px solid var(--line);
@@ -277,7 +277,7 @@
     .btn-danger{background:var(--end-session-bg);color:var(--end-session-fg);border:none;font-size:calc(0.94rem + 1pt);font-weight:900;box-shadow:var(--raise)}
     .btn-sec{background:var(--glass-strong);color:#111827;border:var(--glass-border);box-shadow:var(--raise-sm)}
     .nav-row .btn,.nav-row .btn-cta,.nav-row .btn-sec{background:rgba(255,255,255,.88)!important;color:#111827!important;border:var(--glass-border)!important;box-shadow:var(--raise-sm)!important}
-    .nav-row .btn-start,.btn-sm.match-start{background:#24272B!important;color:var(--accent-yellow)!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important;font-weight:900!important}
+    .nav-row .btn-start,.btn-sm.match-start{background:#24272B!important;color:#C6F135!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important;font-weight:900!important}
     .btn:active{box-shadow:var(--press)}
     .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
     .result-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -400,9 +400,14 @@
     .chip-row.one-line .mini.neon,.btn-cta,.btn-green,.card-acts button,.prow .p-swap,.team-head-row .btn-add-mini,.shot-preview .acts .share,.modal-btns .goal,.modal-btns .def,.modal-btns .save,.modal-btns .cancel,.modal-btns .ok,.act2 button,.btn-sm.blue{background:#24272B!important;color:#C6F135!important;border-color:#24272B!important}
     .name-coach,.prow .p-main.is-coach{background:#24272B!important;color:#fff!important;border-color:#24272B!important}
     .team-stat-card .names .cap,.prow .cap,.name-coach .cap{background:#24272B;border-color:#C6F135;color:#C6F135}
-    /* 경기시작(선택 화면·라이브) 통일: 차콜 + #F7E947 */
-    .nav-row .btn-start,.btn-sm.match-start,.btn-sm.blue{background:#24272B!important;color:#F7E947!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important}
-    .ctrl-row .btn-sm.stat{background:#24272B!important;color:#F7E947!important}
+    /* 경기시작(선택·라이브) 통일: 차콜 + 라임 / TEAM YELLOW 색은 --yellow-* (#F7E947) */
+    .nav-row .btn-start,.btn-sm.match-start,.btn-sm.blue{background:#24272B!important;color:#C6F135!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important}
+    .ctrl-row .btn-sm.stat{background:#24272B!important;color:#C6F135!important}
+    /* 흰 배경에서 TEAM YELLOW 가독성: 글자에 얇은 어두운 테두리 */
+    .t-YELLOW,.draft-team-pick.YELLOW:not(.on) .tn,.lineup-col.team-YELLOW .team-head{
+      color:#F7E947!important;
+      text-shadow:0 0 1px rgba(0,0,0,.55), 0 1px 2px rgba(0,0,0,.35);
+    }
     .timer-ring-wrap{background:#fff;border-color:#C8CCD0}
     .timer-ring-wrap .prog{stroke:#20334D}
     .timer-center .t{color:#20334D!important}
@@ -1397,7 +1402,7 @@ async function downloadCanvas(canvas, name){
     const reader=new FileReader();
     const dataUrl=await new Promise((res,rej)=>{reader.onload=()=>res(reader.result); reader.onerror=rej; reader.readAsDataURL(blob);});
     _shotBlob=blob; _shotName=name;
-    const kind=/_results\.png$/i.test(name)?'results':'lineup';
+    const kind=/_results(\.png)?$/i.test(name)?'results':'lineup';
     state.modal={type:'shot-preview', dataUrl, name, kind};
     render();
     return 'preview';
@@ -1460,7 +1465,7 @@ async function captureLineupShot(){
   toast('라인업 이미지 만드는 중…',2000);
   try{
     const canvas=await captureNode(node);
-    const name=`JMFC_${state.sessionDate||'session'}_lineup.png`;
+    const name=`JMFC_${state.sessionDate||'session'}_lineup`;
     const mode=await downloadCanvas(canvas, name);
     if(mode==='download') toast('라인업 저장 완료');
     else if(mode==='shared') toast('공유 완료');
@@ -1478,7 +1483,7 @@ async function captureResultsShot(){
     // MVP 페인트를 위해 한 프레임 대기
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const canvas=await captureNode(root);
-    const name=`JMFC_${state.sessionDate||'session'}_results.png`;
+    const name=`JMFC_${state.sessionDate||'session'}_results`;
     const mode=await downloadCanvas(canvas, name);
     if(mode==='download') toast('결과 저장 완료');
     else if(mode==='shared') toast('공유 완료');
