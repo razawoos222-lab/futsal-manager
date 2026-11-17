@@ -596,9 +596,9 @@ function emptyTeamStats(){return Object.fromEntries(TEAM_ALL.map(t=>[t,{matchesP
 function personalScore(n){const p=byName[n];if(!p||!(p.ccpPerGame>0))return 0;return (p.ccpPerGame/maxCcpG)*100;}
 function calcTeamPower(names){const list=(names||[]).filter(n=>byName[n]);if(!list.length)return 0;return Math.round(Math.min(100,Math.max(0,list.reduce((a,n)=>a+personalScore(n),0)/list.length)));}
 function calcTeamWinRate(names){const vals=(names||[]).map(n=>byName[n]).filter(p=>p&&!p.isMercenary&&p.winRatePct>0).map(p=>p.winRatePct);if(!vals.length)return '-';return (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1)+'%';}
-function mpOf(s){return (s.goal||0)*2+(s.assist||0)*2+(s.defense||0)+(s.save||0);}
+function mpOf(s){return (s.goal||0)*2+(s.assist||0)*2+(s.defense||0)*2+(s.save||0)*2;}
 function atkOf(s){return (s.goal||0)*2+(s.assist||0)*2;}
-function defOf(s){return (s.defense||0)+(s.save||0);}
+function defOf(s){return (s.defense||0)*2+(s.save||0)*2;}
 function statLabel(stat){return ({goal:'득점',assist:'도움',defense:'수비',save:'선방',own:'자책골'})[stat]||stat;}
 
 const state={
