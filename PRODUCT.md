@@ -23,7 +23,7 @@ Unlike the earlier GAS flow that auto-allocated players by algorithm (team-power
 - Club: JMFC (Korean-language UI).
 - Runtime: mobile web hosted as a Google Apps Script web app (`live/index.html` + `live/Code.gs`) backed by Google Sheets (선수별능력치, 기록실_개인기록, 기록실_감독기록, 지난_팀_구성, app state).
 - Session ritual: attendance chips → team count (2/3/4) → coaches → draft picks → lineup → match select → live match (lineup / standings / personal stats) → results → optional record edit → save / new session.
-- Design previews and playable mocks live under `design-preview/` (not the deployed app until skinned onto `live/`).
+- Design previews and playable mocks live under `design-preview/`. Compact session UI authority is `design-preview/jmfc-compact/`; it is skinned onto `live/` for GAS deploy (see `docs/GAS-DEPLOY.md`).
 - Typical use: one sweaty phone, outdoor/indoor pitch lighting, one-handed taps during play.
 
 ## Capabilities and Constraints
@@ -51,7 +51,7 @@ Unlike the earlier GAS flow that auto-allocated players by algorithm (team-power
 ## Evidence on Hand
 
 - Live app: `live/index.html`, `live/Code.gs`.
-- Session mockup (current design authority for the new flow): `design-preview/jmfc-session/index.html`, gallery `design-preview/jmfc-mockup.html`.
+- Session mockup (current design authority): `design-preview/jmfc-compact/index.html` (FORM/CLUB draft + PIN). Older gallery: `design-preview/jmfc-mockup.html`, prior flow notes in `design-preview/jmfc-session/`.
 - Coach archive / ranking previews: `design-preview/JMFC_2026_coach_ranking.html`, backfill CSV under `design-preview/`.
 - Handoff notes: `docs/HANDOFF-JMFC-MOCKUP.md`, `VIEW-MOCKUP.md`.
 - Do not fabricate testimonials, external customers, or deployment metrics.
