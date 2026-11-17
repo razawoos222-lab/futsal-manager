@@ -1377,17 +1377,23 @@ function bind(){
 
 let _shotBlob=null; let _shotName='lineup.png';
 function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+/** iOS/카톡 공유는 파일명에 .png 가 없으면 실패하는 경우가 많음 */
+function ensurePngName(name, fallback){
+  const base=String(name||fallback||'jmfc').trim()||'jmfc';
+  return /\.png$/i.test(base)?base:(base.replace(/\.(jpe?g|webp|gif)$/i,'')+'.png');
+}
 async function canvasToBlob(canvas){
   return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('blob')),'image/png'));
 }
 async function downloadCanvas(canvas, name){
+  const fileName=ensurePngName(name, 'jmfc.png');
   const blob=await canvasToBlob(canvas);
   const url=URL.createObjectURL(blob);
   try{
     if(navigator.canShare){
-      const file=new File([blob], name, {type:'image/png'});
+      const file=new File([blob], fileName, {type:'image/png'});
       if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title:name});
+        await navigator.share({files:[file], title:fileName});
         return 'shared';
       }
     }
@@ -1396,22 +1402,24 @@ async function downloadCanvas(canvas, name){
   if(isIOS() || !('download' in HTMLAnchorElement.prototype)){
     const reader=new FileReader();
     const dataUrl=await new Promise((res,rej)=>{reader.onload=()=>res(reader.result); reader.onerror=rej; reader.readAsDataURL(blob);});
-    _shotBlob=blob; _shotName=name;
-    const kind=/_results\.png$/i.test(name)?'results':'lineup';
-    state.modal={type:'shot-preview', dataUrl, name, kind};
+    _shotBlob=blob; _shotName=fileName;
+    const kind=/_results\.png$/i.test(fileName)?'results':'lineup';
+    state.modal={type:'shot-preview', dataUrl, name:fileName, kind};
     render();
     return 'preview';
   }
   const a=document.createElement('a');
-  a.download=name; a.href=url; document.body.appendChild(a); a.click(); a.remove();
+  a.download=fileName; a.href=url; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 2000);
   return 'download';
 }
 async function shareShotPreview(){
   try{
     if(_shotBlob && navigator.canShare){
-      const file=new File([_shotBlob], _shotName||'lineup.png', {type:'image/png'});
-      if(navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:_shotName}); toast('공유 완료'); return; }
+      const fileName=ensurePngName(_shotName, 'lineup.png');
+      _shotName=fileName;
+      const file=new File([_shotBlob], fileName, {type:'image/png'});
+      if(navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:fileName}); toast('공유 완료'); return; }
     }
   }catch(e){ if(String(e&&e.name)==='AbortError') return; }
   toast('이미지를 길게 눌러 사진에 저장하세요', 3500);
