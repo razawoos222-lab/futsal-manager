@@ -2,17 +2,18 @@
 
 ## 휴대폰에서 (추천)
 
-큰 `index.html`을 폰에 붙여넣을 필요 없습니다. Apps Script가 GitHub의 `live/index.html`을 불러오도록 **한 번만** 설정합니다.
+큰 `index.html` / `Code.gs` 붙여넣기 없이 배포합니다.
 
-1. 폰 브라우저로 배포 도우미 열기: 저장소의 `deploy-mobile/index.html` (또는 이 에이전트가 퍼블리시한 앱 링크)
-2. **패치 복사** → [script.google.com](https://script.google.com) 의 `Code.gs`에 붙여넣기
-3. 실행 메뉴에서 `useGithubUiPrBranch`(머지 전) 또는 `useGithubUiMain`(머지 후) 실행 · 권한 허용
-4. **배포 → 새 버전**
-5. 이후 UI 변경은 GitHub에 코드만 올라가면 웹앱 **새로고침**으로 반영
+| 구분 | 갱신 방법 |
+|------|-----------|
+| UI (`live/index.html`) | 웹앱이 GitHub에서 매 요청 로드 → **새로고침** |
+| 서버 (`live/Code.gs`) | Apps Script에서 **`syncCodeGsFromGithub` 실행** → **배포 새 버전** |
 
-`Code.gs` 서버 로직이 바뀐 경우에만 4번(새 버전)을 다시 하면 됩니다.
+1. [Apps Script API ON](https://script.google.com/home/usersettings)
+2. `deploy-mobile/` 도우미에서 **짧은 패치 복사** → `Code.gs` 하단에 붙여넣기
+3. 실행: `useGithubRefPrBranch` → `syncCodeGsFromGithub`
+4. 배포 → 새 버전
 
-선택: GitHub Actions `Deploy GAS (clasp)` — Secrets `CLASPRC_JSON` + `SCRIPT_ID`를 한 번 넣으면 폰에서 Actions → Run workflow 로 push 가능.
 
 ---
 

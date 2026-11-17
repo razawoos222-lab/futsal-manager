@@ -20,7 +20,10 @@ const CONFIG = {
    * 비우면 프로젝트 안 HTML 파일(index)을 씁니다.
    */
   UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html',
-  UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html'
+  UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html',
+  /** Code.gs / index.html GitHub raw 기준 ref (브랜치 또는 태그) */
+  UI_GIT_REF: 'cursor/formclub-palette-mockup-7fc5',
+  UI_GIT_REPO: 'razawoos222-lab/futsal-manager'
 };
 
 const TEAM_ALL = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
@@ -166,6 +169,147 @@ function useGithubUiPrBranch() {
 function useLocalUiFile() {
   PropertiesService.getScriptProperties().deleteProperty('UI_HTML_URL');
   return 'UI_HTML_URL cleared · local index.html';
+}
+
+function resolveGitRef_() {
+  const props = PropertiesService.getScriptProperties();
+  return (props.getProperty('UI_GIT_REF') || CONFIG.UI_GIT_REF || 'main').trim();
+}
+
+function resolveGitRepo_() {
+  return (CONFIG.UI_GIT_REPO || 'razawoos222-lab/futsal-manager').trim();
+}
+
+function githubRawUrl_(path) {
+  return 'https://raw.githubusercontent.com/' + resolveGitRepo_() + '/' + resolveGitRef_() + '/' + path;
+}
+
+function fetchGithubText_(path) {
+  const url = githubRawUrl_(path) + '?gas=' + Date.now();
+  const res = UrlFetchApp.fetch(url, {
+    muteHttpExceptions: true,
+    followRedirects: true,
+    headers: { 'Cache-Control': 'no-cache' }
+  });
+  if (res.getResponseCode() !== 200) {
+    throw new Error('GitHub fetch failed ' + res.getResponseCode() + ' · ' + path + ' · ref=' + resolveGitRef_());
+  }
+  return res.getContentText();
+}
+
+/**
+ * 휴대폰에서 Code.gs 자동 갱신.
+ * 사전: https://script.google.com/home/usersettings → Google Apps Script API = ON
+ * 실행 후: 배포 → 새 버전 (서버 함수 변경 반영용)
+ * UI(HTML)는 doGet이 GitHub에서 매 요청 불러오므로 보통 새 버전 없이 새로고침만으로 됨.
+ */
+function syncCodeGsFromGithub() {
+  const source = fetchGithubText_('live/Code.gs');
+  if (source.indexOf('function doGet') < 0) {
+    throw new Error('Downloaded Code.gs looks invalid');
+  }
+  const scriptId = ScriptApp.getScriptId();
+  const token = ScriptApp.getOAuthToken();
+  const endpoint = 'https://script.googleapis.com/v1/projects/' + scriptId + '/content';
+  const getRes = UrlFetchApp.fetch(endpoint, {
+    method: 'get',
+    headers: { Authorization: 'Bearer ' + token },
+    muteHttpExceptions: true
+  });
+  if (getRes.getResponseCode() !== 200) {
+    throw new Error(
+      'Apps Script API 읽기 실패 (' + getRes.getResponseCode() + '). ' +
+      'script.google.com/home/usersettings 에서 Google Apps Script API 를 ON 하세요. ' +
+      getRes.getContentText()
+    );
+  }
+  const content = JSON.parse(getRes.getContentText());
+  let hit = false;
+  const files = (content.files || []).map(function (f) {
+    if (f.name === 'Code' && f.type === 'SERVER_JS') {
+      hit = true;
+      return { name: f.name, type: f.type, source: source };
+    }
+    return f;
+  });
+  if (!hit) {
+    files.push({ name: 'Code', type: 'SERVER_JS', source: source });
+  }
+  const putRes = UrlFetchApp.fetch(endpoint, {
+    method: 'put',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify({ files: files }),
+    muteHttpExceptions: true
+  });
+  if (putRes.getResponseCode() !== 200) {
+    throw new Error('Apps Script API 쓰기 실패 (' + putRes.getResponseCode() + '): ' + putRes.getContentText());
+  }
+  return 'Code.gs synced from GitHub @' + resolveGitRef_() + ' · 배포→새 버전 하면 서버 반영';
+}
+
+/** HTML 파일도 프로젝트에 맞춰 두고 싶을 때 (원격 doGet 쓸 땐 필수는 아님) */
+function syncIndexHtmlFromGithub() {
+  const source = fetchGithubText_('live/index.html');
+  const scriptId = ScriptApp.getScriptId();
+  const token = ScriptApp.getOAuthToken();
+  const endpoint = 'https://script.googleapis.com/v1/projects/' + scriptId + '/content';
+  const getRes = UrlFetchApp.fetch(endpoint, {
+    method: 'get',
+    headers: { Authorization: 'Bearer ' + token },
+    muteHttpExceptions: true
+  });
+  if (getRes.getResponseCode() !== 200) {
+    throw new Error('Apps Script API 읽기 실패: ' + getRes.getContentText());
+  }
+  const content = JSON.parse(getRes.getContentText());
+  let hit = false;
+  const files = (content.files || []).map(function (f) {
+    if ((f.name === 'index' || f.name === 'Index') && f.type === 'HTML') {
+      hit = true;
+      return { name: f.name, type: f.type, source: source };
+    }
+    return f;
+  });
+  if (!hit) {
+    files.push({ name: 'index', type: 'HTML', source: source });
+  }
+  const putRes = UrlFetchApp.fetch(endpoint, {
+    method: 'put',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify({ files: files }),
+    muteHttpExceptions: true
+  });
+  if (putRes.getResponseCode() !== 200) {
+    throw new Error('index sync 실패: ' + putRes.getContentText());
+  }
+  return 'index.html synced @' + resolveGitRef_();
+}
+
+function syncAllFromGithub() {
+  const a = syncCodeGsFromGithub();
+  const b = syncIndexHtmlFromGithub();
+  return a + ' | ' + b;
+}
+
+function useGithubRefMain() {
+  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'main');
+  PropertiesService.getScriptProperties().setProperty(
+    'UI_HTML_URL',
+    'https://raw.githubusercontent.com/' + resolveGitRepo_() + '/main/live/index.html'
+  );
+  return 'ref → main';
+}
+
+function useGithubRefPrBranch() {
+  const ref = 'cursor/formclub-palette-mockup-7fc5';
+  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', ref);
+  PropertiesService.getScriptProperties().setProperty(
+    'UI_HTML_URL',
+    'https://raw.githubusercontent.com/' + resolveGitRepo_() + '/' + ref + '/live/index.html'
+  );
+  return 'ref → ' + ref;
 }
 
 function getSheet(sheetName) {
