@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>JMFC 감독 순위표</title>
+<style>
+  :root{
+    --bg:#f8f9fa; --card:#fff; --ink:#1e293b; --muted:#64748b; --line:#e2e8f0;
+    --blue:#3b82f6; --navy:#1f3a5f; --gold:#fff4d6; --silver:#eef2f7; --bronze:#f5ebe0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:linear-gradient(135deg,#1f3a5f,#2d5a87);color:#fff;padding:18px 16px 14px}
+  header h1{margin:0;font-size:20px;font-weight:800}
+  header p{margin:6px 0 0;font-size:12px;opacity:.88;line-height:1.4}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;padding:14px 16px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  .bar label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:700}
+  select{appearance:none;border:1px solid var(--line);border-radius:10px;padding:10px 36px 10px 12px;font-size:14px;font-weight:700;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%2364748b' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E") right 12px center/10px no-repeat;min-width:160px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--muted)}
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;padding:16px}
+  .card{background:var(--card);border:1px solid #f1f5f9;border-radius:16px;padding:18px 16px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+  .card h3{margin:0 0 14px;text-align:center;font-size:18px;border-bottom:3px solid var(--blue);padding-bottom:10px}
+  .item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+  .item:last-child{border-bottom:0}
+  .rank{width:34px;height:34px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:0 0 auto}
+  .rank.r1{background:#fbbf24;color:#78350f}
+  .rank.r2{background:#cbd5e1;color:#334155}
+  .rank.r3{background:#fdba74;color:#7c2d12}
+  .meta{flex:1;min-width:0}
+  .name{font-weight:800;font-size:15px}
+  .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .val{font-weight:800;font-size:18px;color:var(--navy)}
+  .wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 16px 20px;background:#fff;border-radius:16px;border:1px solid #f1f5f9;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+  table{border-collapse:collapse;width:max-content;min-width:100%;font-size:13px}
+  th,td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+  th{background:var(--navy);color:#fff;font-weight:700}
+  td:nth-child(2),th:nth-child(2){text-align:left;position:sticky;left:0;background:#fff}
+  th:nth-child(2){background:var(--navy)}
+  tbody tr:nth-child(1) td, tbody tr:nth-child(1) td:nth-child(2){background:var(--gold)}
+  tbody tr:nth-child(2) td, tbody tr:nth-child(2) td:nth-child(2){background:var(--silver)}
+  tbody tr:nth-child(3) td, tbody tr:nth-child(3) td:nth-child(2){background:var(--bronze)}
+  .note{margin:0 16px 28px;font-size:12px;color:var(--muted);line-height:1.5}
+  .empty{padding:28px;text-align:center;color:var(--muted);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1>JMFC 감독 순위표</h1>
+  <p>팀 성적 기준 · 전체기간 / 분기별 · 승점·승률·득실</p>
+</header>
+
+<div class="bar">
+  <div>
+    <label for="period">기간</label>
+    <select id="period"></select>
+  </div>
+  <div class="chips" id="sortChips"></div>
+</div>
+
+<div class="grid" id="cards"></div>
+<div class="wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>순위</th><th>감독</th><th>세션</th><th>경기</th><th>승</th><th>무</th><th>패</th>
+        <th>득</th><th>실</th><th>득실</th><th>승점</th><th>승률</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+<p class="note">
+  집계: 감독 현황표 × Docs <code>지난_팀_구성</code>. 감독 지정일에 본인 주 소속팀을 감독팀으로 보고 팀 스코어를 합산합니다.
+  승률 = 승÷(승+패). 시트 반영용 CSV: <code>coach_archive_backfill.csv</code> → 시트명 <b>기록실_감독기록</b>.
+</p>
+
+<script>
+const DATA = {"periods":{"all":[{"name":"배철호","sessions":7,"games":56,"wins":23,"draws":17,"losses":16,"gf":76,"ga":58,"gd":18,"pts":86,"wr":59.0},{"name":"김명래","sessions":6,"games":50,"wins":23,"draws":15,"losses":12,"gf":67,"ga":55,"gd":12,"pts":84,"wr":65.7},{"name":"김기호","sessions":6,"games":50,"wins":21,"draws":11,"losses":18,"gf":68,"ga":64,"gd":4,"pts":74,"wr":53.8},{"name":"김남현","sessions":5,"games":39,"wins":17,"draws":10,"losses":12,"gf":65,"ga":50,"gd":15,"pts":61,"wr":58.6},{"name":"김민수","sessions":5,"games":40,"wins":14,"draws":16,"losses":10,"gf":46,"ga":45,"gd":1,"pts":58,"wr":58.3},{"name":"정세진","sessions":5,"games":40,"wins":15,"draws":12,"losses":13,"gf":40,"ga":42,"gd":-2,"pts":57,"wr":53.6},{"name":"이광일","sessions":4,"games":32,"wins":15,"draws":11,"losses":6,"gf":45,"ga":29,"gd":16,"pts":56,"wr":71.4},{"name":"송환규","sessions":4,"games":32,"wins":12,"draws":10,"losses":10,"gf":32,"ga":32,"gd":0,"pts":46,"wr":54.5},{"name":"배수천","sessions":4,"games":34,"wins":11,"draws":13,"losses":10,"gf":32,"ga":33,"gd":-1,"pts":46,"wr":52.4},{"name":"안재욱","sessions":4,"games":34,"wins":10,"draws":15,"losses":9,"gf":25,"ga":26,"gd":-1,"pts":45,"wr":52.6},{"name":"양승현","sessions":5,"games":39,"wins":11,"draws":12,"losses":16,"gf":41,"ga":50,"gd":-9,"pts":45,"wr":40.7},{"name":"김상덕","sessions":6,"games":48,"wins":10,"draws":15,"losses":23,"gf":41,"ga":59,"gd":-18,"pts":45,"wr":30.3},{"name":"신용주","sessions":4,"games":32,"wins":10,"draws":12,"losses":10,"gf":29,"ga":31,"gd":-2,"pts":42,"wr":50.0},{"name":"이호섭","sessions":4,"games":32,"wins":10,"draws":12,"losses":10,"gf":32,"ga":34,"gd":-2,"pts":42,"wr":50.0},{"name":"여도영","sessions":2,"games":15,"wins":12,"draws":2,"losses":1,"gf":37,"ga":8,"gd":29,"pts":38,"wr":92.3},{"name":"신승진","sessions":3,"games":24,"wins":10,"draws":5,"losses":9,"gf":43,"ga":35,"gd":8,"pts":35,"wr":52.6},{"name":"황민구","sessions":3,"games":24,"wins":9,"draws":8,"losses":7,"gf":25,"ga":22,"gd":3,"pts":35,"wr":56.2},{"name":"장용호","sessions":4,"games":35,"wins":8,"draws":11,"losses":16,"gf":41,"ga":57,"gd":-16,"pts":35,"wr":33.3},{"name":"이호준","sessions":3,"games":23,"wins":9,"draws":6,"losses":8,"gf":26,"ga":30,"gd":-4,"pts":33,"wr":52.9},{"name":"이윤수","sessions":3,"games":25,"wins":7,"draws":7,"losses":11,"gf":20,"ga":29,"gd":-9,"pts":28,"wr":38.9},{"name":"최호진","sessions":3,"games":24,"wins":5,"draws":12,"losses":7,"gf":21,"ga":21,"gd":0,"pts":27,"wr":41.7},{"name":"권성민","sessions":4,"games":33,"wins":6,"draws":9,"losses":18,"gf":26,"ga":47,"gd":-21,"pts":27,"wr":25.0},{"name":"신윤호","sessions":2,"games":18,"wins":7,"draws":5,"losses":6,"gf":21,"ga":20,"gd":1,"pts":26,"wr":53.8},{"name":"이장영","sessions":3,"games":22,"wins":6,"draws":7,"losses":9,"gf":30,"ga":28,"gd":2,"pts":25,"wr":40.0},{"name":"조덕기","sessions":3,"games":24,"wins":4,"draws":11,"losses":9,"gf":18,"ga":24,"gd":-6,"pts":23,"wr":30.8},{"name":"이영중","sessions":2,"games":17,"wins":5,"draws":1,"losses":11,"gf":13,"ga":22,"gd":-9,"pts":16,"wr":31.2},{"name":"최한호","sessions":1,"games":8,"wins":0,"draws":3,"losses":5,"gf":5,"ga":15,"gd":-10,"pts":3,"wr":0.0}],"2026-Q1":[{"name":"김남현","sessions":2,"games":15,"wins":7,"draws":5,"losses":3,"gf":22,"ga":16,"gd":6,"pts":26,"wr":70.0},{"name":"송환규","sessions":2,"games":16,"wins":7,"draws":5,"losses":4,"gf":17,"ga":14,"gd":3,"pts":26,"wr":63.6},{"name":"신용주","sessions":2,"games":16,"wins":6,"draws":4,"losses":6,"gf":17,"ga":20,"gd":-3,"pts":22,"wr":50.0},{"name":"이광일","sessions":1,"games":8,"wins":6,"draws":2,"losses":0,"gf":12,"ga":3,"gd":9,"pts":20,"wr":100.0},{"name":"김기호","sessions":2,"games":16,"wins":6,"draws":2,"losses":8,"gf":22,"ga":27,"gd":-5,"pts":20,"wr":42.9},{"name":"조덕기","sessions":2,"games":16,"wins":3,"draws":9,"losses":4,"gf":13,"ga":13,"gd":0,"pts":18,"wr":42.9},{"name":"김명래","sessions":1,"games":10,"wins":4,"draws":5,"losses":1,"gf":10,"ga":8,"gd":2,"pts":17,"wr":80.0},{"name":"배철호","sessions":1,"games":8,"wins":3,"draws":4,"losses":1,"gf":6,"ga":4,"gd":2,"pts":13,"wr":75.0},{"name":"신승진","sessions":1,"games":8,"wins":3,"draws":2,"losses":3,"gf":12,"ga":8,"gd":4,"pts":11,"wr":50.0},{"name":"이호섭","sessions":1,"games":8,"wins":3,"draws":2,"losses":3,"gf":14,"ga":11,"gd":3,"pts":11,"wr":50.0},{"name":"김민수","sessions":1,"games":8,"wins":2,"draws":5,"losses":1,"gf":8,"ga":9,"gd":-1,"pts":11,"wr":66.7},{"name":"신윤호","sessions":1,"games":9,"wins":2,"draws":4,"losses":3,"gf":10,"ga":10,"gd":0,"pts":10,"wr":40.0},{"name":"이윤수","sessions":1,"games":9,"wins":2,"draws":3,"losses":4,"gf":5,"ga":7,"gd":-2,"pts":9,"wr":33.3},{"name":"양승현","sessions":1,"games":8,"wins":1,"draws":5,"losses":2,"gf":9,"ga":11,"gd":-2,"pts":8,"wr":33.3},{"name":"김상덕","sessions":1,"games":8,"wins":1,"draws":4,"losses":3,"gf":8,"ga":9,"gd":-1,"pts":7,"wr":25.0},{"name":"최호진","sessions":1,"games":8,"wins":1,"draws":4,"losses":3,"gf":7,"ga":8,"gd":-1,"pts":7,"wr":25.0},{"name":"장용호","sessions":1,"games":8,"wins":1,"draws":4,"losses":3,"gf":8,"ga":11,"gd":-3,"pts":7,"wr":25.0},{"name":"정세진","sessions":1,"games":8,"wins":1,"draws":3,"losses":4,"gf":4,"ga":11,"gd":-7,"pts":6,"wr":20.0},{"name":"권성민","sessions":1,"games":7,"wins":1,"draws":2,"losses":4,"gf":6,"ga":10,"gd":-4,"pts":5,"wr":20.0}],"2026-Q2":[{"name":"김명래","sessions":3,"games":24,"wins":12,"draws":4,"losses":8,"gf":36,"ga":30,"gd":6,"pts":40,"wr":60.0},{"name":"황민구","sessions":2,"games":16,"wins":9,"draws":4,"losses":3,"gf":20,"ga":11,"gd":9,"pts":31,"wr":75.0},{"name":"이광일","sessions":2,"games":16,"wins":7,"draws":6,"losses":3,"gf":28,"ga":22,"gd":6,"pts":27,"wr":70.0},{"name":"신승진","sessions":2,"games":16,"wins":7,"draws":3,"losses":6,"gf":31,"ga":27,"gd":4,"pts":24,"wr":53.8},{"name":"김민수","sessions":2,"games":16,"wins":6,"draws":6,"losses":4,"gf":23,"ga":21,"gd":2,"pts":24,"wr":60.0},{"name":"김기호","sessions":2,"games":16,"wins":6,"draws":5,"losses":5,"gf":16,"ga":14,"gd":2,"pts":23,"wr":54.5},{"name":"안재욱","sessions":2,"games":15,"wins":5,"draws":6,"losses":4,"gf":14,"ga":11,"gd":3,"pts":21,"wr":55.6},{"name":"신용주","sessions":2,"games":16,"wins":4,"draws":8,"losses":4,"gf":12,"ga":11,"gd":1,"pts":20,"wr":50.0},{"name":"송환규","sessions":2,"games":16,"wins":5,"draws":5,"losses":6,"gf":15,"ga":18,"gd":-3,"pts":20,"wr":45.5},{"name":"여도영","sessions":1,"games":8,"wins":6,"draws":1,"losses":1,"gf":15,"ga":3,"gd":12,"pts":19,"wr":85.7},{"name":"이장영","sessions":2,"games":15,"wins":5,"draws":4,"losses":6,"gf":19,"ga":16,"gd":3,"pts":19,"wr":45.5},{"name":"이윤수","sessions":2,"games":16,"wins":5,"draws":4,"losses":7,"gf":15,"ga":22,"gd":-7,"pts":19,"wr":41.7},{"name":"배철호","sessions":2,"games":16,"wins":5,"draws":3,"losses":8,"gf":20,"ga":27,"gd":-7,"pts":18,"wr":38.5},{"name":"정세진","sessions":1,"games":8,"wins":4,"draws":2,"losses":2,"gf":10,"ga":7,"gd":3,"pts":14,"wr":66.7},{"name":"장용호","sessions":2,"games":16,"wins":4,"draws":2,"losses":10,"gf":23,"ga":39,"gd":-16,"pts":14,"wr":28.6},{"name":"최호진","sessions":1,"games":8,"wins":2,"draws":5,"losses":1,"gf":7,"ga":5,"gd":2,"pts":11,"wr":66.7},{"name":"김남현","sessions":1,"games":8,"wins":3,"draws":2,"losses":3,"gf":17,"ga":15,"gd":2,"pts":11,"wr":50.0},{"name":"배수천","sessions":1,"games":8,"wins":3,"draws":2,"losses":3,"gf":10,"ga":8,"gd":2,"pts":11,"wr":50.0},{"name":"김상덕","sessions":2,"games":16,"wins":2,"draws":5,"losses":9,"gf":10,"ga":21,"gd":-11,"pts":11,"wr":18.2},{"name":"권성민","sessions":2,"games":16,"wins":2,"draws":5,"losses":9,"gf":10,"ga":22,"gd":-12,"pts":11,"wr":18.2},{"name":"양승현","sessions":1,"games":8,"wins":2,"draws":4,"losses":2,"gf":8,"ga":9,"gd":-1,"pts":10,"wr":50.0}],"2026-Q3":[{"name":"배철호","sessions":3,"games":24,"wins":11,"draws":7,"losses":6,"gf":35,"ga":19,"gd":16,"pts":40,"wr":64.7},{"name":"김기호","sessions":2,"games":18,"wins":9,"draws":4,"losses":5,"gf":30,"ga":23,"gd":7,"pts":31,"wr":64.3},{"name":"김명래","sessions":2,"games":16,"wins":7,"draws":6,"losses":3,"gf":21,"ga":17,"gd":4,"pts":27,"wr":70.0},{"name":"김상덕","sessions":2,"games":16,"wins":7,"draws":4,"losses":5,"gf":17,"ga":13,"gd":4,"pts":25,"wr":58.3},{"name":"배수천","sessions":2,"games":18,"wins":5,"draws":7,"losses":6,"gf":13,"ga":18,"gd":-5,"pts":22,"wr":45.5},{"name":"정세진","sessions":2,"games":16,"wins":5,"draws":6,"losses":5,"gf":18,"ga":19,"gd":-1,"pts":21,"wr":50.0},{"name":"여도영","sessions":1,"games":7,"wins":6,"draws":1,"losses":0,"gf":22,"ga":5,"gd":17,"pts":19,"wr":100.0},{"name":"신윤호","sessions":1,"games":9,"wins":5,"draws":1,"losses":3,"gf":11,"ga":10,"gd":1,"pts":16,"wr":62.5},{"name":"이영중","sessions":2,"games":17,"wins":5,"draws":1,"losses":11,"gf":13,"ga":22,"gd":-9,"pts":16,"wr":31.2},{"name":"김남현","sessions":1,"games":8,"wins":4,"draws":3,"losses":1,"gf":17,"ga":8,"gd":9,"pts":15,"wr":80.0},{"name":"양승현","sessions":2,"games":15,"wins":4,"draws":2,"losses":9,"gf":16,"ga":24,"gd":-8,"pts":14,"wr":30.8},{"name":"권성민","sessions":1,"games":10,"wins":3,"draws":2,"losses":5,"gf":10,"ga":15,"gd":-5,"pts":11,"wr":37.5},{"name":"김민수","sessions":1,"games":8,"wins":2,"draws":4,"losses":2,"gf":4,"ga":4,"gd":0,"pts":10,"wr":50.0},{"name":"안재욱","sessions":1,"games":8,"wins":2,"draws":4,"losses":2,"gf":4,"ga":5,"gd":-1,"pts":10,"wr":50.0},{"name":"이광일","sessions":1,"games":8,"wins":2,"draws":3,"losses":3,"gf":5,"ga":4,"gd":1,"pts":9,"wr":40.0},{"name":"이호섭","sessions":1,"games":8,"wins":1,"draws":6,"losses":1,"gf":4,"ga":9,"gd":-5,"pts":9,"wr":50.0},{"name":"이장영","sessions":1,"games":7,"wins":1,"draws":3,"losses":3,"gf":11,"ga":12,"gd":-1,"pts":6,"wr":25.0},{"name":"이호준","sessions":1,"games":7,"wins":1,"draws":1,"losses":5,"gf":7,"ga":18,"gd":-11,"pts":4,"wr":16.7},{"name":"최한호","sessions":1,"games":8,"wins":0,"draws":3,"losses":5,"gf":5,"ga":15,"gd":-10,"pts":3,"wr":0.0}],"2026-Q4":[{"name":"이호준","sessions":2,"games":16,"wins":8,"draws":5,"losses":3,"gf":19,"ga":12,"gd":7,"pts":29,"wr":72.7},{"name":"이호섭","sessions":2,"games":16,"wins":6,"draws":4,"losses":6,"gf":14,"ga":14,"gd":0,"pts":22,"wr":50.0},{"name":"정세진","sessions":1,"games":8,"wins":5,"draws":1,"losses":2,"gf":8,"ga":5,"gd":3,"pts":16,"wr":71.4},{"name":"배철호","sessions":1,"games":8,"wins":4,"draws":3,"losses":1,"gf":15,"ga":8,"gd":7,"pts":15,"wr":80.0},{"name":"장용호","sessions":1,"games":11,"wins":3,"draws":5,"losses":3,"gf":10,"ga":7,"gd":3,"pts":14,"wr":50.0},{"name":"안재욱","sessions":1,"games":11,"wins":3,"draws":5,"losses":3,"gf":7,"ga":10,"gd":-3,"pts":14,"wr":50.0},{"name":"배수천","sessions":1,"games":8,"wins":3,"draws":4,"losses":1,"gf":9,"ga":7,"gd":2,"pts":13,"wr":75.0},{"name":"양승현","sessions":1,"games":8,"wins":4,"draws":1,"losses":3,"gf":8,"ga":6,"gd":2,"pts":13,"wr":57.1},{"name":"김민수","sessions":1,"games":8,"wins":4,"draws":1,"losses":3,"gf":11,"ga":11,"gd":0,"pts":13,"wr":57.1},{"name":"최호진","sessions":1,"games":8,"wins":2,"draws":3,"losses":3,"gf":7,"ga":8,"gd":-1,"pts":9,"wr":40.0},{"name":"김남현","sessions":1,"games":8,"wins":3,"draws":0,"losses":5,"gf":9,"ga":11,"gd":-2,"pts":9,"wr":37.5},{"name":"조덕기","sessions":1,"games":8,"wins":1,"draws":2,"losses":5,"gf":5,"ga":11,"gd":-6,"pts":5,"wr":16.7},{"name":"황민구","sessions":1,"games":8,"wins":0,"draws":4,"losses":4,"gf":5,"ga":11,"gd":-6,"pts":4,"wr":0.0},{"name":"김상덕","sessions":1,"games":8,"wins":0,"draws":2,"losses":6,"gf":6,"ga":16,"gd":-10,"pts":2,"wr":0.0}]},"labels":{"all":"전체기간","2026-Q1":"2026년 1분기","2026-Q2":"2026년 2분기","2026-Q3":"2026년 3분기","2026-Q4":"2026년 4분기"}};
+
+const SORTS = [
+  {id:'pts', label:'승점', get:r=>r.pts, fmt:r=>r.pts},
+  {id:'wr', label:'승률', get:r=>r.wr==null?-1:r.wr, fmt:r=>r.wr==null?'-':r.wr+'%'},
+  {id:'gd', label:'득실', get:r=>r.gd, fmt:r=>(r.gd>0?'+':'')+r.gd},
+  {id:'gf', label:'득점', get:r=>r.gf, fmt:r=>r.gf},
+];
+
+let period = 'all';
+let sortId = 'pts';
+
+function rows(){
+  return (DATA.periods[period] || []).slice();
+}
+
+function sorted(list){
+  const s = SORTS.find(x=>x.id===sortId) || SORTS[0];
+  return list.slice().sort((a,b)=> s.get(b)-s.get(a) || b.pts-a.pts || b.gd-a.gd || a.name.localeCompare(b.name,'ko'));
+}
+
+function wr(r){ return r.wr==null ? '-' : r.wr+'%'; }
+function gd(r){ return (r.gd>0?'+':'')+r.gd; }
+
+function render(){
+  const list = sorted(rows());
+  const s = SORTS.find(x=>x.id===sortId) || SORTS[0];
+  const cards = document.getElementById('cards');
+  cards.innerHTML = SORTS.map(cat=>{
+    const top = sorted(rows()).sort((a,b)=>cat.get(b)-cat.get(a) || b.pts-a.pts).slice(0,5);
+    return `<section class="card"><h3>감독 ${cat.label} 순위</h3>${
+      top.length ? top.map((r,i)=>`<div class="item"><div class="rank ${i<3?'r'+(i+1):''}">${i+1}</div><div class="meta"><div class="name">${r.name}</div><div class="sub">${r.sessions}세션 · ${r.wins}승 ${r.draws}무 ${r.losses}패</div></div><div class="val">${cat.fmt(r)}</div></div>`).join('')
+      : '<div class="empty">기록 없음</div>'
+    }</section>`;
+  }).join('');
+
+  document.getElementById('tbody').innerHTML = list.length ? list.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td><td>${r.name}</td><td>${r.sessions}</td><td>${r.games}</td>
+      <td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
+      <td>${r.gf}</td><td>${r.ga}</td><td>${gd(r)}</td><td>${r.pts}</td><td>${wr(r)}</td>
+    </tr>`).join('') : `<tr><td colspan="12" class="empty">이 기간 기록 없음</td></tr>`;
+}
+
+function init(){
+  const sel = document.getElementById('period');
+  const order = ['all','2026-Q1','2026-Q2','2026-Q3','2026-Q4'];
+  sel.innerHTML = order.map(k=>`<option value="${k}">${DATA.labels[k]||k}</option>`).join('');
+  // default current quarter if exists
+  const now = new Date();
+  const cq = `${now.getFullYear()}-Q${Math.floor(now.getMonth()/3)+1}`;
+  period = DATA.periods[cq] && DATA.periods[cq].length ? cq : 'all';
+  sel.value = period;
+  sel.onchange = ()=>{ period = sel.value; render(); };
+
+  const chips = document.getElementById('sortChips');
+  chips.innerHTML = SORTS.map(s=>`<button type="button" class="chip ${s.id===sortId?'on':''}" data-sort="${s.id}">${s.label}순</button>`).join('');
+  chips.onclick = e=>{
+    const b = e.target.closest('[data-sort]');
+    if(!b) return;
+    sortId = b.dataset.sort;
+    [...chips.children].forEach(c=>c.classList.toggle('on', c.dataset.sort===sortId));
+    render();
+  };
+  render();
+}
+init();
+</script>
+</body>
+</html>

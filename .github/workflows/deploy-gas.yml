@@ -1,0 +1,51 @@
+# 휴대폰에서: Actions → Deploy GAS (clasp) → Run workflow
+# 사전: 저장소 Secrets에 CLASPRC_JSON, SCRIPT_ID 등록 (최초 1회, PC에서 clasp login 후)
+name: Deploy GAS (clasp)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref_note:
+        description: '메모 (선택)'
+        required: false
+        default: 'mobile deploy'
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp
+        run: npm i -g @google/clasp
+
+      - name: Write clasp auth + project
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ] || [ -z "$SCRIPT_ID" ]; then
+            echo "Missing secrets: CLASPRC_JSON and/or SCRIPT_ID"
+            echo "PC에서 한 번: clasp login 후 ~/.clasprc.json 내용을 CLASPRC_JSON 시크릿으로 등록"
+            echo "SCRIPT_ID = Apps Script 프로젝트 ID"
+            exit 1
+          fi
+          echo "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          printf '%s\n' '{' "  \"scriptId\": \"$SCRIPT_ID\"," '  "rootDir": "live"' '}' > .clasp.json
+          # live 폴더에 appsscript.json 필요
+          test -f live/appsscript.json
+
+      - name: clasp push
+        run: clasp push --force
+
+      - name: Hint
+        run: |
+          echo "clasp push 완료. 웹앱에 반영하려면 Apps Script에서 배포 → 새 버전 이 필요할 수 있습니다."
+          echo "원격 UI(UI_HTML_URL)를 쓰는 경우 HTML은 GitHub만 최신이면 새로고침으로 반영됩니다."

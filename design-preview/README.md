@@ -13,6 +13,8 @@
 | 파일 | 설명 |
 |------|------|
 | **`jmfc-mockup.html`** | JMFC 로고(**EST. 206**) · 6화면 다크 프리미엄 목업 (로고 HTML 내장) |
+| **`team-power-lab.html`** | 실시트 연동 팀파워(100점)·용병제외 승률 실험실 (운영 GAS 아님) |
+| `players-snapshot.json` | 실험실용 선수 스냅샷 |
 | `index.html` | 위 목업으로 자동 이동 |
 | `assets/jmfc-logo.png` | 로고 PNG (헤더·아이콘) |
 | `assets/jmfc-logo-hero.png` | 로고 PNG (카본 배경 포함) |

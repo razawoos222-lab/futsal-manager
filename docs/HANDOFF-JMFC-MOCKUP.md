@@ -33,7 +33,7 @@ https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/d
 | 전체 톤 | **v5: 스타디움 라이트** (`#f4f4f5`, 흰 카드, 검정 CTA) · v3 다크는 보관 |
 | 기록 수정 | 결과(읽기) → **기록 수정**(입력) → 저장 · live에 `screen-record-edit` 분리됨 |
 | 로고 연도 | **EST. 206** (엠블럼 SVG: `design-preview/assets/jmfc-logo.svg`) |
-| `Code.gs` | **변경 없음** — UI만 `live/index.html` 스킨 예정 |
+| `Code.gs` | 초기 state에 `snakeMode` / `sessionPin` / `draftCompleted` 등 추가됨 — 배포는 `docs/GAS-DEPLOY.md` |
 | 구장 선택 | **제거** |
 | 골키퍼 지정 | **제거** |
 | 경기 시간 | **7~12분** 선택 유지 (구장만 제거) |
@@ -70,8 +70,9 @@ https://raw.githack.com/razawoos222-lab/futsal-manager/cursor/jmfc-mockup-6e09/d
 
 ## 아직 안 한 것 (다음 작업)
 
-- [ ] 목업 최종 OK 후 → `live/index.html` JMFC 스킨 적용  
-- [ ] `live/index.html`에서 구장 선택 UI 제거 + GAS `field` 의존성 정리 (필요 시 `Code.gs` 최소 수정 — 사용자는 Code.gs 유지 선호했으나 구장 제거 시 확인 필요)  
+- [x] `jmfc-compact` → `live/index.html` 이식 (BUILD `2026-11-17-live-v18`) + `Code.gs` 초기 state 확장  
+- [ ] 로컬에서 `clasp login` + `clasp push` 후 웹앱 **새 버전** 배포 (`docs/GAS-DEPLOY.md`)  
+- [ ] `live/index.html`에서 구장 선택 UI 제거 + GAS `field` 의존성 정리 (필요 시)  
 - [ ] 골키퍼 UI/로직 제거 (index + Code.gs 연동 여부 검토)  
 - [ ] 경기 시간 옵션 7~12분으로 live와 목업 일치 (현재 live는 6~10분 등 혼재 가능)  
 - [ ] PR #7 머지 — **사용자가 명시할 때까지 하지 말 것**

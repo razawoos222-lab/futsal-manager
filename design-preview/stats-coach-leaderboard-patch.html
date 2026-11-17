@@ -1,0 +1,51 @@
+<!--
+  JMFC Stats index.html 순위표(leaderboards) 탭에 추가할 조각
+
+  1) leaderboards-grid 안에 아래 카드 4개를 추가
+  2) Leaderboards.renderLeaderboards 의 categories 배열에
+     'coachPoints','coachWinrate','coachGd','coachGoals' 추가
+  3) renderLeaderCategory switch 에 coach 값 포맷 추가 (아래 JS)
+  4) Apps Script 재배포
+-->
+
+<!-- HTML: 순위표 그리드 안 -->
+<div class="leader-category">
+  <h3>감독 승점 순위</h3>
+  <div class="leader-list" id="coachPoints-leaders"></div>
+</div>
+<div class="leader-category">
+  <h3>감독 승률 순위</h3>
+  <div class="leader-list" id="coachWinrate-leaders"></div>
+</div>
+<div class="leader-category">
+  <h3>감독 득실 순위</h3>
+  <div class="leader-list" id="coachGd-leaders"></div>
+</div>
+<div class="leader-category">
+  <h3>감독 득점 순위</h3>
+  <div class="leader-list" id="coachGoals-leaders"></div>
+</div>
+
+<script>
+/* Leaderboards.renderLeaderboards 수정 예
+const categories = [
+  'goals','assists','attack','defenses','saves','defensePoints','ccp','winrate','points',
+  'coachPoints','coachWinrate','coachGd','coachGoals'
+];
+*/
+
+/* renderLeaderCategory switch 에 추가
+case 'coachWinrate':
+  statValue = `${(leader.winRate * 100).toFixed(1)}%`;
+  break;
+case 'coachPoints':
+  statValue = leader.points;
+  break;
+case 'coachGd':
+  statValue = (leader.gd > 0 ? '+' : '') + leader.gd;
+  break;
+case 'coachGoals':
+  statValue = leader.goalsFor;
+  break;
+*/
+</script>

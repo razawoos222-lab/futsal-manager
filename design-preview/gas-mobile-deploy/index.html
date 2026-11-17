@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>JMFC · FORM/CLUB 배포</title>
+  <style>
+    :root { --bg:#1a1d21; --surf:#24272b; --text:#f3f4f5; --muted:#a8adb3; --lime:#c6f135; --line:#3a3f46; --ok:#7fd99a; --danger:#f07178; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif; background:var(--bg); color:var(--text); padding:20px 16px 48px; line-height:1.45; }
+    h1 { font-size:1.4rem; margin:0 0 8px; }
+    h2 { font-size:1.05rem; margin:0 0 10px; color:var(--lime); }
+    p, li { color:var(--muted); font-size:0.95rem; }
+    .lead { color:var(--text); margin:0 0 16px; }
+    section { background:var(--surf); border:1px solid var(--line); border-radius:14px; padding:16px; margin:0 0 14px; }
+    .btn { display:block; width:100%; border:0; border-radius:12px; padding:16px 14px; margin:8px 0 0; font-size:1.02rem; font-weight:800; background:var(--lime); color:#111; }
+    .btn.secondary { background:#3a414c; color:var(--text); }
+    .status { min-height:1.3em; margin-top:8px; font-size:0.9rem; color:var(--ok); }
+    .status.err { color:var(--danger); }
+    a.out { display:block; margin-top:10px; color:var(--lime); font-weight:700; word-break:break-all; }
+    ol { padding-left:1.2em; }
+    .okbox { background:#1c2420; border:1px solid #3d5a40; border-radius:12px; padding:12px; margin:0 0 14px; color:var(--text); font-size:0.92rem; }
+  </style>
+</head>
+<body>
+  <h1>FORM/CLUB 배포 (노트북)</h1>
+  <p class="lead">파란「참석 조사」옛 UI는 저장소에서 제거했습니다. 아래만 쓰면 됩니다.</p>
+
+  <div class="okbox">
+    올바른 화면: 참석 이름 선택 시 <b>검정 바탕 + 형광(라임) 글씨</b><br />
+    토스트에 <code>2026-11-17-live-v18</code>
+  </div>
+
+  <section>
+    <h2>노트북 Apps Script</h2>
+    <ol>
+      <li><strong>Code.gs 전체 복사</strong> → Apps Script에서 전체 붙여넣기 · 저장</li>
+      <li>실행: <code>useGithubUiPrBranch</code> (권한 허용)</li>
+      <li>실행: <code>syncIndexHtmlFromGithub</code></li>
+      <li>배포 → 새 버전</li>
+      <li>웹앱 새로고침</li>
+    </ol>
+    <button class="btn" id="btnCode" type="button">Code.gs 전체 복사</button>
+    <button class="btn secondary" id="btnIndex" type="button">index.html 전체 복사 (직접 교체용)</button>
+    <div class="status" id="status"></div>
+    <a class="out" href="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/Code.gs" target="_blank" rel="noopener">Code.gs raw 열기</a>
+    <a class="out" href="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html" target="_blank" rel="noopener">index.html raw 열기</a>
+  </section>
+
+  <script>
+    const BRANCH = 'cursor/formclub-palette-mockup-7fc5';
+    const REPO = 'razawoos222-lab/futsal-manager';
+    const statusEl = document.getElementById('status');
+
+    async function fetchText(path) {
+      const urls = [
+        `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/${path}`,
+        `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${path}`
+      ];
+      for (const u of urls) {
+        try {
+          const r = await fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now());
+          if (r.ok) return await r.text();
+        } catch (_) {}
+      }
+      return '';
+    }
+
+    async function copyPath(path, label) {
+      statusEl.className = 'status';
+      statusEl.textContent = label + ' 불러오는 중…';
+      const text = await fetchText(path);
+      if (!text) {
+        statusEl.className = 'status err';
+        statusEl.textContent = '불러오기 실패';
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        statusEl.className = 'status';
+        statusEl.textContent = label + ' 복사됨 (' + text.length + '자) · Apps Script에 붙여넣기';
+      } catch (_) {
+        statusEl.className = 'status err';
+        statusEl.textContent = '복사 실패 · 위 raw 링크를 여세요';
+      }
+    }
+
+    document.getElementById('btnCode').onclick = () => copyPath('live/Code.gs', 'Code.gs');
+    document.getElementById('btnIndex').onclick = () => copyPath('live/index.html', 'index.html');
+  </script>
+</body>
+</html>
