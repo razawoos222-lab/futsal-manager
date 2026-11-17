@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>JMFC · 모바일 GAS 배포</title>
+  <style>
+    :root {
+      --bg: #1a1d21;
+      --surf: #24272b;
+      --text: #f3f4f5;
+      --muted: #a8adb3;
+      --lime: #c6f135;
+      --line: #3a3f46;
+      --danger: #f07178;
+      --ok: #7fd99a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background: radial-gradient(120% 80% at 10% -10%, #2c3340 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 20px 16px 48px;
+      line-height: 1.45;
+    }
+    h1 { font-size: 1.55rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h2 { font-size: 1.05rem; margin: 0 0 10px; color: var(--lime); }
+    p, li { color: var(--muted); font-size: 0.95rem; }
+    .lead { color: var(--text); margin: 0 0 20px; }
+    section {
+      background: var(--surf);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      margin: 0 0 14px;
+    }
+    .step { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; }
+    .num {
+      flex: 0 0 28px; height: 28px; border-radius: 999px;
+      background: var(--lime); color: #111; font-weight: 800;
+      display: grid; place-items: center; font-size: 0.85rem;
+    }
+    .btn {
+      display: block; width: 100%;
+      border: 0; border-radius: 12px;
+      padding: 16px 14px; margin: 8px 0 0;
+      font-size: 1.05rem; font-weight: 800;
+      background: var(--lime); color: #111;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn.secondary { background: #3a414c; color: var(--text); font-weight: 700; }
+    .btn:active { transform: scale(0.98); }
+    .status { min-height: 1.3em; margin-top: 8px; font-size: 0.9rem; color: var(--ok); }
+    .status.err { color: var(--danger); }
+    a.out {
+      display: block; margin-top: 10px; color: var(--lime);
+      font-weight: 700; word-break: break-all;
+    }
+    pre {
+      white-space: pre-wrap; word-break: break-word;
+      background: #111417; border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px; font-size: 0.72rem;
+      max-height: 180px; overflow: auto; color: #d7dde5;
+    }
+    .note {
+      font-size: 0.85rem; color: var(--muted);
+      border-left: 3px solid var(--lime); padding-left: 10px; margin-top: 10px;
+    }
+    ol { padding-left: 1.2em; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>휴대폰으로 GAS 배포</h1>
+  <p class="lead">큰 <code>index.html</code>을 폰에 붙여넣을 필요 없습니다. <strong>한 번만</strong> Code.gs의 원격 UI 설정을 넣고, 이후에는 GitHub만 최신이면 웹앱 새로고침으로 반영됩니다.</p>
+
+  <section>
+    <h2>지금 할 일 (최초 1회)</h2>
+    <div class="step"><span class="num">1</span><div>아래 <strong>패치 복사</strong>를 누릅니다.</div></div>
+    <div class="step"><span class="num">2</span><div>Chrome/Safari에서 <a class="out" style="display:inline;margin:0" href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> → JMFC 스프레드시트에 연결된 프로젝트를 엽니다.</div></div>
+    <div class="step"><span class="num">3</span><div><code>Code.gs</code>에서 기존 <code>function doGet</code> … 블록을 지우고, 복사한 패치를 붙여넣습니다. (파일 맨 위 <code>CONFIG</code>에 이미 <code>UI_HTML_URL</code>이 있으면 패치의 CONFIG 부분은 건너뛰고 함수만 넣어도 됩니다.)</div></div>
+    <div class="step"><span class="num">4</span><div>저장 → 상단 <strong>실행</strong>에서 <code>useGithubUiPrBranch</code>(머지 전) 또는 <code>useGithubUiMain</code>(머지 후) 실행. 권한 허용.</div></div>
+    <div class="step"><span class="num">5</span><div><strong>배포 → 배포 관리 → 연필 → 버전: 새 버전 → 배포</strong>. 웹앱 URL을 새로고침하면 최신 UI가 뜹니다.</div></div>
+    <button class="btn" id="btnPatch" type="button">1) 패치 복사</button>
+    <button class="btn secondary" id="btnFullCode" type="button">대신 Code.gs 전체 복사</button>
+    <div class="status" id="status"></div>
+    <p class="note">전체 복사가 편하면 Code.gs만 통째로 교체하세요. index.html은 더 이상 붙여넣지 않아도 됩니다.</p>
+  </section>
+
+  <section>
+    <h2>이후 업데이트 (매번)</h2>
+    <ol>
+      <li>GitHub에 코드가 올라가면 끝 (이 채팅/PR 머지).</li>
+      <li>웹앱 링크만 새로고침. (캐시 때문에 안 바뀌면 시크릿/다른 브라우저)</li>
+      <li><code>Code.gs</code> 서버 로직이 바뀐 경우에만 위 배포 5번(새 버전)을 다시 합니다.</li>
+    </ol>
+    <a class="out" href="https://github.com/razawoos222-lab/futsal-manager/pull/19" target="_blank" rel="noopener">PR #19 열기</a>
+    <a class="out" href="https://github.com/razawoos222-lab/futsal-manager/actions/workflows/deploy-gas.yml" target="_blank" rel="noopener">GitHub Actions 배포 (시크릿 설정 후)</a>
+  </section>
+
+  <section>
+    <h2>패치 미리보기</h2>
+    <pre id="preview">불러오는 중…</pre>
+  </section>
+
+  <script>
+    const REPO = 'razawoos222-lab/futsal-manager';
+    const BRANCH = 'cursor/formclub-palette-mockup-7fc5';
+    const statusEl = document.getElementById('status');
+    const previewEl = document.getElementById('preview');
+
+    const PATCH = `// --- JMFC 모바일 배포 패치: CONFIG에 추가 ---
+UI_HTML_URL: 'https://raw.githubusercontent.com/${REPO}/main/live/index.html',
+UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/${REPO}/${BRANCH}/live/index.html'
+
+// --- 기존 function doGet(...) { ... } 전체를 아래로 교체 ---
+function resolveUiHtmlUrl_() {
+  const props = PropertiesService.getScriptProperties();
+  const fromProp = (props.getProperty('UI_HTML_URL') || '').trim();
+  if (fromProp) return fromProp;
+  return (CONFIG.UI_HTML_URL || '').trim();
+}
+
+function fetchRemoteUiHtml_() {
+  const primary = resolveUiHtmlUrl_();
+  const fallback = (CONFIG.UI_HTML_URL_FALLBACK || '').trim();
+  const urls = [];
+  if (primary) urls.push(primary);
+  if (fallback && fallback !== primary) urls.push(fallback);
+  let lastErr = '';
+  for (let i = 0; i < urls.length; i++) {
+    const base = urls[i];
+    const bust = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'gas=' + Date.now();
+    try {
+      const res = UrlFetchApp.fetch(bust, {
+        muteHttpExceptions: true,
+        followRedirects: true,
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      const code = res.getResponseCode();
+      const text = res.getContentText() || '';
+      if (code === 200 && (text.indexOf('<!DOCTYPE') >= 0 || text.indexOf('<html') >= 0)) {
+        return text;
+      }
+      lastErr = 'HTTP ' + code + ' · ' + base;
+    } catch (err) {
+      lastErr = String(err && err.message ? err.message : err) + ' · ' + base;
+    }
+  }
+  Logger.log('fetchRemoteUiHtml_ failed: ' + lastErr);
+  return null;
+}
+
+function doGet(e) {
+  const remote = fetchRemoteUiHtml_();
+  if (remote) {
+    return HtmlService.createHtmlOutput(remote)
+      .setTitle('JMFC풋살 매니저')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+  }
+  return HtmlService.createHtmlOutputFromFile('index')
+    .setTitle('JMFC풋살 매니저')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+}
+
+function useGithubUiMain() {
+  PropertiesService.getScriptProperties().setProperty(
+    'UI_HTML_URL',
+    'https://raw.githubusercontent.com/${REPO}/main/live/index.html'
+  );
+  return 'UI_HTML_URL → main/live/index.html';
+}
+
+function useGithubUiPrBranch() {
+  PropertiesService.getScriptProperties().setProperty(
+    'UI_HTML_URL',
+    'https://raw.githubusercontent.com/${REPO}/${BRANCH}/live/index.html'
+  );
+  return 'UI_HTML_URL → PR branch';
+}
+
+function useLocalUiFile() {
+  PropertiesService.getScriptProperties().deleteProperty('UI_HTML_URL');
+  return 'UI_HTML_URL cleared · local index.html';
+}
+`;
+
+    previewEl.textContent = PATCH;
+
+    async function copyText(text, okMsg) {
+      try {
+        await navigator.clipboard.writeText(text);
+        statusEl.className = 'status';
+        statusEl.textContent = okMsg;
+      } catch (_) {
+        statusEl.className = 'status err';
+        statusEl.textContent = '복사 실패 — 아래 미리보기를 길게 눌러 복사하세요.';
+      }
+    }
+
+    document.getElementById('btnPatch').onclick = () =>
+      copyText(PATCH, '패치 복사됨 · script.google.com 에 붙여넣으세요');
+
+    document.getElementById('btnFullCode').onclick = async () => {
+      statusEl.className = 'status';
+      statusEl.textContent = 'Code.gs 불러오는 중…';
+      const urls = [
+        `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/live/Code.gs`,
+        `https://raw.githubusercontent.com/${REPO}/${BRANCH}/live/Code.gs`
+      ];
+      let text = '';
+      for (const u of urls) {
+        try {
+          const r = await fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now());
+          if (r.ok) { text = await r.text(); break; }
+        } catch (_) {}
+      }
+      if (!text) {
+        statusEl.className = 'status err';
+        statusEl.textContent = '불러오기 실패 · 네트워크/저장소 공개 여부를 확인하세요.';
+        return;
+      }
+      await copyText(text, 'Code.gs 전체 복사됨 (' + text.length + '자)');
+    };
+  </script>
+</body>
+</html>

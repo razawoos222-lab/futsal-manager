@@ -13,7 +13,14 @@ const CONFIG = {
   SESSION_ARCHIVE_SHEET: '세션_결과_아카이브',
   TEAM_LEADERS_SHEET: '감독_배정_2026',
   /** 감독순위 웹앱(통계대시보드) 스프레드시트 */
-  STATS_SPREADSHEET_ID: '1A_rY2T1Tk1G5_tQq6SxNSxr7k330bHqD4rXCElS1BiA'
+  STATS_SPREADSHEET_ID: '1A_rY2T1Tk1G5_tQq6SxNSxr7k330bHqD4rXCElS1BiA',
+  /**
+   * 모바일 배포: GitHub의 live/index.html을 그대로 불러옵니다.
+   * Script Properties 키 UI_HTML_URL 로 덮어쓸 수 있습니다.
+   * 비우면 프로젝트 안 HTML 파일(index)을 씁니다.
+   */
+  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html',
+  UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html'
 };
 
 const TEAM_ALL = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
@@ -82,11 +89,83 @@ function buildInitialState_() {
   };
 }
 
+function resolveUiHtmlUrl_() {
+  const props = PropertiesService.getScriptProperties();
+  const fromProp = (props.getProperty('UI_HTML_URL') || '').trim();
+  if (fromProp) return fromProp;
+  return (CONFIG.UI_HTML_URL || '').trim();
+}
+
+/** GitHub(raw)에서 UI HTML 가져오기 — 실패 시 null */
+function fetchRemoteUiHtml_() {
+  const primary = resolveUiHtmlUrl_();
+  const fallback = (CONFIG.UI_HTML_URL_FALLBACK || '').trim();
+  const urls = [];
+  if (primary) urls.push(primary);
+  if (fallback && fallback !== primary) urls.push(fallback);
+  let lastErr = '';
+  for (let i = 0; i < urls.length; i++) {
+    const base = urls[i];
+    const bust = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'gas=' + Date.now();
+    try {
+      const res = UrlFetchApp.fetch(bust, {
+        muteHttpExceptions: true,
+        followRedirects: true,
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      const code = res.getResponseCode();
+      const text = res.getContentText() || '';
+      if (code === 200 && (text.indexOf('<!DOCTYPE') >= 0 || text.indexOf('<html') >= 0)) {
+        return text;
+      }
+      lastErr = 'HTTP ' + code + ' · ' + base;
+    } catch (err) {
+      lastErr = String(err && err.message ? err.message : err) + ' · ' + base;
+    }
+  }
+  Logger.log('fetchRemoteUiHtml_ failed: ' + lastErr);
+  return null;
+}
+
 function doGet(e) {
+  const remote = fetchRemoteUiHtml_();
+  if (remote) {
+    return HtmlService.createHtmlOutput(remote)
+      .setTitle('JMFC풋살 매니저')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+  }
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('JMFC풋살 매니저')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+}
+
+/**
+ * Apps Script 편집기에서 1회 실행: GitHub main UI를 쓰도록 설정.
+ * 모바일: 실행 → useGithubUiMain 선택 → 실행
+ */
+function useGithubUiMain() {
+  PropertiesService.getScriptProperties().setProperty(
+    'UI_HTML_URL',
+    'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html'
+  );
+  return 'UI_HTML_URL → main/live/index.html';
+}
+
+/** PR 브랜치 UI를 임시로 쓸 때 (머지 전) */
+function useGithubUiPrBranch() {
+  PropertiesService.getScriptProperties().setProperty(
+    'UI_HTML_URL',
+    'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html'
+  );
+  return 'UI_HTML_URL → formclub-palette-mockup branch';
+}
+
+/** 원격 UI 끄고 프로젝트 HTML 파일만 사용 */
+function useLocalUiFile() {
+  PropertiesService.getScriptProperties().deleteProperty('UI_HTML_URL');
+  return 'UI_HTML_URL cleared · local index.html';
 }
 
 function getSheet(sheetName) {
