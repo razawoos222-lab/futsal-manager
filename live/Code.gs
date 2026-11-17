@@ -19,8 +19,9 @@ const CONFIG = {
    * Script Properties 키 UI_HTML_URL 로 덮어쓸 수 있습니다.
    * 비우면 프로젝트 안 HTML 파일(index)을 씁니다.
    */
-  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html',
-  UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html',
+  // PR 머지 전에는 formclub 브랜치를 1순위로 (main은 아직 옛 UI)
+  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html',
+  UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html',
   /** Code.gs / index.html GitHub raw 기준 ref (브랜치 또는 태그) */
   UI_GIT_REF: 'cursor/formclub-palette-mockup-7fc5',
   UI_GIT_REPO: 'razawoos222-lab/futsal-manager'
@@ -604,7 +605,7 @@ function resetSession() {
 }
 
 function getAppBuild() {
-  return '2026-11-14-live-v5';
+  return '2026-11-17-live-v18';
 }
 
 function getInitialData() {
