@@ -17,7 +17,7 @@
       --bg:#E5E7E9; --surf:#F3F4F5; --text:#24272B; --muted:#5B6168;
       --line:#C8CCD0; --accent:#24272B; --accent-soft:#D6D9DC;
       --danger:#D94B40; --neon:#C6F135; --own:#C6F135; --modal-accent:#C6F135;
-      --red:#E11D48; --blue:#2563EB; --yellow-text:#B45309; --yellow-fill:#F5B800; --black:#24272B;
+      --red:#E11D48; --blue:#2563EB; --yellow-text:#B45309; --yellow-fill:#F5B800; --accent-yellow:#F7E947; --black:#24272B;
       --end-session-bg:#D94B40; --end-session-fg:#FFFFFF;
       --glass:rgba(255,255,255,.88); --glass-strong:#FFFFFF;
       --glass-border:1px solid var(--line);
@@ -277,7 +277,7 @@
     .btn-danger{background:var(--end-session-bg);color:var(--end-session-fg);border:none;font-size:calc(0.94rem + 1pt);font-weight:900;box-shadow:var(--raise)}
     .btn-sec{background:var(--glass-strong);color:#111827;border:var(--glass-border);box-shadow:var(--raise-sm)}
     .nav-row .btn,.nav-row .btn-cta,.nav-row .btn-sec{background:rgba(255,255,255,.88)!important;color:#111827!important;border:var(--glass-border)!important;box-shadow:var(--raise-sm)!important}
-    .nav-row .btn-start{background:#2563eb!important;color:#fff!important;border:none!important;box-shadow:0 8px 16px rgba(37,99,235,.28)!important}
+    .nav-row .btn-start,.btn-sm.match-start{background:#24272B!important;color:var(--accent-yellow)!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important;font-weight:900!important}
     .btn:active{box-shadow:var(--press)}
     .btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
     .result-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -343,11 +343,22 @@
     .pin-err{color:#D94B40;font-size:0.8rem;font-weight:800;text-align:center;min-height:1.2em;margin-top:8px}
     .shot-light,.shot-light *{color-scheme:light !important}
     .shot-light{background:#ffffff !important;color:#111827 !important;padding:8px !important}
-    .shot-light .result-card,.shot-light .result-hero,.shot-light .award,.shot-light .mvp-mini{background:#fff !important}
+    /* 결과 카드·수상은 밝게, MVP 존은 화면과 같이 검정 유지 (흰 박스 버그 방지) */
+    .shot-light .result-card,.shot-light .award,.shot-light .mvp-mini{background:#fff !important}
+    .shot-light .result-hero{
+      background:#111111 !important;
+      border:1px solid #333 !important;
+      color:#fff !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+    .shot-light .result-hero .eyebrow{color:#F5E6B8 !important}
+    .shot-light .result-hero .mvp-names,.shot-light .result-hero .mvp-names span{color:#C6F135 !important}
     .shot-light table.data{font-size:0.92rem}
     .shot-light .mvp-row .result-hero{height:128px;min-height:128px;max-height:128px}
     .shot-light h2{font-size:1.2rem !important}
     .shot-light h3{font-size:1rem !important}
+    .result-btns .btn{min-height:48px;font-size:0.94rem;font-weight:900;letter-spacing:0}
     .toast{position:absolute;left:50%;bottom:calc(18px + var(--safe-b));transform:translateX(-50%) translateY(12px);background:rgba(17,24,39,.94);color:#fff;padding:14px 18px;border-radius:14px;font-weight:700;font-size:0.9rem;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;width:max-content;max-width:calc(100% - 24px);min-width:min(260px,calc(100% - 24px));text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);letter-spacing:0;border:1px solid rgba(255,255,255,.12);white-space:normal;overflow-wrap:anywhere;word-break:keep-all;line-height:1.45}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + var(--safe-b));z-index:100}
@@ -389,8 +400,9 @@
     .chip-row.one-line .mini.neon,.btn-cta,.btn-green,.card-acts button,.prow .p-swap,.team-head-row .btn-add-mini,.shot-preview .acts .share,.modal-btns .goal,.modal-btns .def,.modal-btns .save,.modal-btns .cancel,.modal-btns .ok,.act2 button,.btn-sm.blue{background:#24272B!important;color:#C6F135!important;border-color:#24272B!important}
     .name-coach,.prow .p-main.is-coach{background:#24272B!important;color:#fff!important;border-color:#24272B!important}
     .team-stat-card .names .cap,.prow .cap,.name-coach .cap{background:#24272B;border-color:#C6F135;color:#C6F135}
-    /* 경기시작 · 가운데 시간 = Deep Navy */
-    .nav-row .btn-start{background:#20334D!important;color:#C6F135!important;border:none!important;box-shadow:0 8px 16px rgba(32,51,77,.35)!important}
+    /* 경기시작(선택 화면·라이브) 통일: 차콜 + #F7E947 */
+    .nav-row .btn-start,.btn-sm.match-start,.btn-sm.blue{background:#24272B!important;color:#F7E947!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important}
+    .ctrl-row .btn-sm.stat{background:#24272B!important;color:#F7E947!important}
     .timer-ring-wrap{background:#fff;border-color:#C8CCD0}
     .timer-ring-wrap .prog{stroke:#20334D}
     .timer-center .t{color:#20334D!important}
@@ -925,7 +937,7 @@ return `<h2>드래프트</h2>
 <div class="team-cards">${teamNames().map(t=>teamCardHtml(t,{editable:true})).join('')}</div>
 ${navRow('coach',null,!!pool.length,'data-act="to-lineup"','드래프트 완료')}`;}
 
-function renderLineup(){return `<div class="lineup-shot" id="lineup-shot-root"><h2>${state.teamMode}팀 라인업 <span class="h2-date">${formatDateLabel(state.sessionDate)}</span></h2><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div></div><div class="result-btns" style="margin-top:8px"><button class="btn btn-cta" data-act="shot-lineup">라인업 한장 저장</button></div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
+function renderLineup(){return `<div class="lineup-shot" id="lineup-shot-root"><h2>${state.teamMode}팀 라인업 <span class="h2-date">${formatDateLabel(state.sessionDate)}</span></h2><div class="team-cards">${teamNames().map(teamCardHtml).join('')}</div></div><div class="result-btns" style="margin-top:8px"><button class="btn btn-cta" data-act="shot-lineup">라인업 공유 ↗</button></div>${navRow('draft','matchSelect',false,null,'다음 →')}`;}
 
 function renderMatchSelect(){ensureCoachesInTeams();const picks=state.playing;const opts=Array.from({length:6},(_,i)=>{const m=i+7;return `<option value="${m*60}" ${state.duration===m*60?'selected':''}>${m}분</option>`;}).join('');
 const histItems=(state.matchHistory||[]).map(h=>`<button type="button" class="hist-item" data-act="edit-match" data-id="${h.id}"><b>Match #${h.num}</b><div class="scoreline"><span class="t-${h.a}">${h.a}</span> ${h.scoreA}:${h.scoreB} <span class="t-${h.b}">${h.b}</span></div><span>탭 · 다시 보기/수정</span></button>`).join('');
@@ -966,11 +978,12 @@ function modalHtml(){
       </div></div>`;
   }
   if(m.type==='shot-preview'){
-    return `<div class="shot-preview" id="shot-preview"><div class="card"><h3 style="margin:0 0 8px;font-size:1rem">라인업 이미지</h3>
-      <img id="shot-preview-img" alt="lineup" src="${m.dataUrl||''}" />
-      <p class="hint">아이폰: 이미지를 길게 눌러 저장 · 또는 공유</p>
+    const kind=m.kind==='results'?'결과':'라인업';
+    return `<div class="shot-preview" id="shot-preview"><div class="card"><h3 style="margin:0 0 8px;font-size:1rem">${kind} 공유</h3>
+      <img id="shot-preview-img" alt="${kind}" src="${m.dataUrl||''}" />
+      <p class="hint">아이폰: 이미지를 길게 눌러 저장 · 또는 아래 공유</p>
       <div class="acts">
-        <button type="button" class="share" data-act="shot-share">공유 / 저장</button>
+        <button type="button" class="share" data-act="shot-share">${kind} 공유 ↗</button>
         <button type="button" class="close" data-act="close-modal">닫기</button>
       </div></div></div>`;
   }
@@ -1084,7 +1097,7 @@ function renderMatch(){
   return `<div class="match-compact"><div class="score-big"><div class="side t-${a}"><div class="tn">TEAM ${a}</div><div class="sc">${state.score.A}</div></div><div class="sep"><div class="match-no">#${matchNo}</div><div class="colon">:</div></div><div class="side t-${b}"><div class="tn">TEAM ${b}</div><div class="sc">${state.score.B}</div></div></div>
 <div class="ctrl-row"><button type="button" class="btn-sm stat" data-act="undo-rec">스탯취소</button>
 <div class="timer-ring-wrap"><svg viewBox="0 0 112 112" aria-hidden="true"><circle class="track" cx="56" cy="56" r="46"></circle><circle class="prog" id="timer-prog" cx="56" cy="56" r="46" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}"></circle></svg><div class="timer-center"><div class="t" id="timer-text">${fmtTime(state.secondsLeft)}</div></div></div>
-<button type="button" class="btn-sm blue" data-act="toggle-timer">${state.timerRunning?'일시정지':'경기시작'}</button></div>
+<button type="button" class="btn-sm blue match-start" data-act="toggle-timer">${state.timerRunning?'일시정지':'경기시작'}</button></div>
 <div class="match-view-links"><button type="button" class="${tab==='lineup'?'on':''}" data-act="match-tab" data-tab="lineup">라인업</button><button type="button" class="${tab==='standings'?'on':''}" data-act="match-tab" data-tab="standings">팀순위</button><button type="button" class="${tab==='stats'?'on':''}" data-act="match-tab" data-tab="stats">개인기록</button></div>
 ${body}
 ${navRow('matchSelect',null,false, state.editingMatchId?'data-act="ask-end-match"':'data-act="match-next"', state.editingMatchId?'수정 저장 →':'다음 →')}</div>`;}
@@ -1125,7 +1138,12 @@ ${standingsTableHtml()}
 ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','class="result-card stats-card')).join('')}
 </div>
 </div>
-<div class="result-btns"><button class="btn btn-cta" data-act="shot-results">결과 스샷 2장 저장</button><button class="btn btn-green" data-act="go" data-screen="edit">기록 수정하기</button><button class="btn btn-cta" data-act="save-new">기록 저장 & NEW 세션</button><button class="btn btn-danger btn-end-session" data-act="reset-new">기록 리셋 & NEW 세션</button></div>
+<div class="result-btns">
+<button class="btn btn-cta" data-act="shot-results">결과 공유 ↗</button>
+<button class="btn btn-green" data-act="go" data-screen="edit">기록 수정</button>
+<button class="btn btn-cta" data-act="save-new">기록 저장</button>
+<button class="btn btn-danger btn-end-session" data-act="reset-new">기록 리셋</button>
+</div>
 <div class="nav-row"><button class="btn btn-sec" data-act="go" data-screen="${state.matchLive?'match':'matchSelect'}">← 이전</button><button class="btn btn-sec" data-act="toggle-drawer">메뉴</button></div>`;
 }
 function renderEdit(){return `<h2>기록 수정</h2><p class="sub">숫자 변경 시 MP 재계산</p>${activeDetailOrder().map(t=>{const names=state.teams[t]||[];return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead><tbody>${names.map(n=>{const s=ensureStat(n,t);return `<tr data-edit-name="${n}"><td>${n}</td><td><input type="number" min="0" data-f="goal" value="${s.goal||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="assist" value="${s.assist||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="defense" value="${s.defense||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="save" value="${s.save||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td class="mp" data-mp>${mpOf(s)}</td></tr>`;}).join('')}</tbody></table></div>`;}).join('')}<div class="result-btns"><button class="btn btn-cta" data-act="save-edit">수정 완료 → 결과로</button></div>${navRow('results',null,false,'data-act="save-edit"','수정 완료 →')}`;}
@@ -1379,7 +1397,8 @@ async function downloadCanvas(canvas, name){
     const reader=new FileReader();
     const dataUrl=await new Promise((res,rej)=>{reader.onload=()=>res(reader.result); reader.onerror=rej; reader.readAsDataURL(blob);});
     _shotBlob=blob; _shotName=name;
-    state.modal={type:'shot-preview', dataUrl, name};
+    const kind=/_results\.png$/i.test(name)?'results':'lineup';
+    state.modal={type:'shot-preview', dataUrl, name, kind};
     render();
     return 'preview';
   }
@@ -1418,7 +1437,21 @@ async function captureNode(node, opts){
     cleanup=()=>{host.innerHTML=''; host.style.cssText='position:fixed;left:-9999px;top:0;width:390px;background:#fff;padding:16px;z-index:-1'; host.setAttribute('aria-hidden','true');};
   }
   try{
-    return await html2canvas(target, Object.assign({backgroundColor:'#ffffff',scale:Math.min(2.5, (window.devicePixelRatio||2)*1.15),useCORS:true,allowTaint:true,logging:false,scrollX:0,scrollY:0,windowWidth:Math.max(target.scrollWidth,390),windowHeight:Math.max(target.scrollHeight,1),onclone:(doc)=>{try{doc.documentElement.style.colorScheme='light'; doc.body.style.background='#ffffff';}catch(_){}},ignoreElements:(el)=>el.id==='toast'||el.id==='shot-preview'||(el.classList&&(el.classList.contains('drawer')||el.classList.contains('drawer-backdrop')||el.classList.contains('hamburger')||el.classList.contains('screen-chip')||el.classList.contains('nav-row')||el.classList.contains('result-btns')||el.classList.contains('hist-panel')||el.classList.contains('collapse-toggle')))}, opts||{}));
+    return await html2canvas(target, Object.assign({backgroundColor:'#ffffff',scale:Math.min(2.5, (window.devicePixelRatio||2)*1.15),useCORS:true,allowTaint:true,logging:false,scrollX:0,scrollY:0,windowWidth:Math.max(target.scrollWidth,390),windowHeight:Math.max(target.scrollHeight,1),onclone:(doc)=>{
+      try{
+        doc.documentElement.style.colorScheme='light';
+        doc.body.style.background='#ffffff';
+        // html2canvas가 그라데이션/투명 배경을 놓쳐 MVP가 하얗게 나오는 것 방지
+        doc.querySelectorAll('.result-hero').forEach(el=>{
+          el.style.setProperty('background','#111111','important');
+          el.style.setProperty('border','1px solid #333333','important');
+          el.style.setProperty('-webkit-print-color-adjust','exact','important');
+          el.style.setProperty('print-color-adjust','exact','important');
+        });
+        doc.querySelectorAll('.result-hero .eyebrow').forEach(el=>el.style.setProperty('color','#F5E6B8','important'));
+        doc.querySelectorAll('.result-hero .mvp-names, .result-hero .mvp-names span').forEach(el=>el.style.setProperty('color','#C6F135','important'));
+      }catch(_){}
+    },ignoreElements:(el)=>el.id==='toast'||el.id==='shot-preview'||(el.classList&&(el.classList.contains('drawer')||el.classList.contains('drawer-backdrop')||el.classList.contains('hamburger')||el.classList.contains('screen-chip')||el.classList.contains('nav-row')||el.classList.contains('result-btns')||el.classList.contains('hist-panel')||el.classList.contains('collapse-toggle')))}, opts||{}));
   } finally { cleanup(); }
 }
 async function captureLineupShot(){
@@ -1431,25 +1464,25 @@ async function captureLineupShot(){
     const mode=await downloadCanvas(canvas, name);
     if(mode==='download') toast('라인업 저장 완료');
     else if(mode==='shared') toast('공유 완료');
-    else if(mode==='preview') toast('미리보기 · 길게 눌러 저장', 2800);
+    else if(mode==='preview') toast('미리보기 · 공유 ↗ 또는 길게 눌러 저장', 2800);
   }catch(e){
     console.error(e);
     toast('저장 실패 · '+((e&&e.message)||'브라우저 제한'), 4000);
   }
 }
 async function captureResultsShot(){
-  const p1=document.getElementById('results-page1');
-  const p2=document.getElementById('results-page2');
-  if(!p1||!p2){toast('결과 영역 없음');return;}
+  const root=document.getElementById('results-root');
+  if(!root){toast('결과 영역 없음');return;}
   toast('결과 이미지 만드는 중…',2000);
   try{
-    const c1=await captureNode(p1);
-    const mode1=await downloadCanvas(c1, `JMFC_${state.sessionDate||'session'}_results_1.png`);
-    if(mode1==='preview'){ toast('1장 미리보기 · 저장 후 다시 누르면 2장'); return; }
-    await new Promise(r=>setTimeout(r,350));
-    const c2=await captureNode(p2);
-    await downloadCanvas(c2, `JMFC_${state.sessionDate||'session'}_results_2.png`);
-    toast('결과 이미지 완료');
+    // MVP 페인트를 위해 한 프레임 대기
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const canvas=await captureNode(root);
+    const name=`JMFC_${state.sessionDate||'session'}_results.png`;
+    const mode=await downloadCanvas(canvas, name);
+    if(mode==='download') toast('결과 저장 완료');
+    else if(mode==='shared') toast('공유 완료');
+    else if(mode==='preview') toast('미리보기 · 공유 ↗ 또는 길게 눌러 저장', 2800);
   }catch(e){
     try{
       const summary=`JMFC ${state.sessionDate}\n`+activeDetailOrder().map(t=>`TEAM ${t}: ${(state.teams[t]||[]).join(', ')}`).join('\n');
