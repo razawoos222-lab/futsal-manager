@@ -289,7 +289,7 @@
     .mvp-row .mvp-names > span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;width:100%}
     .result-hero{padding:12px 8px;border-radius:16px;background:linear-gradient(160deg,#0c0c0e,#1a1a22 55%,#121218);border:1px solid #c9a22755;box-shadow:none;min-height:0}
     .eyebrow{font-family:inherit;font-size:calc(0.78rem + 1pt);font-weight:900;letter-spacing:0;color:#f5e6b8;text-align:center}
-    .mvp-names{text-align:center;font-size:calc(0.82rem + 1pt);font-weight:900;color:#fff;margin-top:8px;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;letter-spacing:0}
+    .mvp-names,.mvp-names > span{text-align:center;font-size:calc(0.82rem + 1pt);font-weight:900;color:#ffffff!important;margin-top:8px;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;letter-spacing:0}
     .mvp-meta{display:inline-block;text-align:center;margin:8px auto 0;padding:3px 8px;font-size:0.76rem;font-weight:800;color:#e7c56a;line-height:1.2;border:1px solid #93c5fd;border-radius:8px;width:fit-content;max-width:100%;letter-spacing:0}
     .result-hero .mvp-meta-wrap{text-align:center}
     .award-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
@@ -353,7 +353,7 @@
       print-color-adjust:exact !important;
     }
     .shot-light .result-hero .eyebrow{color:#F5E6B8 !important}
-    .shot-light .result-hero .mvp-names,.shot-light .result-hero .mvp-names span{color:#C6F135 !important}
+    .shot-light .result-hero .mvp-names,.shot-light .result-hero .mvp-names span{color:#ffffff !important}
     .shot-light table.data{font-size:0.92rem}
     .shot-light .mvp-row .result-hero{height:128px;min-height:128px;max-height:128px}
     .shot-light h2{font-size:1.2rem !important}
@@ -403,6 +403,7 @@
     /* 경기시작(선택·라이브) 통일: 차콜 + 라임 */
     .nav-row .btn-start,.btn-sm.match-start,.btn-sm.blue{background:#24272B!important;color:#C6F135!important;border:none!important;box-shadow:0 8px 16px rgba(36,39,43,.28)!important}
     .ctrl-row .btn-sm.stat{background:#24272B!important;color:#C6F135!important}
+    .mvp-names,.mvp-names > span,.mvp-row .mvp-names,.mvp-row .mvp-names > span{color:#ffffff!important}
     .timer-ring-wrap{background:#fff;border-color:#C8CCD0}
     .timer-ring-wrap .prog{stroke:#20334D}
     .timer-center .t{color:#20334D!important}
@@ -1457,7 +1458,7 @@ async function captureNode(node, opts){
           el.style.setProperty('print-color-adjust','exact','important');
         });
         doc.querySelectorAll('.result-hero .eyebrow').forEach(el=>el.style.setProperty('color','#F5E6B8','important'));
-        doc.querySelectorAll('.result-hero .mvp-names, .result-hero .mvp-names span').forEach(el=>el.style.setProperty('color','#C6F135','important'));
+        doc.querySelectorAll('.result-hero .mvp-names, .result-hero .mvp-names span').forEach(el=>el.style.setProperty('color','#ffffff','important'));
       }catch(_){}
     },ignoreElements:(el)=>el.id==='toast'||el.id==='shot-preview'||(el.classList&&(el.classList.contains('drawer')||el.classList.contains('drawer-backdrop')||el.classList.contains('hamburger')||el.classList.contains('screen-chip')||el.classList.contains('nav-row')||el.classList.contains('result-btns')||el.classList.contains('hist-panel')||el.classList.contains('collapse-toggle')))}, opts||{}));
   } finally { cleanup(); }
