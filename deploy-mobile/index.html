@@ -56,29 +56,35 @@
 </head>
 <body>
   <h1>사파리에서 배포하기</h1>
-  <p class="lead">맞습니다. <strong>시트 화면에서는 Apps Script를 실행할 수 없습니다.</strong> (아이폰 사파리·시트 앱 모두 동일)</p>
+  <p class="lead">아이폰 사파리에서 <code>script.google.com</code> 이 <strong>404</strong> 나는 경우가 많습니다. Google이 모바일에서 편집기를 막아 두어서입니다.</p>
 
   <div class="warn">
-    지금 연 주소는 스프레드시트입니다.<br />
-    스크립트는 <strong>script.google.com</strong> 으로 따로 열어야 합니다.
+    <strong>404가 떴다면</strong> 링크가 잘못된 게 아니라, 아이폰에서는 Apps Script 편집기가 안 열리는 겁니다.<br />
+    아래 순서대로 시도하고, 안 되면 <strong>PC/맥/아이패드에서 한 번만</strong> 패치를 넣으면 됩니다. 그 다음부터는 폰 웹앱으로 동기화 가능합니다.
   </div>
 
   <section>
-    <h2>사파리에서 할 일</h2>
-    <div class="step"><span class="num">1</span><div>아래 버튼을 눌러 <strong>Apps Script 홈</strong>을 엽니다. (시트가 아님)</div></div>
-    <a class="btn" href="https://script.google.com/home/cli_romeo" target="_blank" rel="noopener">script.google.com 열기</a>
-    <div class="step" style="margin-top:14px"><span class="num">2</span><div>사파리 주소창 옆 <strong>aA</strong> → <strong>데스크톱 웹 사이트 요청</strong> (편집기가 안 보이면 필수)</div></div>
-    <div class="step"><span class="num">3</span><div>프로젝트 목록에서 JMFC 시트에 연결된 프로젝트를 탭합니다. 이름에 시트 제목이 들어 있는 경우가 많습니다.</div></div>
-    <div class="step"><span class="num">4</span><div><strong>짧은 패치 복사</strong> 후 <code>Code.gs</code> <strong>맨 아래</strong>에 붙여넣고 저장(디스크 아이콘)</div></div>
-    <div class="step"><span class="num">5</span><div>상단 <strong>배포 → 새 배포</strong> 또는 <strong>배포 관리 → 연필 → 새 버전</strong></div></div>
-    <div class="step"><span class="num">6</span><div>이미 쓰는 <strong>웹앱 URL</strong> 끝에 <code>?jmfc=admin</code> 을 붙여 엽니다. (시트 URL이 아니라 웹앱 실행 URL)</div></div>
+    <h2>아이폰에서 될 때까지 시도</h2>
+    <div class="step"><span class="num">1</span><div>JMFC <strong>시트</strong>를 연 뒤, 사파리 <strong>aA → 데스크톱 웹 사이트 요청</strong></div></div>
+    <a class="btn secondary" href="https://docs.google.com/spreadsheets/d/1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk/edit" target="_blank" rel="noopener">JMFC 시트 열기 (데스크톱 모드)</a>
+    <div class="step" style="margin-top:14px"><span class="num">2</span><div>상단 메뉴 <strong>확장 프로그램 → Apps Script</strong> 가 보이면 그걸 탭 (이게 제일 확실)</div></div>
+    <div class="step"><span class="num">3</span><div>안 보이면 Chrome 앱 설치 후 같은 시트 URL을 열고, ⋮ → <strong>데스크톱 사이트</strong> → 확장 프로그램 → Apps Script</div></div>
+    <div class="step"><span class="num">4</span><div>그래도 404면 아래 주소를 <strong>데스크톱 모드</strong>로 하나씩 시도</div></div>
+    <a class="out" href="https://script.google.com/home" target="_blank" rel="noopener">script.google.com/home</a>
+    <a class="out" href="https://script.google.com/home/start" target="_blank" rel="noopener">script.google.com/home/start</a>
+  </section>
+
+  <section>
+    <h2>편집기가 열렸을 때</h2>
+    <div class="step"><span class="num">1</span><div><strong>짧은 패치 복사</strong> → <code>Code.gs</code> 맨 아래 붙여넣기 · 저장 (기존 <code>doGet</code>이 있으면 삭제 후 패치만)</div></div>
+    <div class="step"><span class="num">2</span><div><strong>배포 → 배포 관리 → 연필 → 새 버전 → 배포</strong></div></div>
+    <div class="step"><span class="num">3</span><div>평소 <strong>웹앱 URL</strong>(시트가 아님) 끝에 <code>?jmfc=admin</code> 붙여 열기 → 설정 → 동기화</div></div>
   </section>
 
   <div class="okbox">
-    <strong>실행 메뉴 대신</strong><br />
-    웹앱 주소 예시:<br />
-    <code>https://script.google.com/macros/s/×××/exec?jmfc=admin</code><br />
-    거기서 <strong>설정</strong> → <strong>Code.gs 동기화</strong> 버튼을 누르면 됩니다. 시트 편집 화면이 아닙니다.
+    <strong>현실적인 방법</strong><br />
+    아이폰에서 편집기가 끝까지 안 열리면, PC나 맥·아이패드에서 <strong>딱 1회</strong> 패치 + 새 버전만 해주세요.<br />
+    그 다음부터 UI는 GitHub 자동, Code.gs는 폰에서 웹앱 <code>?jmfc=admin</code> 으로 갱신합니다.
   </div>
 
   <section>
