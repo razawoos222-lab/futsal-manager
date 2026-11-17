@@ -130,7 +130,77 @@ function fetchRemoteUiHtml_() {
   return null;
 }
 
+function htmlAdminMsg_(title, body) {
+  const safeTitle = String(title || '').replace(/</g, '&lt;');
+  const safeBody = String(body || '').replace(/</g, '&lt;');
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<style>body{font-family:-apple-system,sans-serif;padding:24px;background:#1a1d21;color:#f3f4f5}' +
+    'h1{color:#c6f135;font-size:1.3rem}p{line-height:1.5;word-break:break-word}a{color:#c6f135}</style></head><body>' +
+    '<h1>' + safeTitle + '</h1><p>' + safeBody + '</p>' +
+    '<p><a href="?jmfc=admin">관리 메뉴</a></p></body></html>'
+  )
+    .setTitle('JMFC · ' + String(title || 'admin'))
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** 휴대폰: 시트에서 실행 메뉴가 없을 때 웹앱 URL로 동기화 */
+function serveJmfcAdmin_(action) {
+  const act = String(action || 'admin').toLowerCase();
+  try {
+    if (act === 'setup' || act === 'setup-pr') {
+      const msg = typeof useGithubRefPrBranch === 'function'
+        ? useGithubRefPrBranch()
+        : useGithubUiPrBranch();
+      return htmlAdminMsg_('설정 완료', msg + ' · 이어서 ?jmfc=sync 를 여세요.');
+    }
+    if (act === 'setup-main') {
+      const msg = typeof useGithubRefMain === 'function'
+        ? useGithubRefMain()
+        : useGithubUiMain();
+      return htmlAdminMsg_('설정 완료', msg + ' · 이어서 ?jmfc=sync 를 여세요.');
+    }
+    if (act === 'sync') {
+      const msg = syncCodeGsFromGithub();
+      return htmlAdminMsg_('Code.gs 동기화 완료', msg + ' · 배포에서 새 버전을 만든 뒤 웹앱을 새로고침하세요.');
+    }
+    if (act === 'status') {
+      const props = PropertiesService.getScriptProperties();
+      return htmlAdminMsg_(
+        '상태',
+        'UI_HTML_URL=' + (props.getProperty('UI_HTML_URL') || '(없음)') +
+        ' · UI_GIT_REF=' + (props.getProperty('UI_GIT_REF') || resolveGitRef_())
+      );
+    }
+  } catch (err) {
+    return htmlAdminMsg_('오류', String(err && err.message ? err.message : err));
+  }
+
+  const body =
+    '<p>사파리 시트에서는 Apps Script 실행이 안 됩니다. 이 관리 페이지를 쓰세요.</p>' +
+    '<p><a href="?jmfc=setup">1) GitHub PR 브랜치로 설정</a></p>' +
+    '<p><a href="?jmfc=sync">2) Code.gs GitHub 동기화</a></p>' +
+    '<p><a href="?jmfc=setup-main">main으로 설정</a></p>' +
+    '<p><a href="?jmfc=status">상태 보기</a></p>' +
+    '<p>동기화 후: script.google.com → 배포 → 새 버전</p>';
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<style>body{font-family:-apple-system,sans-serif;padding:24px;background:#1a1d21;color:#f3f4f5}' +
+    'h1{color:#c6f135}a{display:block;margin:12px 0;padding:14px;background:#c6f135;color:#111;' +
+    'text-decoration:none;border-radius:12px;font-weight:800;text-align:center}</style></head><body>' +
+    '<h1>JMFC 배포 관리</h1>' + body + '</body></html>'
+  )
+    .setTitle('JMFC 배포 관리')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
 function doGet(e) {
+  const params = (e && e.parameter) || {};
+  const action = String(params.jmfc || params.action || '').trim();
+  if (action) {
+    return serveJmfcAdmin_(action);
+  }
+
   const remote = fetchRemoteUiHtml_();
   if (remote) {
     return HtmlService.createHtmlOutput(remote)

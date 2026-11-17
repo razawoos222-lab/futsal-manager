@@ -16,7 +16,7 @@
       background: radial-gradient(120% 80% at 10% -10%, #2c3340 0%, var(--bg) 55%);
       color: var(--text); min-height: 100dvh; padding: 20px 16px 48px; line-height: 1.45;
     }
-    h1 { font-size: 1.5rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h1 { font-size: 1.45rem; margin: 0 0 8px; }
     h2 { font-size: 1.05rem; margin: 0 0 10px; color: var(--lime); }
     p, li { color: var(--muted); font-size: 0.95rem; }
     .lead { color: var(--text); margin: 0 0 16px; }
@@ -32,69 +32,63 @@
     }
     .btn {
       display: block; width: 100%; border: 0; border-radius: 12px;
-      padding: 16px 14px; margin: 8px 0 0; font-size: 1.05rem; font-weight: 800;
-      background: var(--lime); color: #111; -webkit-tap-highlight-color: transparent;
+      padding: 16px 14px; margin: 8px 0 0; font-size: 1.02rem; font-weight: 800;
+      background: var(--lime); color: #111;
     }
     .btn.secondary { background: #3a414c; color: var(--text); font-weight: 700; }
-    .btn:active { transform: scale(0.98); }
     .status { min-height: 1.3em; margin-top: 8px; font-size: 0.9rem; color: var(--ok); }
     .status.err { color: var(--danger); }
     a.out { display: block; margin-top: 10px; color: var(--lime); font-weight: 700; word-break: break-all; }
     pre {
       white-space: pre-wrap; word-break: break-word; background: #111417;
       border: 1px solid var(--line); border-radius: 10px; padding: 12px;
-      font-size: 0.7rem; max-height: 160px; overflow: auto; color: #d7dde5;
+      font-size: 0.68rem; max-height: 150px; overflow: auto; color: #d7dde5;
     }
-    .note {
-      font-size: 0.85rem; color: var(--muted);
-      border-left: 3px solid var(--lime); padding-left: 10px; margin-top: 10px;
+    .warn {
+      background: #2a1f1f; border: 1px solid #6b3a3a; border-radius: 12px;
+      padding: 12px; margin: 0 0 14px; color: #ffd0d0; font-size: 0.92rem;
     }
-    .callout {
+    .okbox {
       background: #1c2420; border: 1px solid #3d5a40; border-radius: 12px;
       padding: 12px; margin: 0 0 14px; color: var(--text); font-size: 0.92rem;
     }
-    ol { padding-left: 1.2em; margin: 8px 0; }
-    code { font-size: 0.88em; }
   </style>
 </head>
 <body>
-  <h1>휴대폰 GAS 배포</h1>
-  <p class="lead"><code>index.html</code>은 매 접속 시 GitHub에서 자동 로드됩니다. <code>Code.gs</code>도 29,000자 붙여넣기 없이, 실행 메뉴에서 <strong>동기화 한 번</strong>으로 GitHub 내용을 끌어올 수 있습니다.</p>
+  <h1>사파리에서 배포하기</h1>
+  <p class="lead">맞습니다. <strong>시트 화면에서는 Apps Script를 실행할 수 없습니다.</strong> (아이폰 사파리·시트 앱 모두 동일)</p>
 
-  <div class="callout">
-    <strong>방금 “Code.gs 전체 복사”를 눌렀다면</strong><br />
-    굳이 그 긴 텍스트를 붙여넣지 마세요. 아래 <strong>짧은 패치</strong>만 넣고 → <code>syncCodeGsFromGithub</code>를 실행하면 Code.gs가 GitHub 최신으로 덮어씌워집니다.
+  <div class="warn">
+    지금 연 주소는 스프레드시트입니다.<br />
+    스크립트는 <strong>script.google.com</strong> 으로 따로 열어야 합니다.
   </div>
 
   <section>
-    <h2>자동 업데이트 구조</h2>
-    <ul>
-      <li><strong>화면(UI)</strong> — 웹앱 열 때마다 GitHub <code>live/index.html</code> 로드 → 새로고침만으로 반영</li>
-      <li><strong>서버(Code.gs)</strong> — 폰에서 <code>syncCodeGsFromGithub</code> 실행 → GitHub 내용으로 교체 → <strong>배포 → 새 버전</strong> 한 번</li>
-    </ul>
+    <h2>사파리에서 할 일</h2>
+    <div class="step"><span class="num">1</span><div>아래 버튼을 눌러 <strong>Apps Script 홈</strong>을 엽니다. (시트가 아님)</div></div>
+    <a class="btn" href="https://script.google.com/home/cli_romeo" target="_blank" rel="noopener">script.google.com 열기</a>
+    <div class="step" style="margin-top:14px"><span class="num">2</span><div>사파리 주소창 옆 <strong>aA</strong> → <strong>데스크톱 웹 사이트 요청</strong> (편집기가 안 보이면 필수)</div></div>
+    <div class="step"><span class="num">3</span><div>프로젝트 목록에서 JMFC 시트에 연결된 프로젝트를 탭합니다. 이름에 시트 제목이 들어 있는 경우가 많습니다.</div></div>
+    <div class="step"><span class="num">4</span><div><strong>짧은 패치 복사</strong> 후 <code>Code.gs</code> <strong>맨 아래</strong>에 붙여넣고 저장(디스크 아이콘)</div></div>
+    <div class="step"><span class="num">5</span><div>상단 <strong>배포 → 새 배포</strong> 또는 <strong>배포 관리 → 연필 → 새 버전</strong></div></div>
+    <div class="step"><span class="num">6</span><div>이미 쓰는 <strong>웹앱 URL</strong> 끝에 <code>?jmfc=admin</code> 을 붙여 엽니다. (시트 URL이 아니라 웹앱 실행 URL)</div></div>
   </section>
 
+  <div class="okbox">
+    <strong>실행 메뉴 대신</strong><br />
+    웹앱 주소 예시:<br />
+    <code>https://script.google.com/macros/s/×××/exec?jmfc=admin</code><br />
+    거기서 <strong>설정</strong> → <strong>Code.gs 동기화</strong> 버튼을 누르면 됩니다. 시트 편집 화면이 아닙니다.
+  </div>
+
   <section>
-    <h2>최초 1회 (짧은 패치)</h2>
-    <div class="step"><span class="num">1</span><div><a class="out" style="display:inline;margin:0" href="https://script.google.com/home/usersettings" target="_blank" rel="noopener">Apps Script 사용자 설정</a>에서 <strong>Google Apps Script API = ON</strong></div></div>
-    <div class="step"><span class="num">2</span><div><strong>짧은 패치 복사</strong> → <a class="out" style="display:inline;margin:0" href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> JMFC 프로젝트 <code>Code.gs</code> 맨 아래에 붙여넣기 · 저장</div></div>
-    <div class="step"><span class="num">3</span><div>실행: <code>useGithubRefPrBranch</code> → 권한 허용</div></div>
-    <div class="step"><span class="num">4</span><div>실행: <code>syncCodeGsFromGithub</code> (Code.gs 전체가 GitHub 최신으로 교체됨)</div></div>
-    <div class="step"><span class="num">5</span><div><strong>배포 → 배포 관리 → 연필 → 새 버전 → 배포</strong> → 웹앱 새로고침</div></div>
-    <button class="btn" id="btnPatch" type="button">짧은 패치 복사 (추천)</button>
-    <button class="btn secondary" id="btnFullCode" type="button">Code.gs 전체 복사 (비추천 · 수동용)</button>
+    <h2>패치 / 링크</h2>
+    <button class="btn" id="btnPatch" type="button">짧은 패치 복사</button>
+    <button class="btn secondary" id="btnFullCode" type="button">Code.gs 전체 복사 (비추천)</button>
     <div class="status" id="status"></div>
-    <p class="note">전체 복사는 비상용입니다. 평소에는 패치 + <code>syncCodeGsFromGithub</code>만 쓰면 됩니다.</p>
-  </section>
-
-  <section>
-    <h2>나중에 Code.gs가 또 바뀌면</h2>
-    <ol>
-      <li>script.google.com → 실행 → <code>syncCodeGsFromGithub</code></li>
-      <li>배포 → 새 버전</li>
-    </ol>
-    <p>UI만 바뀐 커밋이면 동기화 없이 웹앱 새로고침만 하면 됩니다.</p>
-    <a class="out" href="https://github.com/razawoos222-lab/futsal-manager/pull/19" target="_blank" rel="noopener">PR #19</a>
+    <a class="out" href="https://script.google.com/home/usersettings" target="_blank" rel="noopener">Apps Script API ON (동기화용)</a>
+    <a class="out" href="https://docs.google.com/spreadsheets/d/1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk/edit" target="_blank" rel="noopener">JMFC 시트 (참고 · 여기선 실행 불가)</a>
+    <a class="out" href="https://htmlpreview.github.io/?https://github.com/razawoos222-lab/futsal-manager/blob/cursor/formclub-palette-mockup-7fc5/deploy-mobile/index.html" target="_blank" rel="noopener">이 도우미 다시 열기</a>
   </section>
 
   <section>
@@ -108,33 +102,24 @@
     const statusEl = document.getElementById('status');
     const previewEl = document.getElementById('preview');
 
-    const PATCH = `// ===== JMFC 모바일 동기화 패치 (Code.gs 맨 아래에 추가) =====
-// 이미 같은 함수가 있으면 이 블록은 건너뛰세요.
-
+    const PATCH = `// ===== JMFC 모바일 패치: Code.gs 맨 아래에 추가 =====
 var JMFC_GIT_REPO = '${REPO}';
 var JMFC_GIT_REF = '${BRANCH}';
 
 function jmfcRaw_(path) {
   return 'https://raw.githubusercontent.com/' + JMFC_GIT_REPO + '/' + JMFC_GIT_REF + '/' + path;
 }
-
 function jmfcFetch_(path) {
-  var url = jmfcRaw_(path) + '?gas=' + Date.now();
-  var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+  var res = UrlFetchApp.fetch(jmfcRaw_(path) + '?gas=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
   if (res.getResponseCode() !== 200) throw new Error('GitHub ' + res.getResponseCode() + ' ' + path);
   return res.getContentText();
 }
-
 function useGithubRefPrBranch() {
   JMFC_GIT_REF = '${BRANCH}';
   PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', JMFC_GIT_REF);
-  PropertiesService.getScriptProperties().setProperty(
-    'UI_HTML_URL',
-    jmfcRaw_('live/index.html')
-  );
+  PropertiesService.getScriptProperties().setProperty('UI_HTML_URL', jmfcRaw_('live/index.html'));
   return 'ref → ' + JMFC_GIT_REF;
 }
-
 function useGithubRefMain() {
   JMFC_GIT_REF = 'main';
   PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'main');
@@ -144,8 +129,6 @@ function useGithubRefMain() {
   );
   return 'ref → main';
 }
-
-/** Code.gs를 GitHub 최신으로 교체 (29k 붙여넣기 대체) */
 function syncCodeGsFromGithub() {
   var ref = PropertiesService.getScriptProperties().getProperty('UI_GIT_REF') || JMFC_GIT_REF;
   JMFC_GIT_REF = ref;
@@ -154,12 +137,9 @@ function syncCodeGsFromGithub() {
   var scriptId = ScriptApp.getScriptId();
   var token = ScriptApp.getOAuthToken();
   var endpoint = 'https://script.googleapis.com/v1/projects/' + scriptId + '/content';
-  var getRes = UrlFetchApp.fetch(endpoint, {
-    headers: { Authorization: 'Bearer ' + token },
-    muteHttpExceptions: true
-  });
+  var getRes = UrlFetchApp.fetch(endpoint, { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
   if (getRes.getResponseCode() !== 200) {
-    throw new Error('API OFF? script.google.com/home/usersettings 에서 Apps Script API ON. ' + getRes.getContentText());
+    throw new Error('Apps Script API를 ON 하세요: script.google.com/home/usersettings · ' + getRes.getContentText());
   }
   var content = JSON.parse(getRes.getContentText());
   var hit = false;
@@ -172,34 +152,57 @@ function syncCodeGsFromGithub() {
   });
   if (!hit) files.push({ name: 'Code', type: 'SERVER_JS', source: source });
   var putRes = UrlFetchApp.fetch(endpoint, {
-    method: 'put',
-    contentType: 'application/json',
+    method: 'put', contentType: 'application/json',
     headers: { Authorization: 'Bearer ' + token },
-    payload: JSON.stringify({ files: files }),
-    muteHttpExceptions: true
+    payload: JSON.stringify({ files: files }), muteHttpExceptions: true
   });
   if (putRes.getResponseCode() !== 200) throw new Error(putRes.getContentText());
-  return 'Code.gs synced @' + ref + ' → 배포에서 새 버전 하세요';
+  return 'Code.gs synced @' + ref;
 }
 
-// 원격 UI: 기존 doGet을 아래로 교체하거나, sync 후 최신 Code.gs에 이미 포함됨
+function htmlAdminMsg_(title, body) {
+  return HtmlService.createHtmlOutput(
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<body style="font-family:-apple-system;padding:24px;background:#1a1d21;color:#fff">' +
+    '<h1 style="color:#c6f135">' + title + '</h1><p>' + body + '</p>' +
+    '<p><a style="color:#c6f135" href="?jmfc=admin">관리 메뉴</a></p></body>'
+  ).setTitle(title).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** 기존 doGet이 있으면 이 함수 이름 충돌 방지를 위해 아래 doGet으로 교체하세요 */
 function doGet(e) {
+  var p = (e && e.parameter) || {};
+  var action = String(p.jmfc || '').toLowerCase();
+  if (action === 'admin') {
+    return HtmlService.createHtmlOutput(
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<body style="font-family:-apple-system;padding:24px;background:#1a1d21;color:#fff">' +
+      '<h1 style="color:#c6f135">JMFC 배포 관리</h1>' +
+      '<p><a style="display:block;padding:14px;background:#c6f135;color:#111;border-radius:12px;font-weight:800;text-align:center;margin:10px 0;text-decoration:none" href="?jmfc=setup">1) 설정 (PR 브랜치)</a></p>' +
+      '<p><a style="display:block;padding:14px;background:#c6f135;color:#111;border-radius:12px;font-weight:800;text-align:center;margin:10px 0;text-decoration:none" href="?jmfc=sync">2) Code.gs 동기화</a></p>' +
+      '</body>'
+    ).setTitle('JMFC 배포 관리').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  if (action === 'setup') {
+    try { return htmlAdminMsg_('설정 완료', useGithubRefPrBranch() + ' · 이제 동기화를 누르세요'); }
+    catch (err) { return htmlAdminMsg_('오류', String(err)); }
+  }
+  if (action === 'sync') {
+    try { return htmlAdminMsg_('동기화 완료', syncCodeGsFromGithub() + ' · 배포에서 새 버전 후 웹앱 새로고침'); }
+    catch (err) { return htmlAdminMsg_('오류', String(err)); }
+  }
   var props = PropertiesService.getScriptProperties();
-  var url = (props.getProperty('UI_HTML_URL') || '').trim();
-  if (!url) url = jmfcRaw_('live/index.html');
-  var bust = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'gas=' + Date.now();
+  var url = (props.getProperty('UI_HTML_URL') || '').trim() || jmfcRaw_('live/index.html');
   try {
-    var res = UrlFetchApp.fetch(bust, { muteHttpExceptions: true, followRedirects: true });
+    var res = UrlFetchApp.fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'gas=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
     var text = res.getContentText() || '';
-    if (res.getResponseCode() === 200 && (text.indexOf('<html') >= 0 || text.indexOf('<!DOCTYPE') >= 0)) {
-      return HtmlService.createHtmlOutput(text)
-        .setTitle('JMFC풋살 매니저')
+    if (res.getResponseCode() === 200 && text.indexOf('<html') >= 0) {
+      return HtmlService.createHtmlOutput(text).setTitle('JMFC풋살 매니저')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
         .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
     }
-  } catch (err) {}
-  return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('JMFC풋살 매니저')
+  } catch (err2) {}
+  return HtmlService.createHtmlOutputFromFile('index').setTitle('JMFC풋살 매니저')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
 }
@@ -214,16 +217,15 @@ function doGet(e) {
         statusEl.textContent = okMsg;
       } catch (_) {
         statusEl.className = 'status err';
-        statusEl.textContent = '복사 실패 — 아래 미리보기를 길게 눌러 복사하세요.';
+        statusEl.textContent = '복사 실패 — 미리보기를 길게 눌러 복사하세요.';
       }
     }
 
     document.getElementById('btnPatch').onclick = () =>
-      copyText(PATCH, '짧은 패치 복사됨 · Code.gs 맨 아래에 붙여넣으세요');
+      copyText(PATCH, '패치 복사됨 · script.google.com 프로젝트 Code.gs 맨 아래에 붙여넣기');
 
     document.getElementById('btnFullCode').onclick = async () => {
-      statusEl.className = 'status';
-      statusEl.textContent = '불러오는 중… (가능하면 쓰지 마세요)';
+      statusEl.textContent = '불러오는 중…';
       const urls = [
         `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/live/Code.gs`,
         `https://raw.githubusercontent.com/${REPO}/${BRANCH}/live/Code.gs`
@@ -231,16 +233,12 @@ function doGet(e) {
       let text = '';
       for (const u of urls) {
         try {
-          const r = await fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now());
+          const r = await fetch(u + '?t=' + Date.now());
           if (r.ok) { text = await r.text(); break; }
         } catch (_) {}
       }
-      if (!text) {
-        statusEl.className = 'status err';
-        statusEl.textContent = '불러오기 실패';
-        return;
-      }
-      await copyText(text, '전체 복사됨 — 대신 syncCodeGsFromGithub 사용을 권장합니다');
+      if (!text) { statusEl.className = 'status err'; statusEl.textContent = '실패'; return; }
+      await copyText(text, '전체 복사됨 (가능하면 sync 사용)');
     };
   </script>
 </body>
