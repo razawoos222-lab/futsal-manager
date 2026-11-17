@@ -1,19 +1,19 @@
 # JMFC GAS 배포 가이드
 
-## 휴대폰에서 (추천)
+## 배포 (FORM/CLUB만)
 
-큰 `index.html` / `Code.gs` 붙여넣기 없이 배포합니다.
+옛 파란「참석 조사」UI(`live/user-provided`, main 폴백)는 제거했습니다.  
+`live/index.html` + `live/Code.gs` 만 사용하세요.
 
-| 구분 | 갱신 방법 |
-|------|-----------|
-| UI (`live/index.html`) | 웹앱이 GitHub에서 매 요청 로드 → **새로고침** |
-| 서버 (`live/Code.gs`) | Apps Script에서 **`syncCodeGsFromGithub` 실행** → **배포 새 버전** |
+노트북 Apps Script:
+1. `live/Code.gs` 전체 교체 · 저장
+2. 실행 `useGithubUiPrBranch` → `syncIndexHtmlFromGithub`
+3. 배포 → 새 버전
+4. 웹앱에서 참석 칩 선택 시 **검정+형광** · 빌드 `2026-11-17-live-v18`
 
-1. [Apps Script API ON](https://script.google.com/home/usersettings)
-2. `deploy-mobile/` 도우미에서 **짧은 패치 복사** → `Code.gs` 하단에 붙여넣기
-3. 실행: `useGithubRefPrBranch` → `syncCodeGsFromGithub`
-4. 배포 → 새 버전
+도우미: `deploy-mobile/index.html`
 
+PR #19를 **main에 머지**하면 GitHub main의 옛 `live/index.html`도 사라집니다.
 
 ---
 

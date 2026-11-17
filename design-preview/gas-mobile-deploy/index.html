@@ -3,249 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>JMFC · 모바일 GAS 배포</title>
+  <title>JMFC · FORM/CLUB 배포</title>
   <style>
-    :root {
-      --bg: #1a1d21; --surf: #24272b; --text: #f3f4f5; --muted: #a8adb3;
-      --lime: #c6f135; --line: #3a3f46; --danger: #f07178; --ok: #7fd99a;
-    }
+    :root { --bg:#1a1d21; --surf:#24272b; --text:#f3f4f5; --muted:#a8adb3; --lime:#c6f135; --line:#3a3f46; --ok:#7fd99a; --danger:#f07178; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: radial-gradient(120% 80% at 10% -10%, #2c3340 0%, var(--bg) 55%);
-      color: var(--text); min-height: 100dvh; padding: 20px 16px 48px; line-height: 1.45;
-    }
-    h1 { font-size: 1.45rem; margin: 0 0 8px; }
-    h2 { font-size: 1.05rem; margin: 0 0 10px; color: var(--lime); }
-    p, li { color: var(--muted); font-size: 0.95rem; }
-    .lead { color: var(--text); margin: 0 0 16px; }
-    section {
-      background: var(--surf); border: 1px solid var(--line);
-      border-radius: 14px; padding: 16px; margin: 0 0 14px;
-    }
-    .step { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; }
-    .num {
-      flex: 0 0 28px; height: 28px; border-radius: 999px;
-      background: var(--lime); color: #111; font-weight: 800;
-      display: grid; place-items: center; font-size: 0.85rem;
-    }
-    .btn {
-      display: block; width: 100%; border: 0; border-radius: 12px;
-      padding: 16px 14px; margin: 8px 0 0; font-size: 1.02rem; font-weight: 800;
-      background: var(--lime); color: #111;
-    }
-    .btn.secondary { background: #3a414c; color: var(--text); font-weight: 700; }
-    .status { min-height: 1.3em; margin-top: 8px; font-size: 0.9rem; color: var(--ok); }
-    .status.err { color: var(--danger); }
-    a.out { display: block; margin-top: 10px; color: var(--lime); font-weight: 700; word-break: break-all; }
-    pre {
-      white-space: pre-wrap; word-break: break-word; background: #111417;
-      border: 1px solid var(--line); border-radius: 10px; padding: 12px;
-      font-size: 0.68rem; max-height: 150px; overflow: auto; color: #d7dde5;
-    }
-    .warn {
-      background: #2a1f1f; border: 1px solid #6b3a3a; border-radius: 12px;
-      padding: 12px; margin: 0 0 14px; color: #ffd0d0; font-size: 0.92rem;
-    }
-    .okbox {
-      background: #1c2420; border: 1px solid #3d5a40; border-radius: 12px;
-      padding: 12px; margin: 0 0 14px; color: var(--text); font-size: 0.92rem;
-    }
+    body { margin:0; font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif; background:var(--bg); color:var(--text); padding:20px 16px 48px; line-height:1.45; }
+    h1 { font-size:1.4rem; margin:0 0 8px; }
+    h2 { font-size:1.05rem; margin:0 0 10px; color:var(--lime); }
+    p, li { color:var(--muted); font-size:0.95rem; }
+    .lead { color:var(--text); margin:0 0 16px; }
+    section { background:var(--surf); border:1px solid var(--line); border-radius:14px; padding:16px; margin:0 0 14px; }
+    .btn { display:block; width:100%; border:0; border-radius:12px; padding:16px 14px; margin:8px 0 0; font-size:1.02rem; font-weight:800; background:var(--lime); color:#111; }
+    .btn.secondary { background:#3a414c; color:var(--text); }
+    .status { min-height:1.3em; margin-top:8px; font-size:0.9rem; color:var(--ok); }
+    .status.err { color:var(--danger); }
+    a.out { display:block; margin-top:10px; color:var(--lime); font-weight:700; word-break:break-all; }
+    ol { padding-left:1.2em; }
+    .okbox { background:#1c2420; border:1px solid #3d5a40; border-radius:12px; padding:12px; margin:0 0 14px; color:var(--text); font-size:0.92rem; }
   </style>
 </head>
 <body>
-  <h1>사파리에서 배포하기</h1>
-  <p class="lead">아이폰 사파리에서 <code>script.google.com</code> 이 <strong>404</strong> 나는 경우가 많습니다. Google이 모바일에서 편집기를 막아 두어서입니다.</p>
-
-  <div class="warn">
-    <strong>404가 떴다면</strong> 링크가 잘못된 게 아니라, 아이폰에서는 Apps Script 편집기가 안 열리는 겁니다.<br />
-    아래 순서대로 시도하고, 안 되면 <strong>PC/맥/아이패드에서 한 번만</strong> 패치를 넣으면 됩니다. 그 다음부터는 폰 웹앱으로 동기화 가능합니다.
-  </div>
-
-  <section>
-    <h2>아이폰에서 될 때까지 시도</h2>
-    <div class="step"><span class="num">1</span><div>JMFC <strong>시트</strong>를 연 뒤, 사파리 <strong>aA → 데스크톱 웹 사이트 요청</strong></div></div>
-    <a class="btn secondary" href="https://docs.google.com/spreadsheets/d/1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk/edit" target="_blank" rel="noopener">JMFC 시트 열기 (데스크톱 모드)</a>
-    <div class="step" style="margin-top:14px"><span class="num">2</span><div>상단 메뉴 <strong>확장 프로그램 → Apps Script</strong> 가 보이면 그걸 탭 (이게 제일 확실)</div></div>
-    <div class="step"><span class="num">3</span><div>안 보이면 Chrome 앱 설치 후 같은 시트 URL을 열고, ⋮ → <strong>데스크톱 사이트</strong> → 확장 프로그램 → Apps Script</div></div>
-    <div class="step"><span class="num">4</span><div>그래도 404면 아래 주소를 <strong>데스크톱 모드</strong>로 하나씩 시도</div></div>
-    <a class="out" href="https://script.google.com/home" target="_blank" rel="noopener">script.google.com/home</a>
-    <a class="out" href="https://script.google.com/home/start" target="_blank" rel="noopener">script.google.com/home/start</a>
-  </section>
-
-  <section>
-    <h2>편집기가 열렸을 때</h2>
-    <div class="step"><span class="num">1</span><div><strong>짧은 패치 복사</strong> → <code>Code.gs</code> 맨 아래 붙여넣기 · 저장 (기존 <code>doGet</code>이 있으면 삭제 후 패치만)</div></div>
-    <div class="step"><span class="num">2</span><div><strong>배포 → 배포 관리 → 연필 → 새 버전 → 배포</strong></div></div>
-    <div class="step"><span class="num">3</span><div>평소 <strong>웹앱 URL</strong>(시트가 아님) 끝에 <code>?jmfc=admin</code> 붙여 열기 → 설정 → 동기화</div></div>
-  </section>
+  <h1>FORM/CLUB 배포 (노트북)</h1>
+  <p class="lead">파란「참석 조사」옛 UI는 저장소에서 제거했습니다. 아래만 쓰면 됩니다.</p>
 
   <div class="okbox">
-    <strong>현실적인 방법</strong><br />
-    아이폰에서 편집기가 끝까지 안 열리면, PC나 맥·아이패드에서 <strong>딱 1회</strong> 패치 + 새 버전만 해주세요.<br />
-    그 다음부터 UI는 GitHub 자동, Code.gs는 폰에서 웹앱 <code>?jmfc=admin</code> 으로 갱신합니다.
+    올바른 화면: 참석 이름 선택 시 <b>검정 바탕 + 형광(라임) 글씨</b><br />
+    토스트에 <code>2026-11-17-live-v18</code>
   </div>
 
   <section>
-    <h2>패치 / 링크</h2>
-    <button class="btn" id="btnPatch" type="button">짧은 패치 복사</button>
-    <button class="btn secondary" id="btnFullCode" type="button">Code.gs 전체 복사 (비추천)</button>
+    <h2>노트북 Apps Script</h2>
+    <ol>
+      <li><strong>Code.gs 전체 복사</strong> → Apps Script에서 전체 붙여넣기 · 저장</li>
+      <li>실행: <code>useGithubUiPrBranch</code> (권한 허용)</li>
+      <li>실행: <code>syncIndexHtmlFromGithub</code></li>
+      <li>배포 → 새 버전</li>
+      <li>웹앱 새로고침</li>
+    </ol>
+    <button class="btn" id="btnCode" type="button">Code.gs 전체 복사</button>
+    <button class="btn secondary" id="btnIndex" type="button">index.html 전체 복사 (직접 교체용)</button>
     <div class="status" id="status"></div>
-    <a class="out" href="https://script.google.com/home/usersettings" target="_blank" rel="noopener">Apps Script API ON (동기화용)</a>
-    <a class="out" href="https://docs.google.com/spreadsheets/d/1leKbnUoUy2gCO-0O-xWAa07mE7q68aXnflnhbaL2tBk/edit" target="_blank" rel="noopener">JMFC 시트 (참고 · 여기선 실행 불가)</a>
-    <a class="out" href="https://htmlpreview.github.io/?https://github.com/razawoos222-lab/futsal-manager/blob/cursor/formclub-palette-mockup-7fc5/deploy-mobile/index.html" target="_blank" rel="noopener">이 도우미 다시 열기</a>
-  </section>
-
-  <section>
-    <h2>패치 미리보기</h2>
-    <pre id="preview">불러오는 중…</pre>
+    <a class="out" href="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/Code.gs" target="_blank" rel="noopener">Code.gs raw 열기</a>
+    <a class="out" href="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html" target="_blank" rel="noopener">index.html raw 열기</a>
   </section>
 
   <script>
-    const REPO = 'razawoos222-lab/futsal-manager';
     const BRANCH = 'cursor/formclub-palette-mockup-7fc5';
+    const REPO = 'razawoos222-lab/futsal-manager';
     const statusEl = document.getElementById('status');
-    const previewEl = document.getElementById('preview');
 
-    const PATCH = `// ===== JMFC 모바일 패치: Code.gs 맨 아래에 추가 =====
-var JMFC_GIT_REPO = '${REPO}';
-var JMFC_GIT_REF = '${BRANCH}';
-
-function jmfcRaw_(path) {
-  return 'https://raw.githubusercontent.com/' + JMFC_GIT_REPO + '/' + JMFC_GIT_REF + '/' + path;
-}
-function jmfcFetch_(path) {
-  var res = UrlFetchApp.fetch(jmfcRaw_(path) + '?gas=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
-  if (res.getResponseCode() !== 200) throw new Error('GitHub ' + res.getResponseCode() + ' ' + path);
-  return res.getContentText();
-}
-function useGithubRefPrBranch() {
-  JMFC_GIT_REF = '${BRANCH}';
-  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', JMFC_GIT_REF);
-  PropertiesService.getScriptProperties().setProperty('UI_HTML_URL', jmfcRaw_('live/index.html'));
-  return 'ref → ' + JMFC_GIT_REF;
-}
-function useGithubRefMain() {
-  JMFC_GIT_REF = 'main';
-  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'main');
-  PropertiesService.getScriptProperties().setProperty(
-    'UI_HTML_URL',
-    'https://raw.githubusercontent.com/' + JMFC_GIT_REPO + '/main/live/index.html'
-  );
-  return 'ref → main';
-}
-function syncCodeGsFromGithub() {
-  var ref = PropertiesService.getScriptProperties().getProperty('UI_GIT_REF') || JMFC_GIT_REF;
-  JMFC_GIT_REF = ref;
-  var source = jmfcFetch_('live/Code.gs');
-  if (source.indexOf('function doGet') < 0) throw new Error('invalid Code.gs');
-  var scriptId = ScriptApp.getScriptId();
-  var token = ScriptApp.getOAuthToken();
-  var endpoint = 'https://script.googleapis.com/v1/projects/' + scriptId + '/content';
-  var getRes = UrlFetchApp.fetch(endpoint, { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
-  if (getRes.getResponseCode() !== 200) {
-    throw new Error('Apps Script API를 ON 하세요: script.google.com/home/usersettings · ' + getRes.getContentText());
-  }
-  var content = JSON.parse(getRes.getContentText());
-  var hit = false;
-  var files = (content.files || []).map(function (f) {
-    if (f.name === 'Code' && f.type === 'SERVER_JS') {
-      hit = true;
-      return { name: f.name, type: f.type, source: source };
+    async function fetchText(path) {
+      const urls = [
+        `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/${path}`,
+        `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${path}`
+      ];
+      for (const u of urls) {
+        try {
+          const r = await fetch(u + (u.includes('?') ? '&' : '?') + 't=' + Date.now());
+          if (r.ok) return await r.text();
+        } catch (_) {}
+      }
+      return '';
     }
-    return f;
-  });
-  if (!hit) files.push({ name: 'Code', type: 'SERVER_JS', source: source });
-  var putRes = UrlFetchApp.fetch(endpoint, {
-    method: 'put', contentType: 'application/json',
-    headers: { Authorization: 'Bearer ' + token },
-    payload: JSON.stringify({ files: files }), muteHttpExceptions: true
-  });
-  if (putRes.getResponseCode() !== 200) throw new Error(putRes.getContentText());
-  return 'Code.gs synced @' + ref;
-}
 
-function htmlAdminMsg_(title, body) {
-  return HtmlService.createHtmlOutput(
-    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<body style="font-family:-apple-system;padding:24px;background:#1a1d21;color:#fff">' +
-    '<h1 style="color:#c6f135">' + title + '</h1><p>' + body + '</p>' +
-    '<p><a style="color:#c6f135" href="?jmfc=admin">관리 메뉴</a></p></body>'
-  ).setTitle(title).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-/** 기존 doGet이 있으면 이 함수 이름 충돌 방지를 위해 아래 doGet으로 교체하세요 */
-function doGet(e) {
-  var p = (e && e.parameter) || {};
-  var action = String(p.jmfc || '').toLowerCase();
-  if (action === 'admin') {
-    return HtmlService.createHtmlOutput(
-      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<body style="font-family:-apple-system;padding:24px;background:#1a1d21;color:#fff">' +
-      '<h1 style="color:#c6f135">JMFC 배포 관리</h1>' +
-      '<p><a style="display:block;padding:14px;background:#c6f135;color:#111;border-radius:12px;font-weight:800;text-align:center;margin:10px 0;text-decoration:none" href="?jmfc=setup">1) 설정 (PR 브랜치)</a></p>' +
-      '<p><a style="display:block;padding:14px;background:#c6f135;color:#111;border-radius:12px;font-weight:800;text-align:center;margin:10px 0;text-decoration:none" href="?jmfc=sync">2) Code.gs 동기화</a></p>' +
-      '</body>'
-    ).setTitle('JMFC 배포 관리').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  }
-  if (action === 'setup') {
-    try { return htmlAdminMsg_('설정 완료', useGithubRefPrBranch() + ' · 이제 동기화를 누르세요'); }
-    catch (err) { return htmlAdminMsg_('오류', String(err)); }
-  }
-  if (action === 'sync') {
-    try { return htmlAdminMsg_('동기화 완료', syncCodeGsFromGithub() + ' · 배포에서 새 버전 후 웹앱 새로고침'); }
-    catch (err) { return htmlAdminMsg_('오류', String(err)); }
-  }
-  var props = PropertiesService.getScriptProperties();
-  var url = (props.getProperty('UI_HTML_URL') || '').trim() || jmfcRaw_('live/index.html');
-  try {
-    var res = UrlFetchApp.fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'gas=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
-    var text = res.getContentText() || '';
-    if (res.getResponseCode() === 200 && text.indexOf('<html') >= 0) {
-      return HtmlService.createHtmlOutput(text).setTitle('JMFC풋살 매니저')
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-        .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
-    }
-  } catch (err2) {}
-  return HtmlService.createHtmlOutputFromFile('index').setTitle('JMFC풋살 매니저')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
-}
-`;
-
-    previewEl.textContent = PATCH;
-
-    async function copyText(text, okMsg) {
+    async function copyPath(path, label) {
+      statusEl.className = 'status';
+      statusEl.textContent = label + ' 불러오는 중…';
+      const text = await fetchText(path);
+      if (!text) {
+        statusEl.className = 'status err';
+        statusEl.textContent = '불러오기 실패';
+        return;
+      }
       try {
         await navigator.clipboard.writeText(text);
         statusEl.className = 'status';
-        statusEl.textContent = okMsg;
+        statusEl.textContent = label + ' 복사됨 (' + text.length + '자) · Apps Script에 붙여넣기';
       } catch (_) {
         statusEl.className = 'status err';
-        statusEl.textContent = '복사 실패 — 미리보기를 길게 눌러 복사하세요.';
+        statusEl.textContent = '복사 실패 · 위 raw 링크를 여세요';
       }
     }
 
-    document.getElementById('btnPatch').onclick = () =>
-      copyText(PATCH, '패치 복사됨 · script.google.com 프로젝트 Code.gs 맨 아래에 붙여넣기');
-
-    document.getElementById('btnFullCode').onclick = async () => {
-      statusEl.textContent = '불러오는 중…';
-      const urls = [
-        `https://cdn.jsdelivr.net/gh/${REPO}@${BRANCH}/live/Code.gs`,
-        `https://raw.githubusercontent.com/${REPO}/${BRANCH}/live/Code.gs`
-      ];
-      let text = '';
-      for (const u of urls) {
-        try {
-          const r = await fetch(u + '?t=' + Date.now());
-          if (r.ok) { text = await r.text(); break; }
-        } catch (_) {}
-      }
-      if (!text) { statusEl.className = 'status err'; statusEl.textContent = '실패'; return; }
-      await copyText(text, '전체 복사됨 (가능하면 sync 사용)');
-    };
+    document.getElementById('btnCode').onclick = () => copyPath('live/Code.gs', 'Code.gs');
+    document.getElementById('btnIndex').onclick = () => copyPath('live/index.html', 'index.html');
   </script>
 </body>
 </html>

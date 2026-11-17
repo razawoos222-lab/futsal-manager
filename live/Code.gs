@@ -15,14 +15,10 @@ const CONFIG = {
   /** 감독순위 웹앱(통계대시보드) 스프레드시트 */
   STATS_SPREADSHEET_ID: '1A_rY2T1Tk1G5_tQq6SxNSxr7k330bHqD4rXCElS1BiA',
   /**
-   * 모바일 배포: GitHub의 live/index.html을 그대로 불러옵니다.
-   * Script Properties 키 UI_HTML_URL 로 덮어쓸 수 있습니다.
-   * 비우면 프로젝트 안 HTML 파일(index)을 씁니다.
+   * GitHub FORM/CLUB UI만 사용 (옛 Cinzel/파란 참석조사 UI는 쓰지 않음).
+   * Script Properties UI_HTML_URL / UI_GIT_REF 로 덮어쓸 수 있습니다.
    */
-  // PR 머지 전에는 formclub 브랜치를 1순위로 (main은 아직 옛 UI)
   UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html',
-  UI_HTML_URL_FALLBACK: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html',
-  /** Code.gs / index.html GitHub raw 기준 ref (브랜치 또는 태그) */
   UI_GIT_REF: 'cursor/formclub-palette-mockup-7fc5',
   UI_GIT_REPO: 'razawoos222-lab/futsal-manager'
 };
@@ -129,8 +125,7 @@ function fetchRemoteUiHtml_() {
     resolveUiHtmlUrl_(),
     CONFIG.UI_HTML_URL,
     'https://cdn.jsdelivr.net/gh/' + repo + '@' + ref + '/live/index.html',
-    'https://raw.githubusercontent.com/' + repo + '/' + ref + '/live/index.html',
-    CONFIG.UI_HTML_URL_FALLBACK
+    'https://raw.githubusercontent.com/' + repo + '/' + ref + '/live/index.html'
   ]);
   let lastErr = '';
   for (let i = 0; i < urls.length; i++) {
@@ -209,13 +204,7 @@ function serveJmfcAdmin_(action) {
       const msg = typeof useGithubRefPrBranch === 'function'
         ? useGithubRefPrBranch()
         : useGithubUiPrBranch();
-      return htmlAdminMsg_('설정 완료', msg + ' · 이어서 ?jmfc=sync 를 여세요.');
-    }
-    if (act === 'setup-main') {
-      const msg = typeof useGithubRefMain === 'function'
-        ? useGithubRefMain()
-        : useGithubUiMain();
-      return htmlAdminMsg_('설정 완료', msg + ' · 이어서 ?jmfc=sync 를 여세요.');
+      return htmlAdminMsg_('설정 완료', msg + ' · 이어서 ?jmfc=sync-ui 를 여세요.');
     }
     if (act === 'sync') {
       const msg = syncCodeGsFromGithub();
@@ -290,25 +279,14 @@ function doGet(e) {
   return serveUiSetupNeeded_('GitHub UI fetch failed · local index is old Cinzel UI');
 }
 
-/**
- * Apps Script 편집기에서 1회 실행: GitHub main UI를 쓰도록 설정.
- * 모바일: 실행 → useGithubUiMain 선택 → 실행
- */
-function useGithubUiMain() {
-  PropertiesService.getScriptProperties().setProperty(
-    'UI_HTML_URL',
-    'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/main/live/index.html'
-  );
-  return 'UI_HTML_URL → main/live/index.html';
-}
-
-/** PR 브랜치 UI를 임시로 쓸 때 (머지 전) */
+/** FORM/CLUB UI(GitHub)를 쓰도록 설정 */
 function useGithubUiPrBranch() {
   PropertiesService.getScriptProperties().setProperty(
     'UI_HTML_URL',
     'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html'
   );
-  return 'UI_HTML_URL → formclub-palette-mockup branch';
+  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'cursor/formclub-palette-mockup-7fc5');
+  return 'UI_HTML_URL → formclub UI';
 }
 
 /** 원격 UI 끄고 프로젝트 HTML 파일만 사용 */
@@ -439,13 +417,9 @@ function syncAllFromGithub() {
   return a + ' | ' + b;
 }
 
+/** @deprecated 옛 main UI 경로 제거됨 — FORM/CLUB과 동일 */
 function useGithubRefMain() {
-  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'main');
-  PropertiesService.getScriptProperties().setProperty(
-    'UI_HTML_URL',
-    'https://raw.githubusercontent.com/' + resolveGitRepo_() + '/main/live/index.html'
-  );
-  return 'ref → main';
+  return useGithubRefPrBranch();
 }
 
 function useGithubRefPrBranch() {
