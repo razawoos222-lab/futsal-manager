@@ -82,6 +82,7 @@ function buildInitialState_() {
     subCtx: null,
     addCtx: null,
     baseTeams: null,
+    baseCoaches: null,
     updatedAt: Date.now(),
     matchElapsedSec: 0,
     alerted2min: false,
