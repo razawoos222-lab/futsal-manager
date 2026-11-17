@@ -100,13 +100,38 @@ function resolveUiHtmlUrl_() {
   return (CONFIG.UI_HTML_URL || '').trim();
 }
 
-/** GitHub(raw)에서 UI HTML 가져오기 — 실패 시 null */
+/** FORM/CLUB 새 UI인지 — 옛 main UI(Cinzel 참석조사) 거르기 */
+function isFormclubUiHtml_(text) {
+  if (!text) return false;
+  return text.indexOf('2026-11-17-live-v18') >= 0
+    || text.indexOf('formclub draft UI') >= 0
+    || text.indexOf('--lime:#C6F135') >= 0
+    || text.indexOf('sessionPin') >= 0;
+}
+
+function uniqueUrls_(list) {
+  const out = [];
+  const seen = {};
+  (list || []).forEach(function (u) {
+    const s = String(u || '').trim();
+    if (!s || seen[s]) return;
+    seen[s] = true;
+    out.push(s);
+  });
+  return out;
+}
+
+/** GitHub에서 FORM/CLUB UI HTML 가져오기 — 옛 UI·실패 시 null */
 function fetchRemoteUiHtml_() {
-  const primary = resolveUiHtmlUrl_();
-  const fallback = (CONFIG.UI_HTML_URL_FALLBACK || '').trim();
-  const urls = [];
-  if (primary) urls.push(primary);
-  if (fallback && fallback !== primary) urls.push(fallback);
+  const repo = resolveGitRepo_();
+  const ref = resolveGitRef_() || 'cursor/formclub-palette-mockup-7fc5';
+  const urls = uniqueUrls_([
+    resolveUiHtmlUrl_(),
+    CONFIG.UI_HTML_URL,
+    'https://cdn.jsdelivr.net/gh/' + repo + '@' + ref + '/live/index.html',
+    'https://raw.githubusercontent.com/' + repo + '/' + ref + '/live/index.html',
+    CONFIG.UI_HTML_URL_FALLBACK
+  ]);
   let lastErr = '';
   for (let i = 0; i < urls.length; i++) {
     const base = urls[i];
@@ -119,16 +144,47 @@ function fetchRemoteUiHtml_() {
       });
       const code = res.getResponseCode();
       const text = res.getContentText() || '';
-      if (code === 200 && (text.indexOf('<!DOCTYPE') >= 0 || text.indexOf('<html') >= 0)) {
-        return text;
+      if (code !== 200) {
+        lastErr = 'HTTP ' + code + ' · ' + base;
+        continue;
       }
-      lastErr = 'HTTP ' + code + ' · ' + base;
+      if (!text || (text.indexOf('<!DOCTYPE') < 0 && text.indexOf('<html') < 0)) {
+        lastErr = 'not html · ' + base;
+        continue;
+      }
+      // main 등 옛 UI는 성공으로 치지 않음 (스크린샷의 파란 참석조사가 이 경우)
+      if (!isFormclubUiHtml_(text)) {
+        lastErr = 'skipped old UI · ' + base;
+        continue;
+      }
+      return text;
     } catch (err) {
       lastErr = String(err && err.message ? err.message : err) + ' · ' + base;
     }
   }
   Logger.log('fetchRemoteUiHtml_ failed: ' + lastErr);
   return null;
+}
+
+/** 원격 UI 실패 시 — 옛 local index 대신 안내 페이지 */
+function serveUiSetupNeeded_(reason) {
+  const msg = String(reason || 'remote UI load failed');
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<style>body{font-family:-apple-system,sans-serif;padding:24px;background:#24272B;color:#F3F4F5;line-height:1.5}' +
+    'h1{color:#C6F135;font-size:1.25rem}code{color:#C6F135}a{color:#C6F135;font-weight:800}</style></head><body>' +
+    '<h1>FORM/CLUB UI를 불러오지 못했습니다</h1>' +
+    '<p>지금 보이던 파란「JMFC FOOTBALL 참석 조사」는 <b>예전 index.html</b>입니다.</p>' +
+    '<p>노트북 Apps Script에서:</p>' +
+    '<ol><li>실행 → <code>useGithubUiPrBranch</code> → 권한 허용</li>' +
+    '<li>실행 → <code>syncIndexHtmlFromGithub</code></li>' +
+    '<li>배포 → 새 버전</li></ol>' +
+    '<p>또는 <a href="?jmfc=setup">?jmfc=setup</a> 후 웹앱 새로고침</p>' +
+    '<p style="opacity:.7;font-size:.85rem">' + msg.replace(/</g, '&lt;') + '</p>' +
+    '</body></html>'
+  )
+    .setTitle('JMFC UI 설정 필요')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function htmlAdminMsg_(title, body) {
@@ -165,6 +221,14 @@ function serveJmfcAdmin_(action) {
       const msg = syncCodeGsFromGithub();
       return htmlAdminMsg_('Code.gs 동기화 완료', msg + ' · 배포에서 새 버전을 만든 뒤 웹앱을 새로고침하세요.');
     }
+    if (act === 'sync-ui' || act === 'sync-index') {
+      const msg = syncIndexHtmlFromGithub();
+      return htmlAdminMsg_('index.html 동기화 완료', msg + ' · 배포 → 새 버전 후 웹앱을 여세요. 선택 시 검정+형광(라임) UI여야 합니다.');
+    }
+    if (act === 'sync-all') {
+      const msg = syncAllFromGithub();
+      return htmlAdminMsg_('전체 동기화 완료', msg + ' · 배포 → 새 버전 필수');
+    }
     if (act === 'status') {
       const props = PropertiesService.getScriptProperties();
       return htmlAdminMsg_(
@@ -178,12 +242,13 @@ function serveJmfcAdmin_(action) {
   }
 
   const body =
-    '<p>사파리 시트에서는 Apps Script 실행이 안 됩니다. 이 관리 페이지를 쓰세요.</p>' +
-    '<p><a href="?jmfc=setup">1) GitHub PR 브랜치로 설정</a></p>' +
-    '<p><a href="?jmfc=sync">2) Code.gs GitHub 동기화</a></p>' +
-    '<p><a href="?jmfc=setup-main">main으로 설정</a></p>' +
+    '<p>파란「참석 조사」가 보이면 옛 UI입니다. 아래를 순서대로 누르세요.</p>' +
+    '<p><a href="?jmfc=setup">1) FORM/CLUB 브랜치 설정</a></p>' +
+    '<p><a href="?jmfc=sync-ui">2) index.html(화면) 동기화</a></p>' +
+    '<p><a href="?jmfc=sync">3) Code.gs 동기화</a></p>' +
+    '<p><a href="?jmfc=sync-all">Code+UI 한번에</a></p>' +
     '<p><a href="?jmfc=status">상태 보기</a></p>' +
-    '<p>동기화 후: script.google.com → 배포 → 새 버전</p>';
+    '<p>그다음 Apps Script에서 배포 → 새 버전</p>';
   return HtmlService.createHtmlOutput(
     '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<style>body{font-family:-apple-system,sans-serif;padding:24px;background:#1a1d21;color:#f3f4f5}' +
@@ -209,10 +274,20 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
   }
-  return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('JMFC풋살 매니저')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+
+  // 프로젝트 안 index가 새 UI면 사용, 옛 UI면 안내 페이지 (파란 참석조사 재등장 방지)
+  try {
+    const local = HtmlService.createHtmlOutputFromFile('index').getContent();
+    if (isFormclubUiHtml_(local)) {
+      return HtmlService.createHtmlOutput(local)
+        .setTitle('JMFC풋살 매니저')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+    }
+  } catch (err) {
+    return serveUiSetupNeeded_('local index missing · ' + String(err));
+  }
+  return serveUiSetupNeeded_('GitHub UI fetch failed · local index is old Cinzel UI');
 }
 
 /**
