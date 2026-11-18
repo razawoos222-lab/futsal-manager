@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>풋살매니저 설명서</title>
+  <meta name="description" content="JMFC 풋살매니저 처음부터 결과 저장까지 조작 설명서" />
+  <meta property="og:title" content="풋살매니저 설명서" />
+  <meta property="og:description" content="참석 → 감독 → 드래프트 → 경기 기록 → 결과까지 화면으로 안내" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/11_results_top.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <style>
+    :root { --c:#24272B; --g:#E5E7E9; --l:#C6F135; --m:#5B6168; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; background:var(--g); color:var(--c); }
+    header { position:sticky; top:0; z-index:5; background:var(--c); color:var(--l); padding:14px 16px; }
+    header h1 { margin:0; font-size:1.08rem; }
+    header p { margin:4px 0 0; font-size:0.78rem; color:#c8ccd0; }
+    main { max-width:520px; margin:0 auto; padding:14px 12px 48px; }
+    .card { background:#fff; border-radius:18px; padding:14px; margin:0 0 14px; box-shadow:0 8px 24px rgba(15,23,42,.08); }
+    .card.cover { background:var(--c); color:#fff; }
+    .card.cover h2 { color:var(--l); }
+    .meta { font-size:0.72rem; font-weight:800; color:var(--m); letter-spacing:.04em; }
+    h2 { margin:4px 0 10px; font-size:1.12rem; }
+    img { width:100%; height:auto; border-radius:14px; border:1px solid #d4d4d8; background:#f8fafc; display:block; }
+    ol { margin:12px 0 0; padding-left:1.2rem; line-height:1.55; font-size:0.95rem; }
+    li { margin:0 0 8px; }
+    .cta {
+      display:block; text-align:center; background:var(--c); color:var(--l);
+      text-decoration:none; font-weight:900; padding:15px 14px; border-radius:14px; margin:0 0 10px;
+    }
+    .cta.sec { background:#fff; color:var(--c); border:2px solid var(--c); }
+    .note { font-size:0.8rem; color:var(--m); text-align:center; margin:0 0 16px; line-height:1.45; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>풋살매니저 설명서</h1>
+    <p>처음부터 결과까지 · 화면과 함께 보는 사용 가이드</p>
+  </header>
+  <main>
+    <a class="cta" href="https://da.gd/9TXab">JMFC 풋살매니저 목업 열기</a>
+    <p class="note">마스터핀 없는 연습용 목업입니다. 드래프트 입장 때 세션 핀 4자리를 직접 정하세요.</p>
+
+    <section class="card cover">
+      <h2>전체 흐름</h2>
+      <ol>
+        <li>참석 → 감독 → 핀 → 드래프트 → 라인업</li>
+        <li>2팀 선택 → 경기 기록 → 경기 종료</li>
+        <li>결과 확인·공유 → 필요 시 기록 수정 → 저장</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 1</div>
+      <h2>참석 조사</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/02_attendance_selected.png" alt="참석 조사" loading="lazy" />
+      <ol>
+        <li>날짜를 확인합니다</li>
+        <li>2팀 / 3팀 / 4팀 구성을 고릅니다</li>
+        <li>참석 선수 칩을 탭해 선택합니다</li>
+        <li>「참석 완료 →」로 다음</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 2</div>
+      <h2>감독 선택</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/03_coach.png" alt="감독 선택" loading="lazy" />
+      <ol>
+        <li>팀 슬롯을 탭합니다</li>
+        <li>아래 선수 칩으로 감독을 지정합니다</li>
+        <li>모든 팀 감독을 채운 뒤 「다음 →」</li>
+        <li>감독은 이후 화면에서 C로 표시됩니다</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 3</div>
+      <h2>세션 핀번호</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/04_pin.png" alt="세션 핀" loading="lazy" />
+      <ol>
+        <li>첫 드래프트 입장 때 4자리 핀을 정합니다</li>
+        <li>드래프트 재입장·확정에 사용합니다</li>
+        <li>세션 리셋 전까지 유지됩니다</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 4</div>
+      <h2>드래프트</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/05_draft.png" alt="드래프트" loading="lazy" />
+      <ol>
+        <li>스네이크 ON이면 픽 순서대로 팀이 바뀝니다</li>
+        <li>선수 카드를 탭해 배정합니다</li>
+        <li>랜덤 배정 / 드래그 이동도 가능합니다</li>
+        <li>전원 배정 후 「드래프트 완료」→ 핀 확인</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 5</div>
+      <h2>라인업</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/06_lineup.png" alt="라인업" loading="lazy" />
+      <ol>
+        <li>팀별 명단을 확인합니다</li>
+        <li>감독(C)은 맨 앞입니다</li>
+        <li>「라인업 공유」로 이미지 저장·카톡 전송</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 6</div>
+      <h2>경기 선택</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/07_match_select.png" alt="경기 선택" loading="lazy" />
+      <ol>
+        <li>붙일 2팀을 고릅니다</li>
+        <li>경기 시간(7~12분)을 설정합니다</li>
+        <li>「경기시작」으로 기록 화면 진입</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 7</div>
+      <h2>경기 기록</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/08_match_lineup.png" alt="경기 기록" loading="lazy" />
+      <ol>
+        <li>「경기시작」으로 타이머를 켭니다</li>
+        <li>선수 이름 탭 → 득점/도움/수비/선방/자책</li>
+        <li>⇄ 로 교체·코트 아웃</li>
+        <li>「현재 경기 종료」로 다음 경기 준비</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 7-2</div>
+      <h2>스탯 입력</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/09_match_record.png" alt="스탯 입력" loading="lazy" />
+      <ol>
+        <li>원하는 스탯 버튼을 누릅니다</li>
+        <li>득점 후 도움 선수를 고를 수 있습니다</li>
+        <li>「스탯취소」로 마지막 기록을 되돌립니다</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 8</div>
+      <h2>오늘의 결과</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/11_results_top.png" alt="결과" loading="lazy" />
+      <ol>
+        <li>MVP·최우수 감독·팀 순위를 확인합니다</li>
+        <li>「결과 공유」로 이미지 저장 후 카톡 전송</li>
+        <li>숫자 수정이 필요하면 「기록 수정」</li>
+        <li>끝나면 「기록 저장」</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="meta">STEP 9</div>
+      <h2>기록 수정</h2>
+      <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/13_edit.png" alt="기록 수정" loading="lazy" />
+      <ol>
+        <li>득점·도움·수비·선방 숫자를 고칩니다</li>
+        <li>MP는 바로 다시 계산됩니다</li>
+        <li>감독(C)은 수정해도 유지됩니다</li>
+      </ol>
+    </section>
+
+    <a class="cta" href="https://da.gd/9TXab">JMFC 풋살매니저 목업 열기</a>
+    <a class="cta sec" href="https://da.gd/TnZKD">풋살매니저 설명서 다시 열기</a>
+  </main>
+</body>
+</html>
