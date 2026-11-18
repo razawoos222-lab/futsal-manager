@@ -173,7 +173,7 @@ SLIDES = [
             "① 참석 → ② 감독 → ③ 핀 → ④ 드래프트 → ⑤ 라인업",
             "⑥ 2팀 선택 → ⑦ 경기 기록 → ⑧ 경기 종료",
             "⑨ 결과 확인·공유 → ⑩ 필요 시 기록 수정 → 저장",
-            "연습 목업: design-preview/jmfc-share (GitHub htmlpreview)",
+            "연습 목업: design-preview/jmfc-play (마스터핀 없음)",
         ],
         "cover": True,
     },
@@ -288,7 +288,7 @@ def build_pptx():
 
 
 def build_html():
-    mock_link = "https://htmlpreview.github.io/?https://github.com/razawoos222-lab/futsal-manager/blob/cursor/fix-coach-disappear-7fc5/design-preview/jmfc-share/index.html"
+    mock_link = "https://htmlpreview.github.io/?https://github.com/razawoos222-lab/futsal-manager/blob/cursor/fix-coach-disappear-7fc5/design-preview/jmfc-play/index.html"
     cards = []
     for i, s in enumerate(SLIDES):
         if s.get("cover") and not s["file"]:
