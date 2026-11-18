@@ -518,7 +518,7 @@ function getMasterPlayersFromSheet() {
     const winRatePct = normalizeWinRatePct_(row[13]);
     return {
       name: row[0],
-      position: row[1],
+      // position unused — keep sheet col but do not send to client
       att: Number(row[2]) || 5,
       def: Number(row[3]) || 5,
       // N열 승률 — 퍼센트(0~100)로 내려보내 0.5% 오표시 방지
@@ -894,8 +894,8 @@ function updateAndArchiveSession(payload) {
     // 4) 세션 아카이브 (지난 경기 결과 불러오기용)
     upsertSessionArchive_(payload);
 
-    // 저장 후 감독기록도 배정표·지난팀구성 기준으로 재동기화
-    try { syncCoachArchiveFromAssignments_(); } catch (e) { console.error('coach sync', e); }
+    // 감독기록 전체 재집계는 저장 경로에서 제외 (버벅임 원인).
+    // 클라이언트가 boot 후 syncCoachArchiveNow()를 따로 호출함.
 
     // 5) 앱 상태 초기화
     SpreadsheetApp.flush();
