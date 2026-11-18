@@ -18,8 +18,8 @@ const CONFIG = {
    * GitHub FORM/CLUB UI만 사용 (옛 Cinzel/파란 참석조사 UI는 쓰지 않음).
    * Script Properties UI_HTML_URL / UI_GIT_REF 로 덮어쓸 수 있습니다.
    */
-  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html',
-  UI_GIT_REF: 'cursor/formclub-palette-mockup-7fc5',
+  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/live/index.html',
+  UI_GIT_REF: 'cursor/fix-coach-disappear-7fc5',
   UI_GIT_REPO: 'razawoos222-lab/futsal-manager'
 };
 
@@ -284,10 +284,10 @@ function doGet(e) {
 function useGithubUiPrBranch() {
   PropertiesService.getScriptProperties().setProperty(
     'UI_HTML_URL',
-    'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html'
+    'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/live/index.html'
   );
-  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'cursor/formclub-palette-mockup-7fc5');
-  return 'UI_HTML_URL → formclub UI';
+  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'cursor/fix-coach-disappear-7fc5');
+  return 'UI_HTML_URL → coach-fix UI';
 }
 
 /** 원격 UI 끄고 프로젝트 HTML 파일만 사용 */
