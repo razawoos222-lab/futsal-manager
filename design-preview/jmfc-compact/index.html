@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC GAS web app · formclub draft UI · BUILD 2026-11-17-live-v18 -->
+<!-- JMFC shareable mock · same as live v19-coach · BUILD 2026-11-18-share-mock -->
 <head>
   <base target="_top">
   <meta charset="UTF-8" />
@@ -1599,7 +1599,7 @@ function render(){
   requestAnimationFrame(restore);
   setTimeout(restore, 0);
 }
-const APP_BUILD='2026-11-17-live-v19-coach';
+const APP_BUILD='2026-11-18-share-mock';
 function applyInitialPayload(data){
   PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
   refreshPlayerIndex();
@@ -1638,7 +1638,7 @@ function bootFromServer(attempt){
     if(phone){ phone.style.borderRadius='28px'; phone.style.border='1px solid #cbd5e1'; phone.style.boxShadow='0 20px 50px rgba(15,23,42,.18)'; phone.style.minHeight='720px'; phone.style.maxWidth='430px'; phone.style.margin='0 auto'; }
     loadSessionPin();
     render();
-    toast('목업 · 드래프트 첫 입장에서 핀 설정 (마스터 0503)', 4500);
+    toast('공유 목업 · 라이브와 동일 UI · 핀 설정(마스터 0503)', 5000);
     return;
   }
   toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중… · '+APP_BUILD, 8000);
