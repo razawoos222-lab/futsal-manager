@@ -304,7 +304,7 @@ def build_html():
             f'''<section class="card">
   <div class="meta">STEP {i}</div>
   <h2>{s["title"]}</h2>
-  <img src="screens/{s["file"]}" alt="{s["title"]}" loading="lazy" />
+  <img src="https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/docs/jmfc-guide/screens/{s["file"]}" alt="{s["title"]}" loading="lazy" />
   <ol>{lis}</ol>
 </section>'''
         )
