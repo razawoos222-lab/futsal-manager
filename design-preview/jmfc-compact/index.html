@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC shareable mock · same as live v19-coach · BUILD 2026-11-18-share-mock -->
+<!-- JMFC shareable mock · no master PIN · BUILD 2026-11-18-share-mock-nopin -->
 <head>
   <base target="_top">
   <meta charset="UTF-8" />
@@ -641,7 +641,6 @@ function activeDetailOrder(){return DETAIL_ORDER.filter(t=>teamNames().includes(
 function activeStandingsOrder(){return STANDINGS_ORDER.filter(t=>teamNames().includes(t));}
 function toast(msg,ms){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms||3800);}
 
-const MASTER_PIN='0503';
 const PIN_STORE_KEY='jmfc_session_pin_v1';
 let saveBusy=false;
 function persistSessionPin(){try{localStorage.setItem(PIN_STORE_KEY,JSON.stringify({pin:state.sessionPin,date:state.sessionDate,draftCompleted:!!state.draftCompleted}));}catch(_){}}
@@ -652,7 +651,7 @@ function loadSessionPin(){
   return null;
 }
 function hasSessionPin(){return !!loadSessionPin();}
-function pinMatches(code){const c=String(code||''); if(c===MASTER_PIN) return true; const pin=loadSessionPin(); return !!pin && c===pin;}
+function pinMatches(code){const c=String(code||''); const pin=loadSessionPin(); return !!pin && c===pin;}
 function openPinModal(purpose,title,message){state.modal={type:'pin',purpose,title,message,digits:'',error:''}; render();}
 function openDraftEntryPin(){
   if(!hasSessionPin()) openPinModal('set-pin','핀번호 설정','이번 세션 핀번호 4자리를 정하세요<br>세션 리셋 전까지 유지');
@@ -1406,7 +1405,6 @@ function bind(){
         const purpose=state.modal.purpose;
         const code=state.modal.digits;
         if(purpose==='set-pin'){
-          if(code===MASTER_PIN){ state.modal.digits=''; state.modal.error='마스터 번호는 설정용으로 쓸 수 없습니다'; render(); return; }
           state.sessionPin=code; persistSessionPin(); state.modal=null; toast('핀번호 설정됨'); 
           state.teams=emptyTeams(); teamNames().forEach(tm=>{if(state.coaches[tm]) state.teams[tm].push(state.coaches[tm]);}); ensureCoachesInTeams(); rebuildDraftSlots(); state.draftPickTeam=state.snakeMode?snakeTeamAt(0):teamNames()[0]; state.draftCompleted=false; persistSessionPin(); go('draft'); return;
         }
@@ -1599,7 +1597,7 @@ function render(){
   requestAnimationFrame(restore);
   setTimeout(restore, 0);
 }
-const APP_BUILD='2026-11-18-share-mock';
+const APP_BUILD='2026-11-18-share-mock-nopin';
 function applyInitialPayload(data){
   PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
   refreshPlayerIndex();
@@ -1638,7 +1636,7 @@ function bootFromServer(attempt){
     if(phone){ phone.style.borderRadius='28px'; phone.style.border='1px solid #cbd5e1'; phone.style.boxShadow='0 20px 50px rgba(15,23,42,.18)'; phone.style.minHeight='720px'; phone.style.maxWidth='430px'; phone.style.margin='0 auto'; }
     loadSessionPin();
     render();
-    toast('공유 목업 · 라이브와 동일 UI · 핀 설정(마스터 0503)', 5000);
+    toast('공유 목업 · 드래프트 첫 입장에서 세션 핀 4자리를 설정하세요', 5000);
     return;
   }
   toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중… · '+APP_BUILD, 8000);
