@@ -4,486 +4,682 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <title>JMFC Stats v2 · 목업</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 <style>
 :root{
   --bg:#0f1114; --panel:#181b20; --panel2:#22262c; --line:#30353d;
-  --text:#F2F3F4; --muted:#9AA0A6; --lime:#C6F135; --lime2:rgba(198,241,53,.15);
-  --good:#3DDC97; --bad:#FF6B6B; --safe:env(safe-area-inset-bottom,0px);
+  --text:#F2F3F4; --muted:#9AA0A6; --lime:#C6F135; --lime2:rgba(198,241,53,.14);
+  --head:#2a3140; --row:#1c2026; --row2:#15181d; --safe:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Noto Sans KR",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.4;
-  background-image:radial-gradient(700px 320px at 0% 0%,rgba(198,241,53,.1),transparent 60%)}
+background-image:radial-gradient(700px 280px at 0% 0%,rgba(198,241,53,.08),transparent 55%)}
 button,select,input{font:inherit;color:inherit}
-.app{max-width:480px;margin:0 auto;padding:14px 12px calc(22px + var(--safe))}
-.brand{margin-bottom:10px}
-.brand .eyebrow{display:inline-block;font-size:.68rem;font-weight:800;color:var(--lime);background:var(--lime2);
-  border:1px solid rgba(198,241,53,.35);padding:5px 9px;border-radius:999px;margin-bottom:8px}
-.brand h1{font-family:"Black Han Sans",sans-serif;font-size:2.1rem;letter-spacing:-.02em;line-height:1}
+.app{max-width:480px;margin:0 auto;padding:12px 10px calc(20px + var(--safe))}
+.brand h1{font-family:"Black Han Sans",sans-serif;font-size:2rem;letter-spacing:-.02em;line-height:1}
 .brand h1 i{font-style:normal;color:var(--lime)}
-.brand p{color:var(--muted);font-size:.8rem;margin-top:6px}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 0 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tabs button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--muted);
-  border-radius:999px;padding:10px 13px;font-weight:800;font-size:.84rem}
+.tabs button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:9px 12px;font-weight:800;font-size:.82rem}
 .tabs button.on{background:var(--lime);color:#111;border-color:var(--lime)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
-.h2{font-size:.98rem;font-weight:900}
-.sub{color:var(--muted);font-size:.78rem;margin:4px 0 10px}
-.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.filters .full{grid-column:1/-1}
-.field label{display:block;font-size:.68rem;font-weight:800;color:var(--muted);margin-bottom:4px}
-.field select,.field input{width:100%;height:42px;border-radius:12px;border:1px solid var(--line);
-  background:var(--panel2);padding:0 10px}
-.btn{height:42px;border:none;border-radius:12px;background:var(--lime);color:#111;font-weight:900;padding:0 14px;width:100%}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+.h2{font-size:.95rem;font-weight:900}
+.sub{color:var(--muted);font-size:.75rem;margin:3px 0 8px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;align-items:end}
+.field{flex:1 1 96px;min-width:88px}
+.field.grow{flex:2 1 140px}
+.field label{display:block;font-size:.65rem;font-weight:800;color:var(--muted);margin-bottom:3px}
+.field select,.field input{width:100%;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);padding:0 8px;font-size:.82rem}
+.btn{height:36px;border:none;border-radius:10px;background:var(--lime);color:#111;font-weight:900;padding:0 12px;font-size:.82rem;white-space:nowrap}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
-.kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 0}
-.kpi .c{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px}
-.kpi .k{font-size:.65rem;color:var(--muted);font-weight:800}
-.kpi .v{font-size:1.05rem;font-weight:900;margin-top:2px;color:var(--lime)}
+.chkbar{display:flex;gap:6px;align-items:center;margin:8px 0 6px;flex-wrap:wrap}
+.chkbar span{font-size:.72rem;color:var(--muted);font-weight:700}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;min-width:640px;font-size:.78rem}
-th,td{padding:9px 7px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
-th{background:#14171b;color:var(--muted);font-size:.68rem;position:sticky;top:0;z-index:2}
+table{width:100%;border-collapse:collapse;min-width:700px;font-size:.78rem}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--head);color:#d7dde8;font-size:.7rem;position:sticky;top:0;z-index:2;font-weight:800}
 th.sortable{cursor:pointer}
-th .ar{opacity:.45;font-size:.62rem;margin-left:2px}
+th .ar{opacity:.4;font-size:.6rem;margin-left:2px}
 th.on .ar{opacity:1;color:var(--lime)}
-th.sticky,td.sticky{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;min-width:112px}
-th.sticky{background:#14171b;z-index:3}
-td.name{font-weight:800}
-.rank{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:#2a2f36;font-weight:900;font-size:.68rem;margin-right:6px}
+th.sticky,td.sticky{position:sticky;left:0;z-index:1}
+th.sticky{background:var(--head);z-index:3}
+td.sticky{background:inherit}
+th.chk,td.chk{left:0;width:28px;min-width:28px;max-width:28px;padding:8px 4px}
+th.rankcol,td.rankcol{left:28px;width:34px;min-width:34px;max-width:34px;padding:8px 2px}
+th.namecol,td.namecol{left:62px;width:64px;min-width:64px;max-width:72px;text-align:left;padding-left:6px;overflow:hidden;text-overflow:ellipsis}
+td.namecol{font-weight:800}
+tr.zebra0 td{background:var(--row)}
+tr.zebra1 td{background:var(--row2)}
+tr.zebra0 td.sticky,tr.zebra0 td.chk,tr.zebra0 td.rankcol,tr.zebra0 td.namecol{background:var(--row)}
+tr.zebra1 td.sticky,tr.zebra1 td.chk,tr.zebra1 td.rankcol,tr.zebra1 td.namecol{background:var(--row2)}
+.rank{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:#2a2f36;font-weight:900;font-size:.68rem}
 .rank.t1{background:var(--lime);color:#111}.rank.t2{background:#cfd8a0;color:#111}.rank.t3{background:#7d848c;color:#111}
-.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.seg button{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:10px;padding:8px 10px;font-weight:800;font-size:.78rem}
-.seg button.on{background:var(--lime2);color:var(--lime);border-color:rgba(198,241,53,.4)}
-.board{background:var(--panel2);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;overflow:hidden}
-.board .hd{display:flex;justify-content:space-between;align-items:center;padding:12px;font-weight:900;font-size:.9rem}
-.board .hd em{font-style:normal;color:var(--lime);font-size:.72rem}
-.board ol{list-style:none;padding:0 12px 8px}
-.board li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--line);font-size:.86rem}
+.board{background:var(--panel2);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.board .hd{display:flex;justify-content:space-between;padding:10px 12px;font-weight:900;font-size:.86rem}
+.board .hd em{font-style:normal;color:var(--lime);font-size:.7rem}
+.board ol{list-style:none;padding:0 10px 8px}
+.board li{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--line);font-size:.84rem}
 .board .val{margin-left:auto;font-weight:900;color:var(--lime)}
 .board .more{display:none}
 .board.open .more{display:flex}
-.board .tog{width:100%;border:none;background:#15181c;color:var(--muted);font-weight:800;padding:11px;font-size:.8rem;border-top:1px solid var(--line)}
-.compare{display:grid;gap:8px}
-.side{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
-.side .tag{font-size:.68rem;font-weight:800;color:var(--muted)}
-.side .who{font-size:1.05rem;font-weight:900;margin:4px 0 8px}
-.metric{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.84rem}
+.board .tog{width:100%;border:none;background:#14171b;color:var(--muted);font-weight:800;padding:10px;font-size:.78rem;border-top:1px solid var(--line)}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.seg button{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:10px;padding:7px 10px;font-weight:800;font-size:.76rem}
+.seg button.on{background:var(--lime2);color:var(--lime);border-color:rgba(198,241,53,.4)}
+.radar-wrap{position:relative;height:300px;margin:8px 0;display:grid;place-items:center}
+.radar-wrap svg{width:100%;max-width:360px;height:auto;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35))}
+.legend{display:flex;gap:12px;justify-content:center;font-size:.75rem;font-weight:800}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.side{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+.metric{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.8rem}
 .metric:last-child{border:none}
-.delta.up{color:var(--good);font-weight:800;font-size:.75rem}
-.delta.down{color:var(--bad);font-weight:800;font-size:.75rem}
-.delta.flat{color:var(--muted);font-weight:800;font-size:.75rem}
-.story{margin-top:8px;padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(198,241,53,.12),rgba(80,120,255,.08));
-  border:1px solid rgba(198,241,53,.25);font-size:.84rem;font-weight:700}
-.chart{width:100%;height:160px;margin-top:8px}
-.chem-score{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.chem-score .c{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
-.chem-score .s{font-size:1.6rem;font-weight:900;color:var(--lime)}
-.terms{display:grid;gap:8px}
-.term{padding:12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-size:.84rem}
-.term b{color:var(--lime)}
-.note{color:var(--muted);font-size:.72rem;margin-top:8px}
-.fun{display:grid;gap:8px}
-.fun .card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
-.fun .card h3{font-size:.88rem;margin-bottom:6px}
+.scorebig{font-size:1.8rem;font-weight:900;color:var(--lime);text-align:center}
+.note{color:var(--muted);font-size:.7rem;margin-top:6px}
+.chart{width:100%;height:200px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips label{display:flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 8px;font-size:.72rem;font-weight:700}
 .hidden{display:none!important}
-@media(min-width:720px){.app{max-width:720px}.filters{grid-template-columns:1fr 1fr 1fr 1fr}}
+@media(min-width:720px){.app{max-width:760px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="brand">
-    <div class="eyebrow">MOCK · 실데이터 기반</div>
-    <h1>JMFC <i>STATS</i></h1>
-    <p>MP 공식 변경(수비·선방×2) · 연도/분기 · 모바일 순위 · 케미</p>
-  </header>
+  <header class="brand"><h1>JMFC <i>STATS</i></h1></header>
   <nav class="tabs" id="tabs">
     <button class="on" data-tab="dash">대시보드</button>
     <button data-tab="boards">순위표</button>
     <button data-tab="coach">감독</button>
     <button data-tab="compare">비교</button>
-    <button data-tab="fun">더보기</button>
+    <button data-tab="form">폼</button>
     <button data-tab="terms">용어</button>
   </nav>
 
   <section id="tab-dash">
     <div class="panel">
       <div class="filters" id="dashFilters"></div>
-      <div style="margin-top:8px"><button class="btn" id="dashQuery">조회</button></div>
-    </div>
-    <div class="panel">
-      <div class="kpi" id="dashKpi"></div>
+      <div class="chkbar"><span id="dashChkInfo">체크 없음 = 전체</span>
+        <button class="btn ghost" type="button" id="dashClearChk">체크 해제</button></div>
       <div class="table-wrap"><table>
         <thead><tr id="dashHead"></tr></thead>
         <tbody id="dashBody"></tbody>
       </table></div>
-      <p class="note">헤더 탭 → 오름/내림차순 · RANK는 이름 앞</p>
     </div>
   </section>
 
   <section id="tab-boards" class="hidden">
     <div class="panel">
       <div class="h2">순위표</div>
-      <p class="sub">기간 선택 후 조회 · 기본 5위 + 펼치기</p>
+      <p class="sub">기간 조회 · 기본 5위 + 더보기</p>
       <div class="filters" id="boardFilters"></div>
-      <div style="margin-top:8px"><button class="btn" id="boardQuery">조회</button></div>
     </div>
     <div id="boardsOut"></div>
   </section>
 
   <section id="tab-coach" class="hidden">
     <div class="panel">
-      <div class="h2">감독 순위</div>
-      <p class="sub">세션 = 감독_배정 기준 (테스트 저장일 제외)</p>
+      <div class="h2">감독</div>
       <div class="filters" id="coachFilters"></div>
-      <div style="margin-top:8px"><button class="btn" id="coachQuery">조회</button></div>
-      <div class="kpi" id="coachKpi" style="margin-top:10px"></div>
+      <div class="chkbar"><span id="coachChkInfo">체크 없음 = 전체</span>
+        <button class="btn ghost" type="button" id="coachClearChk">체크 해제</button></div>
       <div class="table-wrap"><table>
-        <thead><tr>
-          <th class="sticky">감독</th><th>#</th><th>세션</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득실</th><th>승점</th><th>승률</th>
-        </tr></thead>
+        <thead><tr id="coachHead"></tr></thead>
         <tbody id="coachBody"></tbody>
       </table></div>
-      <p class="note" id="coachNote"></p>
+      <p class="note">세션은 감독_배정 날짜만 집계 (테스트 저장 제외)</p>
     </div>
   </section>
 
   <section id="tab-compare" class="hidden">
     <div class="panel">
       <div class="h2">비교</div>
-      <p class="sub">분기 성장 · 케미(지난_팀_구성 실데이터)</p>
       <div class="seg" id="cmpMode">
         <button class="on" data-mode="self">나와 나</button>
         <button data-mode="chem">케미 파트너</button>
       </div>
       <div class="filters">
-        <div class="field"><label>선수</label><select id="cmpPlayer"></select></div>
-        <div class="field" id="cmpOtherWrap"><label>파트너</label><select id="cmpOther"></select></div>
-        <div class="field full" id="cmpQWrap"><label>분기</label>
-          <select id="cmpQ"><option value="q1-q3">Q1 vs Q3</option><option value="q1-q2">Q1 vs Q2</option></select>
-        </div>
+        <div class="field grow"><label>선수</label><select id="cmpPlayer"></select></div>
+        <div class="field grow" id="cmpOtherWrap"><label>파트너</label><select id="cmpOther"></select></div>
       </div>
     </div>
     <div class="panel" id="cmpOut"></div>
   </section>
 
-  <section id="tab-fun" class="hidden">
+  <section id="tab-form" class="hidden">
     <div class="panel">
-      <div class="h2">더 재밌는 기능 (제안)</div>
-      <p class="sub">실데이터로 바로 붙일 수 있는 것들</p>
-      <div class="fun" id="funOut"></div>
+      <div class="h2">선수별 폼</div>
+      <p class="sub">첫 분기=100 기준 상대 지수 · 절대 스탯이 아니라 추세</p>
+      <div class="filters">
+        <div class="field"><label>지표</label>
+          <select id="formMetric">
+            <option value="mpG">MP/G</option>
+            <option value="winRate">승률</option>
+            <option value="ppg">승점/경기</option>
+            <option value="gd">득실</option>
+          </select>
+        </div>
+        <div class="field grow"><label>보기</label>
+          <select id="formView">
+            <option value="all">전체 추세</option>
+            <option value="pick">선택한 선수</option>
+            <option value="hot">상승폼 TOP</option>
+            <option value="cold">하락폼 TOP</option>
+          </select>
+        </div>
+      </div>
+      <div class="chips" id="formChips"></div>
+      <div style="margin-top:6px"><button class="btn" type="button" id="formQuery">조회</button></div>
+      <svg class="chart" id="formChart" viewBox="0 0 360 200"></svg>
+      <div id="formList" style="margin-top:8px"></div>
     </div>
   </section>
 
   <section id="tab-terms" class="hidden">
     <div class="panel">
       <div class="h2">용어</div>
-      <div class="terms" style="margin-top:10px">
-        <div class="term"><b>MP</b> Match Points = (득점 + 도움 + 수비 + 선방) × 2<br>예전: (득+도)×2 + (수비+선방)×1 → 이제 수비·선방도 2점</div>
-        <div class="term"><b>MP/G</b> 경기당 MP = MP ÷ 경기수</div>
-        <div class="term"><b>CCP</b> 승점 + MP</div>
-        <div class="term"><b>CCP/G</b> CCP ÷ 경기수</div>
-        <div class="term"><b>공격P</b> 득점 + 도움</div>
-        <div class="term"><b>수비P</b> 수비 + 선방</div>
-        <div class="term"><b>감독 승률</b> 승 ÷ (승+패) · 세션은 감독_배정 날짜 기준</div>
+      <div style="display:grid;gap:8px;margin-top:8px;font-size:.84rem">
+        <div class="side"><b style="color:var(--lime)">MP</b> (득점+도움+수비+선방)×2</div>
+        <div class="side"><b style="color:var(--lime)">MP/G</b> MP÷경기수</div>
+        <div class="side"><b style="color:var(--lime)">CCP</b> 승점+MP</div>
+        <div class="side"><b style="color:var(--lime)">CCP/G</b> CCP÷경기수</div>
+        <div class="side"><b style="color:var(--lime)">케미</b> 같은 팀 승률·승점·득실 기반 100점</div>
+        <div class="side"><b style="color:var(--lime)">폼 지수</b> 개인 첫 분기=100, 이후 상대값</div>
       </div>
     </div>
   </section>
 </div>
 <script>
-window.DATA={"years": [2025, 2026], "players": [{"name": "여도영", "games": 119, "wins": 52, "draws": 36, "losses": 31, "goal": 85, "assist": 35, "defense": 0, "save": 6, "winRate": 62.7, "points": 192, "mp": 252, "oldMp": 246, "mpG": 2.12, "ccp": 444, "ccpG": 3.73, "attackPoints": 120, "defensePoints": 6, "rank": 1, "year": 2026, "q1": {"winRate": 59.7, "ccpG": 3.53, "mpG": 2.0, "goal": 38, "assist": 14, "defense": 0, "save": 2}, "q3": {"winRate": 64.7, "ccpG": 3.88, "mpG": 2.22, "goal": 46, "assist": 20, "defense": 0, "save": 3}, "rankNew": 1}, {"name": "이윤수", "games": 284, "wins": 103, "draws": 77, "losses": 104, "goal": 112, "assist": 54, "defense": 3, "save": 17, "winRate": 49.8, "points": 386, "mp": 372, "oldMp": 352, "mpG": 1.31, "ccp": 758, "ccpG": 2.67, "attackPoints": 166, "defensePoints": 20, "rank": 2, "year": 2026, "q1": {"winRate": 46.8, "ccpG": 2.47, "mpG": 1.19, "goal": 50, "assist": 22, "defense": 1, "save": 8}, "q3": {"winRate": 51.8, "ccpG": 2.82, "mpG": 1.41, "goal": 61, "assist": 31, "defense": 1, "save": 8}, "rankNew": 2}, {"name": "배철호", "games": 280, "wins": 123, "draws": 83, "losses": 74, "goal": 44, "assist": 58, "defense": 26, "save": 13, "winRate": 62.4, "points": 452, "mp": 282, "oldMp": 243, "mpG": 1.01, "ccp": 734, "ccpG": 2.62, "attackPoints": 102, "defensePoints": 39, "rank": 3, "year": 2026, "q1": {"winRate": 59.4, "ccpG": 2.42, "mpG": 0.89, "goal": 19, "assist": 24, "defense": 13, "save": 6}, "q3": {"winRate": 64.4, "ccpG": 2.77, "mpG": 1.11, "goal": 24, "assist": 33, "defense": 13, "save": 6}, "rankNew": 3}, {"name": "김명래", "games": 446, "wins": 164, "draws": 139, "losses": 143, "goal": 123, "assist": 115, "defense": 4, "save": 7, "winRate": 53.4, "points": 631, "mp": 498, "oldMp": 487, "mpG": 1.12, "ccp": 1129, "ccpG": 2.53, "attackPoints": 238, "defensePoints": 11, "rank": 4, "year": 2026, "q1": {"winRate": 50.4, "ccpG": 2.33, "mpG": 1.0, "goal": 55, "assist": 48, "defense": 2, "save": 3}, "q3": {"winRate": 55.4, "ccpG": 2.68, "mpG": 1.22, "goal": 67, "assist": 66, "defense": 2, "save": 3}, "rankNew": 4}, {"name": "신윤호", "games": 405, "wins": 147, "draws": 112, "losses": 146, "goal": 113, "assist": 89, "defense": 1, "save": 3, "winRate": 50.2, "points": 553, "mp": 412, "oldMp": 408, "mpG": 1.02, "ccp": 965, "ccpG": 2.38, "attackPoints": 202, "defensePoints": 4, "rank": 5, "year": 2026, "q1": {"winRate": 47.2, "ccpG": 2.18, "mpG": 0.9, "goal": 50, "assist": 37, "defense": 0, "save": 1}, "q3": {"winRate": 52.2, "ccpG": 2.53, "mpG": 1.12, "goal": 62, "assist": 51, "defense": 0, "save": 1}, "rankNew": 5}, {"name": "김기호", "games": 431, "wins": 152, "draws": 115, "losses": 164, "goal": 126, "assist": 75, "defense": 2, "save": 23, "winRate": 48.1, "points": 571, "mp": 452, "oldMp": 427, "mpG": 1.05, "ccp": 1023, "ccpG": 2.37, "attackPoints": 201, "defensePoints": 25, "rank": 6, "year": 2026, "q1": {"winRate": 45.1, "ccpG": 2.17, "mpG": 0.93, "goal": 56, "assist": 31, "defense": 1, "save": 11}, "q3": {"winRate": 50.1, "ccpG": 2.52, "mpG": 1.15, "goal": 69, "assist": 43, "defense": 1, "save": 11}, "rankNew": 6}, {"name": "강병찬", "games": 18, "wins": 8, "draws": 5, "losses": 5, "goal": 3, "assist": 1, "defense": 0, "save": 2, "winRate": 61.5, "points": 29, "mp": 12, "oldMp": 10, "mpG": 0.67, "ccp": 41, "ccpG": 2.28, "attackPoints": 4, "defensePoints": 2, "rank": 7, "year": 2026, "q1": {"winRate": 58.5, "ccpG": 2.08, "mpG": 0.55, "goal": 1, "assist": 0, "defense": 0, "save": 0}, "q3": {"winRate": 63.5, "ccpG": 2.43, "mpG": 0.77, "goal": 1, "assist": 0, "defense": 0, "save": 1}, "rankNew": 7}, {"name": "최한호", "games": 96, "wins": 33, "draws": 30, "losses": 33, "goal": 22, "assist": 14, "defense": 0, "save": 7, "winRate": 50.0, "points": 129, "mp": 86, "oldMp": 79, "mpG": 0.9, "ccp": 215, "ccpG": 2.24, "attackPoints": 36, "defensePoints": 7, "rank": 8, "year": 2026, "q1": {"winRate": 47.0, "ccpG": 2.04, "mpG": 0.78, "goal": 9, "assist": 5, "defense": 0, "save": 3}, "q3": {"winRate": 52.0, "ccpG": 2.39, "mpG": 1.0, "goal": 12, "assist": 8, "defense": 0, "save": 3}, "rankNew": 8}, {"name": "배수천", "games": 275, "wins": 88, "draws": 83, "losses": 104, "goal": 68, "assist": 20, "defense": 9, "save": 35, "winRate": 45.8, "points": 347, "mp": 264, "oldMp": 220, "mpG": 0.96, "ccp": 611, "ccpG": 2.22, "attackPoints": 88, "defensePoints": 44, "rank": 9, "year": 2026, "q1": {"winRate": 42.8, "ccpG": 2.02, "mpG": 0.84, "goal": 30, "assist": 8, "defense": 4, "save": 16}, "q3": {"winRate": 47.8, "ccpG": 2.37, "mpG": 1.06, "goal": 37, "assist": 11, "defense": 4, "save": 18}, "rankNew": 9}, {"name": "김민수", "games": 302, "wins": 106, "draws": 92, "losses": 104, "goal": 76, "assist": 34, "defense": 9, "save": 11, "winRate": 50.5, "points": 410, "mp": 260, "oldMp": 240, "mpG": 0.86, "ccp": 670, "ccpG": 2.22, "attackPoints": 110, "defensePoints": 20, "rank": 10, "year": 2026, "q1": {"winRate": 47.5, "ccpG": 2.02, "mpG": 0.74, "goal": 34, "assist": 14, "defense": 4, "save": 5}, "q3": {"winRate": 52.5, "ccpG": 2.37, "mpG": 0.96, "goal": 41, "assist": 19, "defense": 4, "save": 5}, "rankNew": 10}, {"name": "김남현", "games": 277, "wins": 105, "draws": 87, "losses": 85, "goal": 45, "assist": 47, "defense": 7, "save": 6, "winRate": 55.3, "points": 402, "mp": 210, "oldMp": 197, "mpG": 0.76, "ccp": 612, "ccpG": 2.21, "attackPoints": 92, "defensePoints": 13, "rank": 11, "year": 2026, "q1": {"winRate": 52.3, "ccpG": 2.01, "mpG": 0.64, "goal": 20, "assist": 19, "defense": 3, "save": 2}, "q3": {"winRate": 57.3, "ccpG": 2.36, "mpG": 0.86, "goal": 24, "assist": 27, "defense": 3, "save": 3}, "rankNew": 11}, {"name": "양승현", "games": 408, "wins": 163, "draws": 123, "losses": 122, "goal": 79, "assist": 38, "defense": 5, "save": 15, "winRate": 57.2, "points": 612, "mp": 274, "oldMp": 254, "mpG": 0.67, "ccp": 886, "ccpG": 2.17, "attackPoints": 117, "defensePoints": 20, "rank": 12, "year": 2026, "q1": {"winRate": 54.2, "ccpG": 1.97, "mpG": 0.55, "goal": 35, "assist": 15, "defense": 2, "save": 7}, "q3": {"winRate": 59.2, "ccpG": 2.32, "mpG": 0.77, "goal": 43, "assist": 22, "defense": 2, "save": 7}, "rankNew": 12}, {"name": "이호섭", "games": 212, "wins": 69, "draws": 67, "losses": 76, "goal": 40, "assist": 30, "defense": 6, "save": 12, "winRate": 47.6, "points": 274, "mp": 176, "oldMp": 158, "mpG": 0.83, "ccp": 450, "ccpG": 2.12, "attackPoints": 70, "defensePoints": 18, "rank": 13, "year": 2026, "q1": {"winRate": 44.6, "ccpG": 1.92, "mpG": 0.71, "goal": 18, "assist": 12, "defense": 3, "save": 5}, "q3": {"winRate": 49.6, "ccpG": 2.27, "mpG": 0.93, "goal": 22, "assist": 17, "defense": 3, "save": 6}, "rankNew": 13}, {"name": "정세진", "games": 402, "wins": 147, "draws": 123, "losses": 132, "goal": 55, "assist": 43, "defense": 7, "save": 33, "winRate": 52.7, "points": 564, "mp": 276, "oldMp": 236, "mpG": 0.69, "ccp": 840, "ccpG": 2.09, "attackPoints": 98, "defensePoints": 40, "rank": 14, "year": 2026, "q1": {"winRate": 49.7, "ccpG": 1.89, "mpG": 0.57, "goal": 24, "assist": 18, "defense": 3, "save": 15}, "q3": {"winRate": 54.7, "ccpG": 2.24, "mpG": 0.79, "goal": 30, "assist": 24, "defense": 3, "save": 17}, "rankNew": 14}, {"name": "이영중", "games": 395, "wins": 148, "draws": 98, "losses": 149, "goal": 50, "assist": 81, "defense": 8, "save": 0, "winRate": 49.8, "points": 542, "mp": 278, "oldMp": 270, "mpG": 0.7, "ccp": 820, "ccpG": 2.08, "attackPoints": 131, "defensePoints": 8, "rank": 15, "year": 2026, "q1": {"winRate": 46.8, "ccpG": 1.88, "mpG": 0.58, "goal": 22, "assist": 34, "defense": 4, "save": 0}, "q3": {"winRate": 51.8, "ccpG": 2.23, "mpG": 0.8, "goal": 27, "assist": 46, "defense": 4, "save": 0}, "rankNew": 15}, {"name": "신용주", "games": 360, "wins": 124, "draws": 105, "losses": 131, "goal": 75, "assist": 44, "defense": 3, "save": 9, "winRate": 48.6, "points": 477, "mp": 262, "oldMp": 250, "mpG": 0.73, "ccp": 739, "ccpG": 2.05, "attackPoints": 119, "defensePoints": 12, "rank": 16, "year": 2026, "q1": {"winRate": 45.6, "ccpG": 1.85, "mpG": 0.61, "goal": 33, "assist": 18, "defense": 1, "save": 4}, "q3": {"winRate": 50.6, "ccpG": 2.2, "mpG": 0.83, "goal": 41, "assist": 25, "defense": 1, "save": 4}, "rankNew": 16}, {"name": "정대운", "games": 43, "wins": 17, "draws": 11, "losses": 15, "goal": 6, "assist": 7, "defense": 0, "save": 0, "winRate": 53.1, "points": 62, "mp": 26, "oldMp": 26, "mpG": 0.6, "ccp": 88, "ccpG": 2.05, "attackPoints": 13, "defensePoints": 0, "rank": 17, "year": 2026, "q1": {"winRate": 50.1, "ccpG": 1.85, "mpG": 0.48, "goal": 2, "assist": 2, "defense": 0, "save": 0}, "q3": {"winRate": 55.1, "ccpG": 2.2, "mpG": 0.7, "goal": 3, "assist": 4, "defense": 0, "save": 0}, "rankNew": 17}, {"name": "최호진", "games": 181, "wins": 62, "draws": 70, "losses": 49, "goal": 17, "assist": 22, "defense": 9, "save": 5, "winRate": 55.9, "points": 256, "mp": 106, "oldMp": 92, "mpG": 0.59, "ccp": 362, "ccpG": 2.0, "attackPoints": 39, "defensePoints": 14, "rank": 18, "year": 2026, "q1": {"winRate": 52.9, "ccpG": 1.8, "mpG": 0.47, "goal": 7, "assist": 9, "defense": 4, "save": 2}, "q3": {"winRate": 57.9, "ccpG": 2.15, "mpG": 0.69, "goal": 9, "assist": 12, "defense": 4, "save": 2}, "rankNew": 18}, {"name": "이호준", "games": 127, "wins": 49, "draws": 40, "losses": 38, "goal": 5, "assist": 20, "defense": 3, "save": 5, "winRate": 56.3, "points": 187, "mp": 66, "oldMp": 58, "mpG": 0.52, "ccp": 253, "ccpG": 1.99, "attackPoints": 25, "defensePoints": 8, "rank": 19, "year": 2026, "q1": {"winRate": 53.3, "ccpG": 1.79, "mpG": 0.4, "goal": 2, "assist": 8, "defense": 1, "save": 2}, "q3": {"winRate": 58.3, "ccpG": 2.14, "mpG": 0.62, "goal": 2, "assist": 11, "defense": 1, "save": 2}, "rankNew": 19}, {"name": "정광훈", "games": 73, "wins": 26, "draws": 21, "losses": 26, "goal": 15, "assist": 6, "defense": 0, "save": 2, "winRate": 50.0, "points": 99, "mp": 46, "oldMp": 44, "mpG": 0.63, "ccp": 145, "ccpG": 1.99, "attackPoints": 21, "defensePoints": 2, "rank": 20, "year": 2026, "q1": {"winRate": 47.0, "ccpG": 1.79, "mpG": 0.51, "goal": 6, "assist": 2, "defense": 0, "save": 0}, "q3": {"winRate": 52.0, "ccpG": 2.14, "mpG": 0.73, "goal": 8, "assist": 3, "defense": 0, "save": 1}, "rankNew": 20}, {"name": "송환규", "games": 295, "wins": 115, "draws": 80, "losses": 100, "goal": 21, "assist": 45, "defense": 5, "save": 9, "winRate": 53.5, "points": 425, "mp": 160, "oldMp": 146, "mpG": 0.54, "ccp": 585, "ccpG": 1.98, "attackPoints": 66, "defensePoints": 14, "rank": 21, "year": 2026, "q1": {"winRate": 50.5, "ccpG": 1.78, "mpG": 0.42, "goal": 9, "assist": 18, "defense": 2, "save": 4}, "q3": {"winRate": 55.5, "ccpG": 2.13, "mpG": 0.64, "goal": 11, "assist": 26, "defense": 2, "save": 4}, "rankNew": 21}, {"name": "이장영", "games": 267, "wins": 91, "draws": 81, "losses": 95, "goal": 34, "assist": 28, "defense": 5, "save": 15, "winRate": 48.9, "points": 354, "mp": 164, "oldMp": 144, "mpG": 0.61, "ccp": 518, "ccpG": 1.94, "attackPoints": 62, "defensePoints": 20, "rank": 22, "year": 2026, "q1": {"winRate": 45.9, "ccpG": 1.74, "mpG": 0.49, "goal": 15, "assist": 11, "defense": 2, "save": 7}, "q3": {"winRate": 50.9, "ccpG": 2.09, "mpG": 0.71, "goal": 18, "assist": 16, "defense": 2, "save": 7}, "rankNew": 22}, {"name": "신승진", "games": 339, "wins": 112, "draws": 95, "losses": 132, "goal": 32, "assist": 37, "defense": 18, "save": 23, "winRate": 45.9, "points": 431, "mp": 220, "oldMp": 179, "mpG": 0.65, "ccp": 651, "ccpG": 1.92, "attackPoints": 69, "defensePoints": 41, "rank": 23, "year": 2026, "q1": {"winRate": 42.9, "ccpG": 1.72, "mpG": 0.53, "goal": 14, "assist": 15, "defense": 9, "save": 11}, "q3": {"winRate": 47.9, "ccpG": 2.07, "mpG": 0.75, "goal": 17, "assist": 21, "defense": 9, "save": 11}, "rankNew": 23}, {"name": "조덕기", "games": 150, "wins": 48, "draws": 44, "losses": 58, "goal": 10, "assist": 13, "defense": 7, "save": 17, "winRate": 45.3, "points": 188, "mp": 94, "oldMp": 70, "mpG": 0.63, "ccp": 282, "ccpG": 1.88, "attackPoints": 23, "defensePoints": 24, "rank": 24, "year": 2026, "q1": {"winRate": 42.3, "ccpG": 1.68, "mpG": 0.51, "goal": 4, "assist": 5, "defense": 3, "save": 8}, "q3": {"winRate": 47.3, "ccpG": 2.03, "mpG": 0.73, "goal": 5, "assist": 7, "defense": 3, "save": 8}, "rankNew": 24}, {"name": "박건호", "games": 8, "wins": 2, "draws": 5, "losses": 1, "goal": 0, "assist": 0, "defense": 0, "save": 2, "winRate": 66.7, "points": 11, "mp": 4, "oldMp": 2, "mpG": 0.5, "ccp": 15, "ccpG": 1.88, "attackPoints": 0, "defensePoints": 2, "rank": 25, "year": 2026, "q1": {"winRate": 63.7, "ccpG": 1.68, "mpG": 0.38, "goal": 0, "assist": 0, "defense": 0, "save": 0}, "q3": {"winRate": 68.7, "ccpG": 2.02, "mpG": 0.6, "goal": 0, "assist": 0, "defense": 0, "save": 1}, "rankNew": 25}, {"name": "이광일", "games": 324, "wins": 119, "draws": 101, "losses": 104, "goal": 10, "assist": 20, "defense": 18, "save": 22, "winRate": 53.4, "points": 458, "mp": 140, "oldMp": 100, "mpG": 0.43, "ccp": 598, "ccpG": 1.85, "attackPoints": 30, "defensePoints": 40, "rank": 26, "year": 2026, "q1": {"winRate": 50.4, "ccpG": 1.65, "mpG": 0.31, "goal": 4, "assist": 8, "defense": 9, "save": 10}, "q3": {"winRate": 55.4, "ccpG": 2.0, "mpG": 0.53, "goal": 5, "assist": 11, "defense": 9, "save": 11}, "rankNew": 26}, {"name": "권성민", "games": 350, "wins": 115, "draws": 95, "losses": 140, "goal": 39, "assist": 33, "defense": 8, "save": 15, "winRate": 45.1, "points": 440, "mp": 190, "oldMp": 167, "mpG": 0.54, "ccp": 630, "ccpG": 1.8, "attackPoints": 72, "defensePoints": 23, "rank": 27, "year": 2026, "q1": {"winRate": 42.1, "ccpG": 1.6, "mpG": 0.42, "goal": 17, "assist": 13, "defense": 4, "save": 7}, "q3": {"winRate": 47.1, "ccpG": 1.95, "mpG": 0.64, "goal": 21, "assist": 19, "defense": 4, "save": 7}, "rankNew": 27}, {"name": "손진석", "games": 167, "wins": 64, "draws": 34, "losses": 69, "goal": 8, "assist": 10, "defense": 16, "save": 1, "winRate": 48.1, "points": 226, "mp": 70, "oldMp": 53, "mpG": 0.42, "ccp": 296, "ccpG": 1.77, "attackPoints": 18, "defensePoints": 17, "rank": 28, "year": 2026, "q1": {"winRate": 45.1, "ccpG": 1.57, "mpG": 0.3, "goal": 3, "assist": 4, "defense": 8, "save": 0}, "q3": {"winRate": 50.1, "ccpG": 1.92, "mpG": 0.52, "goal": 4, "assist": 5, "defense": 8, "save": 0}, "rankNew": 28}, {"name": "김상덕", "games": 329, "wins": 89, "draws": 87, "losses": 153, "goal": 50, "assist": 46, "defense": 4, "save": 13, "winRate": 36.8, "points": 354, "mp": 226, "oldMp": 209, "mpG": 0.69, "ccp": 580, "ccpG": 1.76, "attackPoints": 96, "defensePoints": 17, "rank": 29, "year": 2026, "q1": {"winRate": 33.8, "ccpG": 1.56, "mpG": 0.57, "goal": 22, "assist": 19, "defense": 2, "save": 6}, "q3": {"winRate": 38.8, "ccpG": 1.91, "mpG": 0.79, "goal": 27, "assist": 26, "defense": 2, "save": 6}, "rankNew": 29}, {"name": "최연수", "games": 57, "wins": 22, "draws": 11, "losses": 24, "goal": 3, "assist": 3, "defense": 4, "save": 1, "winRate": 47.8, "points": 77, "mp": 22, "oldMp": 17, "mpG": 0.39, "ccp": 99, "ccpG": 1.74, "attackPoints": 6, "defensePoints": 5, "rank": 30, "year": 2026, "q1": {"winRate": 44.8, "ccpG": 1.54, "mpG": 0.3, "goal": 1, "assist": 1, "defense": 2, "save": 0}, "q3": {"winRate": 49.8, "ccpG": 1.89, "mpG": 0.49, "goal": 1, "assist": 1, "defense": 2, "save": 0}, "rankNew": 30}, {"name": "황민구", "games": 273, "wins": 98, "draws": 79, "losses": 96, "goal": 18, "assist": 15, "defense": 2, "save": 10, "winRate": 50.5, "points": 373, "mp": 90, "oldMp": 78, "mpG": 0.33, "ccp": 463, "ccpG": 1.7, "attackPoints": 33, "defensePoints": 12, "rank": 31, "year": 2026, "q1": {"winRate": 47.5, "ccpG": 1.5, "mpG": 0.3, "goal": 8, "assist": 6, "defense": 1, "save": 4}, "q3": {"winRate": 52.5, "ccpG": 1.85, "mpG": 0.43, "goal": 9, "assist": 8, "defense": 1, "save": 5}, "rankNew": 31}, {"name": "안재욱", "games": 104, "wins": 24, "draws": 42, "losses": 38, "goal": 15, "assist": 5, "defense": 7, "save": 4, "winRate": 38.7, "points": 114, "mp": 62, "oldMp": 51, "mpG": 0.6, "ccp": 176, "ccpG": 1.69, "attackPoints": 20, "defensePoints": 11, "rank": 32, "year": 2026, "q1": {"winRate": 35.7, "ccpG": 1.49, "mpG": 0.48, "goal": 6, "assist": 2, "defense": 3, "save": 1}, "q3": {"winRate": 40.7, "ccpG": 1.84, "mpG": 0.7, "goal": 8, "assist": 2, "defense": 3, "save": 2}, "rankNew": 32}, {"name": "이현희", "games": 104, "wins": 35, "draws": 25, "losses": 44, "goal": 5, "assist": 5, "defense": 7, "save": 5, "winRate": 44.3, "points": 130, "mp": 44, "oldMp": 32, "mpG": 0.42, "ccp": 174, "ccpG": 1.67, "attackPoints": 10, "defensePoints": 12, "rank": 33, "year": 2026, "q1": {"winRate": 41.3, "ccpG": 1.47, "mpG": 0.3, "goal": 2, "assist": 2, "defense": 3, "save": 2}, "q3": {"winRate": 46.3, "ccpG": 1.82, "mpG": 0.52, "goal": 2, "assist": 2, "defense": 3, "save": 2}, "rankNew": 33}, {"name": "최원태", "games": 17, "wins": 5, "draws": 3, "losses": 9, "goal": 0, "assist": 2, "defense": 0, "save": 3, "winRate": 35.7, "points": 18, "mp": 10, "oldMp": 7, "mpG": 0.59, "ccp": 28, "ccpG": 1.65, "attackPoints": 2, "defensePoints": 3, "rank": 34, "year": 2026, "q1": {"winRate": 32.7, "ccpG": 1.45, "mpG": 0.47, "goal": 0, "assist": 0, "defense": 0, "save": 1}, "q3": {"winRate": 37.7, "ccpG": 1.8, "mpG": 0.69, "goal": 0, "assist": 1, "defense": 0, "save": 1}, "rankNew": 34}, {"name": "장용호", "games": 279, "wins": 93, "draws": 76, "losses": 110, "goal": 13, "assist": 15, "defense": 7, "save": 11, "winRate": 45.8, "points": 355, "mp": 92, "oldMp": 74, "mpG": 0.33, "ccp": 447, "ccpG": 1.6, "attackPoints": 28, "defensePoints": 18, "rank": 35, "year": 2026, "q1": {"winRate": 42.8, "ccpG": 1.4, "mpG": 0.3, "goal": 5, "assist": 6, "defense": 3, "save": 5}, "q3": {"winRate": 47.8, "ccpG": 1.75, "mpG": 0.43, "goal": 7, "assist": 8, "defense": 3, "save": 5}, "rankNew": 35}], "coaches": [{"name": "여도영", "games": 15, "w": 12, "d": 2, "l": 1, "gf": 37, "ga": 8, "gd": 29, "sessions": 2, "pts": 38, "winRate": 92.3, "rawSessionCount": 2}, {"name": "이광일", "games": 32, "w": 15, "d": 11, "l": 6, "gf": 45, "ga": 29, "gd": 16, "sessions": 4, "pts": 56, "winRate": 71.4, "rawSessionCount": 4}, {"name": "김명래", "games": 50, "w": 23, "d": 15, "l": 12, "gf": 67, "ga": 55, "gd": 12, "sessions": 6, "pts": 84, "winRate": 65.7, "rawSessionCount": 6}, {"name": "배철호", "games": 56, "w": 23, "d": 17, "l": 16, "gf": 76, "ga": 58, "gd": 18, "sessions": 7, "pts": 86, "winRate": 59.0, "rawSessionCount": 7}, {"name": "김남현", "games": 39, "w": 17, "d": 10, "l": 12, "gf": 65, "ga": 50, "gd": 15, "sessions": 5, "pts": 61, "winRate": 58.6, "rawSessionCount": 5}, {"name": "김민수", "games": 40, "w": 14, "d": 16, "l": 10, "gf": 46, "ga": 45, "gd": 1, "sessions": 5, "pts": 58, "winRate": 58.3, "rawSessionCount": 7}, {"name": "황민구", "games": 24, "w": 9, "d": 8, "l": 7, "gf": 25, "ga": 22, "gd": 3, "sessions": 3, "pts": 35, "winRate": 56.2, "rawSessionCount": 3}, {"name": "송환규", "games": 32, "w": 12, "d": 10, "l": 10, "gf": 32, "ga": 32, "gd": 0, "sessions": 4, "pts": 46, "winRate": 54.5, "rawSessionCount": 4}, {"name": "김기호", "games": 50, "w": 21, "d": 11, "l": 18, "gf": 68, "ga": 64, "gd": 4, "sessions": 6, "pts": 74, "winRate": 53.8, "rawSessionCount": 8}, {"name": "신윤호", "games": 18, "w": 7, "d": 5, "l": 6, "gf": 21, "ga": 20, "gd": 1, "sessions": 2, "pts": 26, "winRate": 53.8, "rawSessionCount": 2}, {"name": "정세진", "games": 40, "w": 15, "d": 12, "l": 13, "gf": 40, "ga": 42, "gd": -2, "sessions": 5, "pts": 57, "winRate": 53.6, "rawSessionCount": 5}, {"name": "이호준", "games": 23, "w": 9, "d": 6, "l": 8, "gf": 26, "ga": 30, "gd": -4, "sessions": 3, "pts": 33, "winRate": 52.9, "rawSessionCount": 3}, {"name": "안재욱", "games": 34, "w": 10, "d": 15, "l": 9, "gf": 25, "ga": 26, "gd": -1, "sessions": 4, "pts": 45, "winRate": 52.6, "rawSessionCount": 4}, {"name": "신승진", "games": 24, "w": 10, "d": 5, "l": 9, "gf": 43, "ga": 35, "gd": 8, "sessions": 3, "pts": 35, "winRate": 52.6, "rawSessionCount": 3}, {"name": "배수천", "games": 34, "w": 11, "d": 13, "l": 10, "gf": 32, "ga": 33, "gd": -1, "sessions": 4, "pts": 46, "winRate": 52.4, "rawSessionCount": 4}, {"name": "신용주", "games": 32, "w": 10, "d": 12, "l": 10, "gf": 29, "ga": 31, "gd": -2, "sessions": 4, "pts": 42, "winRate": 50.0, "rawSessionCount": 4}, {"name": "이호섭", "games": 32, "w": 10, "d": 12, "l": 10, "gf": 32, "ga": 34, "gd": -2, "sessions": 4, "pts": 42, "winRate": 50.0, "rawSessionCount": 4}, {"name": "최호진", "games": 24, "w": 5, "d": 12, "l": 7, "gf": 21, "ga": 21, "gd": 0, "sessions": 3, "pts": 27, "winRate": 41.7, "rawSessionCount": 3}, {"name": "양승현", "games": 39, "w": 11, "d": 12, "l": 16, "gf": 41, "ga": 50, "gd": -9, "sessions": 5, "pts": 45, "winRate": 40.7, "rawSessionCount": 5}, {"name": "이장영", "games": 22, "w": 6, "d": 7, "l": 9, "gf": 30, "ga": 28, "gd": 2, "sessions": 3, "pts": 25, "winRate": 40.0, "rawSessionCount": 4}, {"name": "이윤수", "games": 25, "w": 7, "d": 7, "l": 11, "gf": 20, "ga": 29, "gd": -9, "sessions": 3, "pts": 28, "winRate": 38.9, "rawSessionCount": 3}, {"name": "장용호", "games": 35, "w": 8, "d": 11, "l": 16, "gf": 41, "ga": 57, "gd": -16, "sessions": 4, "pts": 35, "winRate": 33.3, "rawSessionCount": 5}, {"name": "이영중", "games": 17, "w": 5, "d": 1, "l": 11, "gf": 13, "ga": 22, "gd": -9, "sessions": 2, "pts": 16, "winRate": 31.2, "rawSessionCount": 2}, {"name": "조덕기", "games": 24, "w": 4, "d": 11, "l": 9, "gf": 18, "ga": 24, "gd": -6, "sessions": 3, "pts": 23, "winRate": 30.8, "rawSessionCount": 3}, {"name": "김상덕", "games": 48, "w": 10, "d": 15, "l": 23, "gf": 41, "ga": 59, "gd": -18, "sessions": 6, "pts": 45, "winRate": 30.3, "rawSessionCount": 6}, {"name": "권성민", "games": 33, "w": 6, "d": 9, "l": 18, "gf": 26, "ga": 47, "gd": -21, "sessions": 4, "pts": 27, "winRate": 25.0, "rawSessionCount": 6}, {"name": "최한호", "games": 8, "w": 0, "d": 3, "l": 5, "gf": 5, "ga": 15, "gd": -10, "sessions": 1, "pts": 3, "winRate": 0.0, "rawSessionCount": 2}], "chem": [{"a": "김기호", "b": "이영중", "together": 136}, {"a": "김명래", "b": "양승현", "together": 130}, {"a": "김명래", "b": "신승진", "together": 128}, {"a": "김기호", "b": "김명래", "together": 127}, {"a": "신승진", "b": "신용주", "together": 121}, {"a": "신용주", "b": "양승현", "together": 119}, {"a": "김명래", "b": "정세진", "together": 115}, {"a": "신윤호", "b": "이광일", "together": 114}, {"a": "김명래", "b": "이광일", "together": 110}, {"a": "김상덕", "b": "신용주", "together": 109}, {"a": "김상덕", "b": "배수천", "together": 105}, {"a": "김명래", "b": "신용주", "together": 103}, {"a": "김명래", "b": "이영중", "together": 103}, {"a": "양승현", "b": "이영중", "together": 101}, {"a": "신윤호", "b": "양승현", "together": 101}, {"a": "배수천", "b": "정세진", "together": 100}, {"a": "김기호", "b": "김남현", "together": 100}, {"a": "권성민", "b": "양승현", "together": 100}, {"a": "양승현", "b": "이광일", "together": 100}, {"a": "배철호", "b": "양승현", "together": 100}, {"a": "권성민", "b": "이윤수", "together": 99}, {"a": "신용주", "b": "신윤호", "together": 97}, {"a": "김민수", "b": "정세진", "together": 95}, {"a": "신용주", "b": "장용호", "together": 93}, {"a": "김기호", "b": "김상덕", "together": 92}, {"a": "김기호", "b": "장용호", "together": 92}, {"a": "송환규", "b": "이윤수", "together": 92}, {"a": "권성민", "b": "김명래", "together": 90}, {"a": "신윤호", "b": "이영중", "together": 89}, {"a": "김명래", "b": "장용호", "together": 89}, {"a": "신윤호", "b": "정세진", "together": 88}, {"a": "김민수", "b": "배철호", "together": 88}, {"a": "김남현", "b": "신윤호", "together": 87}, {"a": "신윤호", "b": "이장영", "together": 87}, {"a": "김민수", "b": "배수천", "together": 86}, {"a": "김기호", "b": "정세진", "together": 84}, {"a": "송환규", "b": "신윤호", "together": 83}, {"a": "이영중", "b": "이호섭", "together": 83}, {"a": "신승진", "b": "정세진", "together": 82}, {"a": "김상덕", "b": "신승진", "together": 82}, {"a": "신용주", "b": "정세진", "together": 81}, {"a": "신용주", "b": "이광일", "together": 81}, {"a": "김남현", "b": "양승현", "together": 81}, {"a": "송환규", "b": "이광일", "together": 81}, {"a": "신승진", "b": "장용호", "together": 81}, {"a": "양승현", "b": "정세진", "together": 80}, {"a": "김민수", "b": "김상덕", "together": 80}, {"a": "배철호", "b": "신윤호", "together": 80}, {"a": "김기호", "b": "신용주", "together": 79}, {"a": "김명래", "b": "송환규", "together": 79}, {"a": "송환규", "b": "양승현", "together": 79}, {"a": "김남현", "b": "김명래", "together": 78}, {"a": "양승현", "b": "황민구", "together": 78}, {"a": "김기호", "b": "김민수", "together": 77}, {"a": "김기호", "b": "신윤호", "together": 77}, {"a": "권성민", "b": "김기호", "together": 77}, {"a": "김기호", "b": "황민구", "together": 77}, {"a": "김기호", "b": "신승진", "together": 74}, {"a": "이영중", "b": "이윤수", "together": 73}, {"a": "이광일", "b": "정세진", "together": 73}, {"a": "신승진", "b": "이윤수", "together": 72}, {"a": "신윤호", "b": "황민구", "together": 72}, {"a": "이영중", "b": "정세진", "together": 72}, {"a": "김민수", "b": "신윤호", "together": 71}, {"a": "이윤수", "b": "장용호", "together": 71}, {"a": "신승진", "b": "이영중", "together": 71}, {"a": "김남현", "b": "이영중", "together": 70}, {"a": "권성민", "b": "정세진", "together": 70}, {"a": "김명래", "b": "황민구", "together": 70}, {"a": "권성민", "b": "김상덕", "together": 69}, {"a": "권성민", "b": "송환규", "together": 68}, {"a": "권성민", "b": "이영중", "together": 67}, {"a": "정세진", "b": "황민구", "together": 67}, {"a": "김기호", "b": "최호진", "together": 67}, {"a": "신승진", "b": "이광일", "together": 67}, {"a": "이광일", "b": "이영중", "together": 67}, {"a": "배철호", "b": "이호섭", "together": 67}, {"a": "배철호", "b": "정세진", "together": 67}, {"a": "이영중", "b": "황민구", "together": 66}, {"a": "권성민", "b": "이장영", "together": 64}, {"a": "김상덕", "b": "장용호", "together": 64}, {"a": "송환규", "b": "장용호", "together": 64}, {"a": "신용주", "b": "황민구", "together": 64}, {"a": "이영중", "b": "장용호", "together": 64}, {"a": "신용주", "b": "이호섭", "together": 64}, {"a": "김기호", "b": "배철호", "together": 64}, {"a": "권성민", "b": "배수천", "together": 63}, {"a": "권성민", "b": "조덕기", "together": 63}, {"a": "양승현", "b": "이장영", "together": 63}, {"a": "배철호", "b": "이장영", "together": 63}, {"a": "김명래", "b": "이호섭", "together": 63}, {"a": "손진석", "b": "정세진", "together": 62}, {"a": "신윤호", "b": "여도영", "together": 62}, {"a": "권성민", "b": "김민수", "together": 61}, {"a": "김남현", "b": "정세진", "together": 61}, {"a": "김기호", "b": "배수천", "together": 61}, {"a": "이윤수", "b": "정세진", "together": 61}, {"a": "이광일", "b": "이윤수", "together": 61}, {"a": "김기호", "b": "이호준", "together": 59}, {"a": "이광일", "b": "이호섭", "together": 59}, {"a": "이장영", "b": "정세진", "together": 58}, {"a": "배수천", "b": "장용호", "together": 57}, {"a": "김명래", "b": "배수천", "together": 57}, {"a": "김상덕", "b": "이장영", "together": 57}, {"a": "김기호", "b": "송환규", "together": 57}, {"a": "김민수", "b": "양승현", "together": 56}, {"a": "이장영", "b": "이호섭", "together": 56}, {"a": "배철호", "b": "송환규", "together": 56}, {"a": "여도영", "b": "이광일", "together": 56}, {"a": "배수천", "b": "이영중", "together": 55}, {"a": "이영중", "b": "이장영", "together": 55}, {"a": "권성민", "b": "손진석", "together": 55}, {"a": "이호섭", "b": "장용호", "together": 55}, {"a": "양승현", "b": "여도영", "together": 55}, {"a": "김남현", "b": "신용주", "together": 54}, {"a": "김기호", "b": "이호섭", "together": 54}, {"a": "김명래", "b": "이윤수", "together": 53}, {"a": "김명래", "b": "최호진", "together": 53}, {"a": "권성민", "b": "김남현", "together": 52}, {"a": "손진석", "b": "이윤수", "together": 52}, {"a": "김명래", "b": "조덕기", "together": 51}, {"a": "신승진", "b": "황민구", "together": 51}, {"a": "김민수", "b": "최한호", "together": 50}, {"a": "배수천", "b": "조덕기", "together": 49}, {"a": "김상덕", "b": "최호진", "together": 47}, {"a": "배철호", "b": "안재욱", "together": 47}, {"a": "손진석", "b": "신윤호", "together": 44}, {"a": "여도영", "b": "정세진", "together": 44}, {"a": "이윤수", "b": "조덕기", "together": 42}, {"a": "정세진", "b": "조덕기", "together": 41}, {"a": "정세진", "b": "최호진", "together": 41}, {"a": "배철호", "b": "이호준", "together": 41}, {"a": "신용주", "b": "여도영", "together": 41}, {"a": "배수천", "b": "이호준", "together": 40}, {"a": "권성민", "b": "이호준", "together": 40}, {"a": "김민수", "b": "이호준", "together": 40}, {"a": "이영중", "b": "최호진", "together": 39}, {"a": "이장영", "b": "최호진", "together": 39}, {"a": "이호준", "b": "정세진", "together": 39}, {"a": "신윤호", "b": "이호준", "together": 39}, {"a": "신윤호", "b": "안재욱", "together": 39}, {"a": "안재욱", "b": "양승현", "together": 38}, {"a": "배철호", "b": "최한호", "together": 38}, {"a": "김남현", "b": "최호진", "together": 37}, {"a": "이영중", "b": "조덕기", "together": 35}, {"a": "이현희", "b": "정세진", "together": 35}, {"a": "양승현", "b": "최호진", "together": 35}, {"a": "안재욱", "b": "정세진", "together": 35}, {"a": "김민수", "b": "안재욱", "together": 34}, {"a": "손진석", "b": "조덕기", "together": 33}, {"a": "김명래", "b": "손진석", "together": 33}, {"a": "여도영", "b": "이영중", "together": 33}, {"a": "양승현", "b": "조덕기", "together": 32}, {"a": "손진석", "b": "이영중", "together": 32}, {"a": "김기호", "b": "최한호", "together": 32}, {"a": "안재욱", "b": "이광일", "together": 31}, {"a": "배철호", "b": "여도영", "together": 31}, {"a": "신윤호", "b": "이현희", "together": 30}, {"a": "배수천", "b": "손진석", "together": 30}, {"a": "김상덕", "b": "이호준", "together": 30}, {"a": "이영중", "b": "최한호", "together": 30}, {"a": "신승진", "b": "이현희", "together": 28}, {"a": "신용주", "b": "이현희", "together": 26}, {"a": "이광일", "b": "정대운", "together": 26}, {"a": "김남현", "b": "안재욱", "together": 26}, {"a": "김상덕", "b": "최한호", "together": 26}, {"a": "권성민", "b": "최한호", "together": 26}, {"a": "신윤호", "b": "정대운", "together": 25}, {"a": "신용주", "b": "정대운", "together": 25}, {"a": "김기호", "b": "정대운", "together": 25}, {"a": "권성민", "b": "안재욱", "together": 25}, {"a": "신승진", "b": "여도영", "together": 25}, {"a": "배철호", "b": "이현희", "together": 24}, {"a": "이장영", "b": "최한호", "together": 23}, {"a": "신윤호", "b": "최한호", "together": 23}, {"a": "권성민", "b": "정광훈", "together": 22}, {"a": "권성민", "b": "최연수", "together": 22}, {"a": "이현희", "b": "조덕기", "together": 21}, {"a": "이윤수", "b": "이현희", "together": 21}, {"a": "손진석", "b": "정광훈", "together": 20}, {"a": "김명래", "b": "정광훈", "together": 19}, {"a": "배수천", "b": "정광훈", "together": 19}, {"a": "김기호", "b": "이현희", "together": 18}, {"a": "정대운", "b": "최연수", "together": 17}, {"a": "김남현", "b": "최연수", "together": 17}, {"a": "신용주", "b": "최연수", "together": 16}, {"a": "김기호", "b": "최연수", "together": 16}, {"a": "정세진", "b": "최연수", "together": 16}, {"a": "이영중", "b": "최연수", "together": 16}, {"a": "배수천", "b": "최연수", "together": 16}, {"a": "송환규", "b": "정대운", "together": 16}, {"a": "강병찬", "b": "여도영", "together": 16}, {"a": "이윤수", "b": "정광훈", "together": 14}, {"a": "정광훈", "b": "정세진", "together": 11}, {"a": "송환규", "b": "정광훈", "together": 11}, {"a": "신승진", "b": "정광훈", "together": 10}, {"a": "양승현", "b": "정대운", "together": 10}, {"a": "정대운", "b": "정세진", "together": 9}, {"a": "강병찬", "b": "신용주", "together": 9}, {"a": "김명래", "b": "박건호", "together": 8}, {"a": "박건호", "b": "최호진", "together": 8}, {"a": "권성민", "b": "박건호", "together": 8}, {"a": "박건호", "b": "정세진", "together": 8}, {"a": "김남현", "b": "박건호", "together": 8}, {"a": "강병찬", "b": "양승현", "together": 8}, {"a": "강병찬", "b": "이광일", "together": 8}, {"a": "강병찬", "b": "신윤호", "together": 8}, {"a": "강병찬", "b": "김기호", "together": 8}, {"a": "강병찬", "b": "황민구", "together": 6}, {"a": "강병찬", "b": "김민수", "together": 4}], "note": "coach sessions counted only on 감독_배정 dates (excludes 11/18 test)"};
+
+window.DATA={"years": [2025, 2026], "quarters": ["2025-Q4", "2026-Q1", "2026-Q2", "2026-Q3", "2026-Q4"], "players": [{"name": "여도영", "games": 119, "wins": 52, "draws": 36, "losses": 31, "goal": 85, "assist": 35, "defense": 0, "save": 6, "points": 192, "winRate": 62.7, "mp": 252, "mpG": 2.12, "ccp": 444, "ccpG": 3.73, "attackPoints": 120, "defensePoints": 6, "form": {"2026-Q2": {"games": 71, "winRate": 56.2, "pts": 104, "ppg": 1.46, "gd": 17, "gf": 104, "ga": 87, "mpG": 2.17, "mp": 154.1}, "2026-Q3": {"games": 48, "winRate": 71.4, "pts": 88, "ppg": 1.83, "gd": 38, "gf": 88, "ga": 50, "mpG": 2.73, "mp": 131.0}}}, {"name": "이윤수", "games": 284, "wins": 103, "draws": 77, "losses": 104, "goal": 112, "assist": 54, "defense": 3, "save": 17, "points": 386, "winRate": 49.8, "mp": 372, "mpG": 1.31, "ccp": 758, "ccpG": 2.67, "attackPoints": 166, "defensePoints": 20, "form": {"2025-Q4": {"games": 85, "winRate": 53.0, "pts": 124, "ppg": 1.46, "gd": 6, "gf": 92, "ga": 86, "mpG": 2.14, "mp": 181.9}, "2026-Q1": {"games": 73, "winRate": 51.1, "pts": 98, "ppg": 1.34, "gd": 1, "gf": 70, "ga": 69, "mpG": 1.99, "mp": 145.3}, "2026-Q2": {"games": 64, "winRate": 45.7, "pts": 81, "ppg": 1.27, "gd": -5, "gf": 71, "ga": 76, "mpG": 1.85, "mp": 118.4}, "2026-Q4": {"games": 8, "winRate": 0.0, "pts": 3, "ppg": 0.38, "gd": -6, "gf": 2, "ga": 8, "mpG": 0.42, "mp": 3.4}, "2025-Q3": {"goal": 10.0, "assist": 5.0, "defense": 0.0, "save": 0.0, "mp": 30.0, "mpG": 0.94, "winRate": 48.1}}}, {"name": "김명래", "games": 446, "wins": 164, "draws": 139, "losses": 143, "goal": 123, "assist": 115, "defense": 4, "save": 7, "points": 631, "winRate": 53.4, "mp": 498, "mpG": 1.12, "ccp": 1129, "ccpG": 2.53, "attackPoints": 238, "defensePoints": 11, "form": {"2025-Q4": {"games": 85, "winRate": 57.6, "pts": 133, "ppg": 1.56, "gd": 16, "gf": 106, "ga": 90, "mpG": 2.29, "mp": 194.7}, "2026-Q1": {"games": 100, "winRate": 56.5, "pts": 143, "ppg": 1.43, "gd": 6, "gf": 107, "ga": 101, "mpG": 2.14, "mp": 214.0}, "2026-Q2": {"games": 104, "winRate": 56.9, "pts": 150, "ppg": 1.44, "gd": 13, "gf": 126, "ga": 113, "mpG": 2.15, "mp": 223.6}, "2026-Q3": {"games": 75, "winRate": 48.1, "pts": 98, "ppg": 1.31, "gd": -8, "gf": 81, "ga": 89, "mpG": 1.92, "mp": 144.0}, "2026-Q4": {"games": 16, "winRate": 58.3, "pts": 25, "ppg": 1.56, "gd": 2, "gf": 15, "ga": 13, "mpG": 2.3, "mp": 36.8}, "2025-Q3": {"goal": 8.0, "assist": 12.0, "defense": 2.0, "save": 2.0, "mp": 48.0, "mpG": 1.07, "winRate": 50.0}}}, {"name": "김기호", "games": 431, "wins": 152, "draws": 115, "losses": 164, "goal": 126, "assist": 75, "defense": 2, "save": 23, "points": 571, "winRate": 48.1, "mp": 452, "mpG": 1.05, "ccp": 1023, "ccpG": 2.37, "attackPoints": 201, "defensePoints": 25, "form": {"2025-Q4": {"games": 104, "winRate": 54.3, "pts": 155, "ppg": 1.49, "gd": 10, "gf": 112, "ga": 102, "mpG": 2.18, "mp": 226.7}, "2026-Q1": {"games": 71, "winRate": 38.0, "pts": 78, "ppg": 1.1, "gd": -22, "gf": 61, "ga": 83, "mpG": 1.59, "mp": 112.9}, "2026-Q2": {"games": 53, "winRate": 38.5, "pts": 59, "ppg": 1.11, "gd": -20, "gf": 60, "ga": 80, "mpG": 1.61, "mp": 85.3}, "2026-Q3": {"games": 85, "winRate": 42.2, "pts": 102, "ppg": 1.2, "gd": -20, "gf": 87, "ga": 107, "mpG": 1.74, "mp": 147.9}, "2026-Q4": {"games": 59, "winRate": 59.0, "pts": 89, "ppg": 1.51, "gd": 8, "gf": 66, "ga": 58, "mpG": 2.25, "mp": 132.8}, "2025-Q3": {"goal": 14.0, "assist": 7.0, "defense": 0.0, "save": 1.0, "mp": 44.0, "mpG": 1.1, "winRate": 54.8}}}, {"name": "신윤호", "games": 405, "wins": 147, "draws": 112, "losses": 146, "goal": 113, "assist": 89, "defense": 1, "save": 3, "points": 553, "winRate": 50.2, "mp": 412, "mpG": 1.02, "ccp": 965, "ccpG": 2.38, "attackPoints": 202, "defensePoints": 4, "form": {"2025-Q4": {"games": 77, "winRate": 49.2, "pts": 106, "ppg": 1.38, "gd": -4, "gf": 84, "ga": 88, "mpG": 2.01, "mp": 154.8}, "2026-Q1": {"games": 94, "winRate": 48.4, "pts": 122, "ppg": 1.3, "gd": 2, "gf": 98, "ga": 96, "mpG": 1.91, "mp": 179.5}, "2026-Q2": {"games": 103, "winRate": 46.7, "pts": 133, "ppg": 1.29, "gd": -16, "gf": 125, "ga": 141, "mpG": 1.89, "mp": 194.7}, "2026-Q3": {"games": 55, "winRate": 61.0, "pts": 89, "ppg": 1.62, "gd": 15, "gf": 83, "ga": 68, "mpG": 2.39, "mp": 131.5}, "2026-Q4": {"games": 32, "winRate": 47.8, "pts": 42, "ppg": 1.31, "gd": 4, "gf": 34, "ga": 30, "mpG": 1.92, "mp": 61.4}, "2025-Q3": {"goal": 10.0, "assist": 6.0, "defense": 0.0, "save": 0.0, "mp": 32.0, "mpG": 0.91, "winRate": 57.7}}}, {"name": "배철호", "games": 280, "wins": 123, "draws": 83, "losses": 74, "goal": 44, "assist": 58, "defense": 26, "save": 13, "points": 452, "winRate": 62.4, "mp": 282, "mpG": 1.01, "ccp": 734, "ccpG": 2.62, "attackPoints": 102, "defensePoints": 39, "form": {"2026-Q1": {"games": 64, "winRate": 67.4, "pts": 111, "ppg": 1.73, "gd": 22, "gf": 78, "ga": 56, "mpG": 2.58, "mp": 165.1}, "2026-Q2": {"games": 103, "winRate": 52.7, "pts": 146, "ppg": 1.42, "gd": 18, "gf": 133, "ga": 115, "mpG": 2.09, "mp": 215.3}, "2026-Q3": {"games": 65, "winRate": 68.9, "pts": 113, "ppg": 1.74, "gd": 41, "gf": 97, "ga": 56, "mpG": 2.6, "mp": 169.0}, "2026-Q4": {"games": 48, "winRate": 68.8, "pts": 82, "ppg": 1.71, "gd": 18, "gf": 58, "ga": 40, "mpG": 2.57, "mp": 123.4}}}, {"name": "배수천", "games": 275, "wins": 88, "draws": 83, "losses": 104, "goal": 68, "assist": 20, "defense": 9, "save": 35, "points": 347, "winRate": 45.8, "mp": 264, "mpG": 0.96, "ccp": 611, "ccpG": 2.22, "attackPoints": 88, "defensePoints": 44, "form": {"2025-Q4": {"games": 73, "winRate": 47.4, "pts": 97, "ppg": 1.33, "gd": -4, "gf": 65, "ga": 69, "mpG": 1.94, "mp": 141.6}, "2026-Q1": {"games": 41, "winRate": 50.0, "pts": 52, "ppg": 1.27, "gd": 0, "gf": 38, "ga": 38, "mpG": 1.9, "mp": 77.9}, "2026-Q2": {"games": 33, "winRate": 45.8, "pts": 42, "ppg": 1.27, "gd": -3, "gf": 43, "ga": 46, "mpG": 1.86, "mp": 61.4}, "2026-Q3": {"games": 57, "winRate": 43.9, "pts": 70, "ppg": 1.23, "gd": -14, "gf": 58, "ga": 72, "mpG": 1.79, "mp": 102.0}, "2026-Q4": {"games": 51, "winRate": 38.2, "pts": 56, "ppg": 1.1, "gd": -10, "gf": 44, "ga": 54, "mpG": 1.59, "mp": 81.1}, "2025-Q3": {"goal": 2.0, "assist": 1.0, "defense": 2.0, "save": 3.0, "mp": 16.0, "mpG": 1.0, "winRate": 66.7}}}, {"name": "최한호", "games": 96, "wins": 33, "draws": 30, "losses": 33, "goal": 22, "assist": 14, "defense": 0, "save": 7, "points": 129, "winRate": 50.0, "mp": 86, "mpG": 0.9, "ccp": 215, "ccpG": 2.24, "attackPoints": 36, "defensePoints": 7, "form": {"2026-Q2": {"games": 15, "winRate": 44.4, "pts": 18, "ppg": 1.2, "gd": -4, "gf": 13, "ga": 17, "mpG": 1.76, "mp": 26.4}, "2026-Q3": {"games": 49, "winRate": 48.6, "pts": 65, "ppg": 1.33, "gd": -5, "gf": 59, "ga": 64, "mpG": 1.95, "mp": 95.5}, "2026-Q4": {"games": 32, "winRate": 54.5, "pts": 46, "ppg": 1.44, "gd": 7, "gf": 39, "ga": 32, "mpG": 2.13, "mp": 68.2}}}, {"name": "김민수", "games": 302, "wins": 106, "draws": 92, "losses": 104, "goal": 76, "assist": 34, "defense": 9, "save": 11, "points": 410, "winRate": 50.5, "mp": 260, "mpG": 0.86, "ccp": 670, "ccpG": 2.22, "attackPoints": 110, "defensePoints": 20, "form": {"2025-Q4": {"games": 28, "winRate": 50.0, "pts": 39, "ppg": 1.39, "gd": 2, "gf": 25, "ga": 23, "mpG": 2.03, "mp": 56.8}, "2026-Q1": {"games": 15, "winRate": 50.0, "pts": 19, "ppg": 1.27, "gd": -4, "gf": 13, "ga": 17, "mpG": 1.9, "mp": 28.5}, "2026-Q2": {"games": 87, "winRate": 50.8, "pts": 118, "ppg": 1.36, "gd": 6, "gf": 108, "ga": 102, "mpG": 2.0, "mp": 174.0}, "2026-Q3": {"games": 74, "winRate": 46.9, "pts": 94, "ppg": 1.27, "gd": -9, "gf": 81, "ga": 90, "mpG": 1.87, "mp": 138.4}, "2026-Q4": {"games": 60, "winRate": 53.8, "pts": 84, "ppg": 1.4, "gd": 2, "gf": 62, "ga": 60, "mpG": 2.08, "mp": 124.8}, "2025-Q3": {"goal": 3.0, "assist": 8.0, "defense": 3.0, "save": 0.0, "mp": 28.0, "mpG": 1.08, "winRate": 54.2}}}, {"name": "이호섭", "games": 212, "wins": 69, "draws": 67, "losses": 76, "goal": 40, "assist": 30, "defense": 6, "save": 12, "points": 274, "winRate": 47.6, "mp": 176, "mpG": 0.83, "ccp": 450, "ccpG": 2.12, "attackPoints": 70, "defensePoints": 18, "form": {"2025-Q4": {"games": 6, "winRate": 50.0, "pts": 8, "ppg": 1.33, "gd": 0, "gf": 5, "ga": 5, "mpG": 1.96, "mp": 11.8}, "2026-Q1": {"games": 93, "winRate": 46.2, "pts": 118, "ppg": 1.27, "gd": -2, "gf": 94, "ga": 96, "mpG": 1.86, "mp": 173.0}, "2026-Q2": {"games": 17, "winRate": 46.2, "pts": 22, "ppg": 1.29, "gd": -6, "gf": 20, "ga": 26, "mpG": 1.88, "mp": 32.0}, "2026-Q3": {"games": 53, "winRate": 52.8, "pts": 74, "ppg": 1.4, "gd": 1, "gf": 57, "ga": 56, "mpG": 2.07, "mp": 109.7}, "2026-Q4": {"games": 43, "winRate": 44.4, "pts": 52, "ppg": 1.21, "gd": 1, "gf": 37, "ga": 36, "mpG": 1.77, "mp": 76.1}}}, {"name": "김남현", "games": 277, "wins": 105, "draws": 87, "losses": 85, "goal": 45, "assist": 47, "defense": 7, "save": 6, "points": 402, "winRate": 55.3, "mp": 210, "mpG": 0.76, "ccp": 612, "ccpG": 2.21, "attackPoints": 92, "defensePoints": 13, "form": {"2025-Q4": {"games": 50, "winRate": 57.5, "pts": 79, "ppg": 1.58, "gd": 6, "gf": 56, "ga": 50, "mpG": 2.31, "mp": 115.5}, "2026-Q1": {"games": 87, "winRate": 50.0, "pts": 115, "ppg": 1.32, "gd": 2, "gf": 89, "ga": 87, "mpG": 1.95, "mp": 169.7}, "2026-Q2": {"games": 48, "winRate": 51.5, "pts": 66, "ppg": 1.38, "gd": 9, "gf": 63, "ga": 54, "mpG": 2.03, "mp": 97.4}, "2026-Q3": {"games": 24, "winRate": 62.5, "pts": 38, "ppg": 1.58, "gd": 17, "gf": 35, "ga": 18, "mpG": 2.36, "mp": 56.6}, "2026-Q4": {"games": 27, "winRate": 50.0, "pts": 36, "ppg": 1.33, "gd": -3, "gf": 25, "ga": 28, "mpG": 1.96, "mp": 52.9}, "2025-Q3": {"goal": 4.0, "assist": 2.0, "defense": 1.0, "save": 2.0, "mp": 18.0, "mpG": 0.69, "winRate": 61.1}}}, {"name": "신용주", "games": 360, "wins": 124, "draws": 105, "losses": 131, "goal": 75, "assist": 44, "defense": 3, "save": 9, "points": 477, "winRate": 48.6, "mp": 262, "mpG": 0.73, "ccp": 739, "ccpG": 2.05, "attackPoints": 119, "defensePoints": 12, "form": {"2025-Q4": {"games": 83, "winRate": 50.0, "pts": 116, "ppg": 1.4, "gd": 0, "gf": 82, "ga": 82, "mpG": 2.04, "mp": 169.3}, "2026-Q1": {"games": 74, "winRate": 45.8, "pts": 92, "ppg": 1.24, "gd": -6, "gf": 72, "ga": 78, "mpG": 1.82, "mp": 134.7}, "2026-Q2": {"games": 57, "winRate": 56.1, "pts": 85, "ppg": 1.49, "gd": 8, "gf": 80, "ga": 72, "mpG": 2.2, "mp": 125.4}, "2026-Q3": {"games": 57, "winRate": 55.3, "pts": 82, "ppg": 1.44, "gd": 15, "gf": 69, "ga": 54, "mpG": 2.14, "mp": 122.0}, "2026-Q4": {"games": 43, "winRate": 44.4, "pts": 52, "ppg": 1.21, "gd": -3, "gf": 38, "ga": 41, "mpG": 1.77, "mp": 76.1}, "2025-Q3": {"goal": 11.0, "assist": 3.0, "defense": 1.0, "save": 2.0, "mp": 34.0, "mpG": 2.0, "winRate": 58.3}}}, {"name": "이영중", "games": 395, "wins": 148, "draws": 98, "losses": 149, "goal": 50, "assist": 81, "defense": 8, "save": 0, "points": 542, "winRate": 49.8, "mp": 278, "mpG": 0.7, "ccp": 820, "ccpG": 2.08, "attackPoints": 131, "defensePoints": 8, "form": {"2025-Q4": {"games": 55, "winRate": 61.5, "pts": 88, "ppg": 1.6, "gd": 8, "gf": 57, "ga": 49, "mpG": 2.38, "mp": 130.9}, "2026-Q1": {"games": 89, "winRate": 49.2, "pts": 120, "ppg": 1.35, "gd": -6, "gf": 86, "ga": 92, "mpG": 1.98, "mp": 176.2}, "2026-Q2": {"games": 103, "winRate": 47.3, "pts": 134, "ppg": 1.3, "gd": -23, "gf": 128, "ga": 151, "mpG": 1.9, "mp": 195.7}, "2026-Q3": {"games": 50, "winRate": 46.5, "pts": 67, "ppg": 1.34, "gd": 5, "gf": 67, "ga": 62, "mpG": 1.94, "mp": 97.0}, "2026-Q4": {"games": 41, "winRate": 33.3, "pts": 41, "ppg": 1.0, "gd": -16, "gf": 38, "ga": 54, "mpG": 1.43, "mp": 58.6}, "2025-Q3": {"goal": 5.0, "assist": 4.0, "defense": 2.0, "save": 0.0, "mp": 22.0, "mpG": 0.54, "winRate": 59.4}}}, {"name": "김상덕", "games": 329, "wins": 89, "draws": 87, "losses": 153, "goal": 50, "assist": 46, "defense": 4, "save": 13, "points": 354, "winRate": 36.8, "mp": 226, "mpG": 0.69, "ccp": 580, "ccpG": 1.76, "attackPoints": 96, "defensePoints": 17, "form": {"2025-Q4": {"games": 54, "winRate": 40.9, "pts": 64, "ppg": 1.19, "gd": -10, "gf": 41, "ga": 51, "mpG": 1.72, "mp": 92.9}, "2026-Q1": {"games": 54, "winRate": 27.8, "pts": 48, "ppg": 0.89, "gd": -16, "gf": 45, "ga": 61, "mpG": 1.26, "mp": 68.0}, "2026-Q2": {"games": 65, "winRate": 31.2, "pts": 62, "ppg": 0.95, "gd": -35, "gf": 63, "ga": 98, "mpG": 1.36, "mp": 88.4}, "2026-Q3": {"games": 73, "winRate": 36.5, "pts": 78, "ppg": 1.07, "gd": -25, "gf": 70, "ga": 95, "mpG": 1.54, "mp": 112.4}, "2026-Q4": {"games": 35, "winRate": 43.5, "pts": 42, "ppg": 1.2, "gd": -4, "gf": 32, "ga": 36, "mpG": 1.76, "mp": 61.6}, "2025-Q3": {"goal": 5.0, "assist": 4.0, "defense": 0.0, "save": 1.0, "mp": 20.0, "mpG": 0.77, "winRate": 47.6}}}, {"name": "정세진", "games": 402, "wins": 147, "draws": 123, "losses": 132, "goal": 55, "assist": 43, "defense": 7, "save": 33, "points": 564, "winRate": 52.7, "mp": 276, "mpG": 0.69, "ccp": 840, "ccpG": 2.09, "attackPoints": 98, "defensePoints": 40, "form": {"2025-Q4": {"games": 97, "winRate": 44.6, "pts": 122, "ppg": 1.26, "gd": -14, "gf": 90, "ga": 104, "mpG": 1.83, "mp": 177.5}, "2026-Q1": {"games": 62, "winRate": 56.1, "pts": 90, "ppg": 1.45, "gd": 4, "gf": 57, "ga": 53, "mpG": 2.16, "mp": 133.9}, "2026-Q2": {"games": 91, "winRate": 64.4, "pts": 146, "ppg": 1.6, "gd": 42, "gf": 124, "ga": 82, "mpG": 2.4, "mp": 218.4}, "2026-Q3": {"games": 70, "winRate": 53.2, "pts": 98, "ppg": 1.4, "gd": 5, "gf": 77, "ga": 72, "mpG": 2.07, "mp": 144.9}, "2026-Q4": {"games": 41, "winRate": 50.0, "pts": 54, "ppg": 1.32, "gd": -3, "gf": 31, "ga": 34, "mpG": 1.95, "mp": 80.0}, "2025-Q3": {"goal": 5.0, "assist": 3.0, "defense": 2.0, "save": 2.0, "mp": 24.0, "mpG": 0.92, "winRate": 47.6}}}, {"name": "양승현", "games": 408, "wins": 163, "draws": 123, "losses": 122, "goal": 79, "assist": 38, "defense": 5, "save": 15, "points": 612, "winRate": 57.2, "mp": 274, "mpG": 0.67, "ccp": 886, "ccpG": 2.17, "attackPoints": 117, "defensePoints": 20, "form": {"2025-Q4": {"games": 65, "winRate": 50.9, "pts": 93, "ppg": 1.43, "gd": 6, "gf": 61, "ga": 55, "mpG": 2.08, "mp": 135.2}, "2026-Q1": {"games": 78, "winRate": 70.8, "pts": 132, "ppg": 1.69, "gd": 24, "gf": 93, "ga": 69, "mpG": 2.57, "mp": 200.5}, "2026-Q2": {"games": 95, "winRate": 57.1, "pts": 140, "ppg": 1.47, "gd": 14, "gf": 120, "ga": 106, "mpG": 2.19, "mp": 208.0}, "2026-Q3": {"games": 76, "winRate": 55.4, "pts": 113, "ppg": 1.49, "gd": 26, "gf": 100, "ga": 74, "mpG": 2.19, "mp": 166.4}, "2026-Q4": {"games": 61, "winRate": 62.5, "pts": 96, "ppg": 1.57, "gd": 12, "gf": 56, "ga": 44, "mpG": 2.35, "mp": 143.3}}}, {"name": "강병찬", "games": 18, "wins": 8, "draws": 5, "losses": 5, "goal": 3, "assist": 1, "defense": 0, "save": 2, "points": 29, "winRate": 61.5, "mp": 12, "mpG": 0.67, "ccp": 41, "ccpG": 2.28, "attackPoints": 4, "defensePoints": 2, "form": {"2026-Q2": {"games": 8, "winRate": 66.7, "pts": 14, "ppg": 1.75, "gd": 4, "gf": 21, "ga": 17, "mpG": 2.59, "mp": 20.7}, "2026-Q3": {"games": 10, "winRate": 57.1, "pts": 15, "ppg": 1.5, "gd": 1, "gf": 17, "ga": 16, "mpG": 2.22, "mp": 22.2}}}, {"name": "신승진", "games": 339, "wins": 112, "draws": 95, "losses": 132, "goal": 32, "assist": 37, "defense": 18, "save": 23, "points": 431, "winRate": 45.9, "mp": 220, "mpG": 0.65, "ccp": 651, "ccpG": 1.92, "attackPoints": 69, "defensePoints": 41, "form": {"2025-Q4": {"games": 58, "winRate": 52.3, "pts": 83, "ppg": 1.43, "gd": 4, "gf": 59, "ga": 55, "mpG": 2.1, "mp": 121.8}, "2026-Q1": {"games": 75, "winRate": 46.7, "pts": 93, "ppg": 1.24, "gd": -3, "gf": 70, "ga": 73, "mpG": 1.83, "mp": 137.2}, "2026-Q2": {"games": 89, "winRate": 47.6, "pts": 116, "ppg": 1.3, "gd": -4, "gf": 110, "ga": 114, "mpG": 1.91, "mp": 170.0}, "2026-Q3": {"games": 37, "winRate": 38.7, "pts": 42, "ppg": 1.14, "gd": -7, "gf": 42, "ga": 49, "mpG": 1.64, "mp": 60.7}, "2026-Q4": {"games": 24, "winRate": 43.8, "pts": 29, "ppg": 1.21, "gd": -4, "gf": 20, "ga": 24, "mpG": 1.77, "mp": 42.5}, "2025-Q3": {"goal": 3.0, "assist": 3.0, "defense": 0.0, "save": 1.0, "mp": 14.0, "mpG": 0.82, "winRate": 46.7}}}, {"name": "정광훈", "games": 73, "wins": 26, "draws": 21, "losses": 26, "goal": 15, "assist": 6, "defense": 0, "save": 2, "points": 99, "winRate": 50.0, "mp": 46, "mpG": 0.63, "ccp": 145, "ccpG": 1.99, "attackPoints": 21, "defensePoints": 2, "form": {"2025-Q4": {"games": 27, "winRate": 42.1, "pts": 32, "ppg": 1.19, "gd": -5, "gf": 22, "ga": 27, "mpG": 1.73, "mp": 46.7}, "2026-Q1": {"games": 8, "winRate": 50.0, "pts": 11, "ppg": 1.38, "gd": 4, "gf": 12, "ga": 8, "mpG": 2.02, "mp": 16.2}, "2026-Q4": {"games": 7, "winRate": 40.0, "pts": 8, "ppg": 1.14, "gd": 0, "gf": 8, "ga": 8, "mpG": 1.65, "mp": 11.5}, "2025-Q3": {"goal": 6.0, "assist": 1.0, "defense": 0.0, "save": 0.0, "mp": 14.0, "mpG": 0.56, "winRate": 55.6}}}, {"name": "조덕기", "games": 150, "wins": 48, "draws": 44, "losses": 58, "goal": 10, "assist": 13, "defense": 7, "save": 17, "points": 188, "winRate": 45.3, "mp": 94, "mpG": 0.63, "ccp": 282, "ccpG": 1.88, "attackPoints": 23, "defensePoints": 24, "form": {"2025-Q4": {"games": 40, "winRate": 51.5, "pts": 58, "ppg": 1.45, "gd": 8, "gf": 50, "ga": 42, "mpG": 2.11, "mp": 84.4}, "2026-Q1": {"games": 60, "winRate": 47.5, "pts": 77, "ppg": 1.28, "gd": -5, "gf": 51, "ga": 56, "mpG": 1.88, "mp": 112.8}, "2026-Q2": {"games": 17, "winRate": 36.4, "pts": 18, "ppg": 1.06, "gd": -7, "gf": 12, "ga": 19, "mpG": 1.53, "mp": 26.0}, "2026-Q3": {"games": 8, "winRate": 66.7, "pts": 11, "ppg": 1.38, "gd": 0, "gf": 3, "ga": 3, "mpG": 2.19, "mp": 17.5}, "2026-Q4": {"games": 16, "winRate": 8.3, "pts": 7, "ppg": 0.44, "gd": -16, "gf": 11, "ga": 27, "mpG": 0.57, "mp": 9.1}, "2025-Q3": {"goal": 1.0, "assist": 1.0, "defense": 1.0, "save": 0.0, "mp": 6.0, "mpG": 0.67, "winRate": 71.4}}}, {"name": "이장영", "games": 267, "wins": 91, "draws": 81, "losses": 95, "goal": 34, "assist": 28, "defense": 5, "save": 15, "points": 354, "winRate": 48.9, "mp": 164, "mpG": 0.61, "ccp": 518, "ccpG": 1.94, "attackPoints": 62, "defensePoints": 20, "form": {"2025-Q4": {"games": 1, "winRate": 0, "pts": 1, "ppg": 1.0, "gd": 0, "gf": 1, "ga": 1, "mpG": 1.1, "mp": 1.1}, "2026-Q1": {"games": 56, "winRate": 44.7, "pts": 69, "ppg": 1.23, "gd": -3, "gf": 59, "ga": 62, "mpG": 1.8, "mp": 100.8}, "2026-Q2": {"games": 79, "winRate": 52.7, "pts": 111, "ppg": 1.41, "gd": 16, "gf": 103, "ga": 87, "mpG": 2.08, "mp": 164.3}, "2026-Q3": {"games": 33, "winRate": 38.9, "pts": 36, "ppg": 1.09, "gd": -7, "gf": 29, "ga": 36, "mpG": 1.59, "mp": 52.5}, "2026-Q4": {"games": 40, "winRate": 58.6, "pts": 62, "ppg": 1.55, "gd": 9, "gf": 42, "ga": 33, "mpG": 2.29, "mp": 91.6}, "2025-Q3": {"goal": 6.0, "assist": 4.0, "defense": 1.0, "save": 0.0, "mp": 22.0, "mpG": 0.51, "winRate": 51.4}}}, {"name": "정대운", "games": 43, "wins": 17, "draws": 11, "losses": 15, "goal": 6, "assist": 7, "defense": 0, "save": 0, "points": 62, "winRate": 53.1, "mp": 26, "mpG": 0.6, "ccp": 88, "ccpG": 2.05, "attackPoints": 13, "defensePoints": 0, "form": {"2025-Q4": {"games": 43, "winRate": 53.1, "pts": 62, "ppg": 1.44, "gd": 1, "gf": 35, "ga": 34, "mpG": 2.12, "mp": 91.2}}}, {"name": "안재욱", "games": 104, "wins": 24, "draws": 42, "losses": 38, "goal": 15, "assist": 5, "defense": 7, "save": 4, "points": 114, "winRate": 38.7, "mp": 62, "mpG": 0.6, "ccp": 176, "ccpG": 1.69, "attackPoints": 20, "defensePoints": 11, "form": {"2026-Q2": {"games": 47, "winRate": 37.9, "pts": 51, "ppg": 1.09, "gd": -10, "gf": 42, "ga": 52, "mpG": 1.58, "mp": 74.3}, "2026-Q3": {"games": 16, "winRate": 50.0, "pts": 19, "ppg": 1.19, "gd": -6, "gf": 8, "ga": 14, "mpG": 1.81, "mp": 29.0}, "2026-Q4": {"games": 41, "winRate": 37.0, "pts": 44, "ppg": 1.07, "gd": -12, "gf": 29, "ga": 41, "mpG": 1.55, "mp": 63.6}}}, {"name": "최원태", "games": 17, "wins": 5, "draws": 3, "losses": 9, "goal": 0, "assist": 2, "defense": 0, "save": 3, "points": 18, "winRate": 35.7, "mp": 10, "mpG": 0.59, "ccp": 28, "ccpG": 1.65, "attackPoints": 2, "defensePoints": 3, "form": {}}, {"name": "최호진", "games": 181, "wins": 62, "draws": 70, "losses": 49, "goal": 17, "assist": 22, "defense": 9, "save": 5, "points": 256, "winRate": 55.9, "mp": 106, "mpG": 0.59, "ccp": 362, "ccpG": 2.0, "attackPoints": 39, "defensePoints": 14, "form": {"2025-Q4": {"games": 10, "winRate": 50.0, "pts": 14, "ppg": 1.4, "gd": -4, "gf": 16, "ga": 20, "mpG": 2.04, "mp": 20.4}, "2026-Q1": {"games": 59, "winRate": 50.0, "pts": 75, "ppg": 1.27, "gd": -1, "gf": 62, "ga": 63, "mpG": 1.9, "mp": 112.1}, "2026-Q2": {"games": 23, "winRate": 54.5, "pts": 30, "ppg": 1.3, "gd": 2, "gf": 21, "ga": 19, "mpG": 1.98, "mp": 45.5}, "2026-Q3": {"games": 33, "winRate": 54.5, "pts": 47, "ppg": 1.42, "gd": 1, "gf": 35, "ga": 34, "mpG": 2.11, "mp": 69.6}, "2026-Q4": {"games": 16, "winRate": 55.6, "pts": 22, "ppg": 1.38, "gd": 2, "gf": 12, "ga": 10, "mpG": 2.07, "mp": 33.1}, "2025-Q3": {"goal": 2.0, "assist": 0.0, "defense": 3.0, "save": 2.0, "mp": 14.0, "mpG": 0.82, "winRate": 69.2}}}, {"name": "권성민", "games": 350, "wins": 115, "draws": 95, "losses": 140, "goal": 39, "assist": 33, "defense": 8, "save": 15, "points": 440, "winRate": 45.1, "mp": 190, "mpG": 0.54, "ccp": 630, "ccpG": 1.8, "attackPoints": 72, "defensePoints": 23, "form": {"2025-Q4": {"games": 88, "winRate": 46.6, "pts": 117, "ppg": 1.33, "gd": -2, "gf": 86, "ga": 88, "mpG": 1.93, "mp": 169.8}, "2026-Q1": {"games": 47, "winRate": 29.0, "pts": 43, "ppg": 0.91, "gd": -17, "gf": 34, "ga": 51, "mpG": 1.29, "mp": 60.6}, "2026-Q2": {"games": 70, "winRate": 40.9, "pts": 80, "ppg": 1.14, "gd": -13, "gf": 73, "ga": 86, "mpG": 1.66, "mp": 116.2}, "2026-Q3": {"games": 50, "winRate": 44.1, "pts": 61, "ppg": 1.22, "gd": -5, "gf": 44, "ga": 49, "mpG": 1.78, "mp": 89.0}, "2026-Q4": {"games": 41, "winRate": 53.1, "pts": 60, "ppg": 1.46, "gd": 0, "gf": 39, "ga": 39, "mpG": 2.14, "mp": 87.7}, "2025-Q3": {"goal": 5.0, "assist": 4.0, "defense": 2.0, "save": 3.0, "mp": 28.0, "mpG": 0.82, "winRate": 59.3}}}, {"name": "송환규", "games": 295, "wins": 115, "draws": 80, "losses": 100, "goal": 21, "assist": 45, "defense": 5, "save": 9, "points": 425, "winRate": 53.5, "mp": 160, "mpG": 0.54, "ccp": 585, "ccpG": 1.98, "attackPoints": 66, "defensePoints": 14, "form": {"2025-Q4": {"games": 84, "winRate": 45.3, "pts": 107, "ppg": 1.27, "gd": -8, "gf": 83, "ga": 91, "mpG": 1.85, "mp": 155.4}, "2026-Q1": {"games": 99, "winRate": 62.7, "pts": 158, "ppg": 1.6, "gd": 21, "gf": 103, "ga": 82, "mpG": 2.39, "mp": 236.6}, "2026-Q2": {"games": 55, "winRate": 55.3, "pts": 80, "ppg": 1.45, "gd": 3, "gf": 61, "ga": 58, "mpG": 2.15, "mp": 118.2}, "2025-Q3": {"goal": 0.0, "assist": 7.0, "defense": 1.0, "save": 3.0, "mp": 22.0, "mpG": 0.65, "winRate": 48.3}}}, {"name": "이호준", "games": 127, "wins": 49, "draws": 40, "losses": 38, "goal": 5, "assist": 20, "defense": 3, "save": 5, "points": 187, "winRate": 56.3, "mp": 66, "mpG": 0.52, "ccp": 253, "ccpG": 1.99, "attackPoints": 25, "defensePoints": 8, "form": {"2025-Q4": {"games": 24, "winRate": 45.0, "pts": 31, "ppg": 1.29, "gd": -2, "gf": 18, "ga": 20, "mpG": 1.87, "mp": 44.9}, "2026-Q1": {"games": 14, "winRate": 44.4, "pts": 17, "ppg": 1.21, "gd": -1, "gf": 17, "ga": 18, "mpG": 1.77, "mp": 24.8}, "2026-Q3": {"games": 56, "winRate": 56.8, "pts": 82, "ppg": 1.46, "gd": 1, "gf": 61, "ga": 60, "mpG": 2.17, "mp": 121.5}, "2026-Q4": {"games": 33, "winRate": 71.4, "pts": 57, "ppg": 1.73, "gd": 11, "gf": 37, "ga": 26, "mpG": 2.62, "mp": 86.5}}}, {"name": "박건호", "games": 8, "wins": 2, "draws": 5, "losses": 1, "goal": 0, "assist": 0, "defense": 0, "save": 2, "points": 11, "winRate": 66.7, "mp": 4, "mpG": 0.5, "ccp": 15, "ccpG": 1.88, "attackPoints": 0, "defensePoints": 2, "form": {"2026-Q2": {"games": 8, "winRate": 66.7, "pts": 11, "ppg": 1.38, "gd": 2, "gf": 7, "ga": 5, "mpG": 2.19, "mp": 17.5}}}, {"name": "이광일", "games": 324, "wins": 119, "draws": 101, "losses": 104, "goal": 10, "assist": 20, "defense": 18, "save": 22, "points": 458, "winRate": 53.4, "mp": 140, "mpG": 0.43, "ccp": 598, "ccpG": 1.85, "attackPoints": 30, "defensePoints": 40, "form": {"2025-Q4": {"games": 69, "winRate": 42.3, "pts": 83, "ppg": 1.2, "gd": -11, "gf": 59, "ga": 70, "mpG": 1.74, "mp": 120.1}, "2026-Q1": {"games": 64, "winRate": 60.5, "pts": 99, "ppg": 1.55, "gd": 17, "gf": 66, "ga": 49, "mpG": 2.31, "mp": 147.8}, "2026-Q2": {"games": 86, "winRate": 52.6, "pts": 119, "ppg": 1.38, "gd": 7, "gf": 113, "ga": 106, "mpG": 2.04, "mp": 175.4}, "2026-Q3": {"games": 57, "winRate": 56.8, "pts": 83, "ppg": 1.46, "gd": 6, "gf": 67, "ga": 61, "mpG": 2.17, "mp": 123.7}, "2026-Q4": {"games": 32, "winRate": 58.3, "pts": 50, "ppg": 1.56, "gd": 5, "gf": 30, "ga": 25, "mpG": 2.3, "mp": 73.6}}}, {"name": "이현희", "games": 104, "wins": 35, "draws": 25, "losses": 44, "goal": 5, "assist": 5, "defense": 7, "save": 5, "points": 130, "winRate": 44.3, "mp": 44, "mpG": 0.42, "ccp": 174, "ccpG": 1.67, "attackPoints": 10, "defensePoints": 12, "form": {"2025-Q4": {"games": 27, "winRate": 44.4, "pts": 33, "ppg": 1.22, "gd": -5, "gf": 28, "ga": 33, "mpG": 1.79, "mp": 48.3}, "2026-Q1": {"games": 34, "winRate": 34.6, "pts": 35, "ppg": 1.03, "gd": -15, "gf": 30, "ga": 45, "mpG": 1.48, "mp": 50.3}, "2026-Q2": {"games": 16, "winRate": 46.2, "pts": 21, "ppg": 1.31, "gd": -1, "gf": 17, "ga": 18, "mpG": 1.9, "mp": 30.4}, "2025-Q3": {"goal": 1.0, "assist": 1.0, "defense": 2.0, "save": 0.0, "mp": 8.0, "mpG": 0.42, "winRate": 58.8}}}, {"name": "손진석", "games": 167, "wins": 64, "draws": 34, "losses": 69, "goal": 8, "assist": 10, "defense": 16, "save": 1, "points": 226, "winRate": 48.1, "mp": 70, "mpG": 0.42, "ccp": 296, "ccpG": 1.77, "attackPoints": 18, "defensePoints": 17, "form": {"2025-Q4": {"games": 100, "winRate": 50.0, "pts": 140, "ppg": 1.4, "gd": 0, "gf": 106, "ga": 106, "mpG": 2.04, "mp": 204.0}, "2026-Q1": {"games": 8, "winRate": 42.9, "pts": 10, "ppg": 1.25, "gd": -2, "gf": 6, "ga": 8, "mpG": 1.8, "mp": 14.4}, "2025-Q3": {"goal": 2.0, "assist": 3.0, "defense": 5.0, "save": 0.0, "mp": 20.0, "mpG": 0.57, "winRate": 55.6}}}, {"name": "최연수", "games": 57, "wins": 22, "draws": 11, "losses": 24, "goal": 3, "assist": 3, "defense": 4, "save": 1, "points": 77, "winRate": 47.8, "mp": 22, "mpG": 0.39, "ccp": 99, "ccpG": 1.74, "attackPoints": 6, "defensePoints": 5, "form": {"2025-Q4": {"games": 17, "winRate": 56.2, "pts": 28, "ppg": 1.65, "gd": 2, "gf": 16, "ga": 14, "mpG": 2.38, "mp": 40.5}, "2026-Q2": {"games": 16, "winRate": 42.9, "pts": 20, "ppg": 1.25, "gd": -4, "gf": 27, "ga": 31, "mpG": 1.8, "mp": 28.8}, "2026-Q3": {"games": 7, "winRate": 33.3, "pts": 7, "ppg": 1.0, "gd": -2, "gf": 2, "ga": 4, "mpG": 1.43, "mp": 10.0}}}, {"name": "장용호", "games": 279, "wins": 93, "draws": 76, "losses": 110, "goal": 13, "assist": 15, "defense": 7, "save": 11, "points": 355, "winRate": 45.8, "mp": 92, "mpG": 0.33, "ccp": 447, "ccpG": 1.6, "attackPoints": 28, "defensePoints": 18, "form": {"2025-Q4": {"games": 51, "winRate": 52.5, "pts": 74, "ppg": 1.45, "gd": 1, "gf": 58, "ga": 57, "mpG": 2.12, "mp": 108.1}, "2026-Q1": {"games": 69, "winRate": 37.5, "pts": 75, "ppg": 1.09, "gd": -13, "gf": 56, "ga": 69, "mpG": 1.57, "mp": 108.3}, "2026-Q2": {"games": 48, "winRate": 41.7, "pts": 57, "ppg": 1.19, "gd": -18, "gf": 55, "ga": 73, "mpG": 1.73, "mp": 83.0}, "2026-Q3": {"games": 11, "winRate": 55.6, "pts": 17, "ppg": 1.55, "gd": 1, "gf": 15, "ga": 14, "mpG": 2.26, "mp": 24.9}, "2026-Q4": {"games": 51, "winRate": 41.2, "pts": 59, "ppg": 1.16, "gd": -6, "gf": 43, "ga": 49, "mpG": 1.69, "mp": 86.2}, "2025-Q3": {"goal": 0.0, "assist": 1.0, "defense": 1.0, "save": 1.0, "mp": 6.0, "mpG": 0.35, "winRate": 57.1}}}, {"name": "황민구", "games": 273, "wins": 98, "draws": 79, "losses": 96, "goal": 18, "assist": 15, "defense": 2, "save": 10, "points": 373, "winRate": 50.5, "mp": 90, "mpG": 0.33, "ccp": 463, "ccpG": 1.7, "attackPoints": 33, "defensePoints": 12, "form": {"2025-Q4": {"games": 55, "winRate": 50.0, "pts": 75, "ppg": 1.36, "gd": -5, "gf": 49, "ga": 54, "mpG": 2.0, "mp": 110.0}, "2026-Q1": {"games": 43, "winRate": 48.3, "pts": 56, "ppg": 1.3, "gd": -4, "gf": 43, "ga": 47, "mpG": 1.91, "mp": 82.1}, "2026-Q2": {"games": 31, "winRate": 75.0, "pts": 61, "ppg": 1.97, "gd": 27, "gf": 50, "ga": 23, "mpG": 2.92, "mp": 90.5}, "2026-Q3": {"games": 52, "winRate": 51.4, "pts": 72, "ppg": 1.38, "gd": 4, "gf": 56, "ga": 52, "mpG": 2.03, "mp": 105.6}, "2026-Q4": {"games": 30, "winRate": 40.0, "pts": 34, "ppg": 1.13, "gd": -11, "gf": 27, "ga": 38, "mpG": 1.64, "mp": 49.2}, "2025-Q3": {"goal": 2.0, "assist": 1.0, "defense": 0.0, "save": 1.0, "mp": 8.0, "mpG": 0.89, "winRate": 28.6}}}], "coaches": [{"name": "여도영", "sessions": 2, "games": 15, "w": 12, "d": 2, "l": 1, "gf": 37, "ga": 8, "gd": 29, "pts": 38, "winRate": 92.3, "byQ": {"2026-Q2": {"sessions": 1, "games": 8, "w": 6, "d": 1, "l": 1, "gf": 15, "ga": 3, "gd": 12, "pts": 19, "winRate": 85.7}, "2026-Q3": {"sessions": 1, "games": 7, "w": 6, "d": 1, "l": 0, "gf": 22, "ga": 5, "gd": 17, "pts": 19, "winRate": 100.0}}}, {"name": "이광일", "sessions": 4, "games": 32, "w": 15, "d": 11, "l": 6, "gf": 45, "ga": 29, "gd": 16, "pts": 56, "winRate": 71.4, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 6, "d": 2, "l": 0, "gf": 12, "ga": 3, "gd": 9, "pts": 20, "winRate": 100.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 7, "d": 6, "l": 3, "gf": 28, "ga": 22, "gd": 6, "pts": 27, "winRate": 70.0}, "2026-Q3": {"sessions": 1, "games": 8, "w": 2, "d": 3, "l": 3, "gf": 5, "ga": 4, "gd": 1, "pts": 9, "winRate": 40.0}}}, {"name": "김명래", "sessions": 6, "games": 50, "w": 23, "d": 15, "l": 12, "gf": 67, "ga": 55, "gd": 12, "pts": 84, "winRate": 65.7, "byQ": {"2026-Q1": {"sessions": 1, "games": 10, "w": 4, "d": 5, "l": 1, "gf": 10, "ga": 8, "gd": 2, "pts": 17, "winRate": 80.0}, "2026-Q2": {"sessions": 3, "games": 24, "w": 12, "d": 4, "l": 8, "gf": 36, "ga": 30, "gd": 6, "pts": 40, "winRate": 60.0}, "2026-Q3": {"sessions": 2, "games": 16, "w": 7, "d": 6, "l": 3, "gf": 21, "ga": 17, "gd": 4, "pts": 27, "winRate": 70.0}}}, {"name": "배철호", "sessions": 7, "games": 56, "w": 23, "d": 17, "l": 16, "gf": 76, "ga": 58, "gd": 18, "pts": 86, "winRate": 59.0, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 3, "d": 4, "l": 1, "gf": 6, "ga": 4, "gd": 2, "pts": 13, "winRate": 75.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 5, "d": 3, "l": 8, "gf": 20, "ga": 27, "gd": -7, "pts": 18, "winRate": 38.5}, "2026-Q3": {"sessions": 3, "games": 24, "w": 11, "d": 7, "l": 6, "gf": 35, "ga": 19, "gd": 16, "pts": 40, "winRate": 64.7}, "2026-Q4": {"sessions": 1, "games": 8, "w": 4, "d": 3, "l": 1, "gf": 15, "ga": 8, "gd": 7, "pts": 15, "winRate": 80.0}}}, {"name": "김남현", "sessions": 5, "games": 39, "w": 17, "d": 10, "l": 12, "gf": 65, "ga": 50, "gd": 15, "pts": 61, "winRate": 58.6, "byQ": {"2026-Q1": {"sessions": 2, "games": 15, "w": 7, "d": 5, "l": 3, "gf": 22, "ga": 16, "gd": 6, "pts": 26, "winRate": 70.0}, "2026-Q2": {"sessions": 1, "games": 8, "w": 3, "d": 2, "l": 3, "gf": 17, "ga": 15, "gd": 2, "pts": 11, "winRate": 50.0}, "2026-Q3": {"sessions": 1, "games": 8, "w": 4, "d": 3, "l": 1, "gf": 17, "ga": 8, "gd": 9, "pts": 15, "winRate": 80.0}, "2026-Q4": {"sessions": 1, "games": 8, "w": 3, "d": 0, "l": 5, "gf": 9, "ga": 11, "gd": -2, "pts": 9, "winRate": 37.5}}}, {"name": "김민수", "sessions": 5, "games": 40, "w": 14, "d": 16, "l": 10, "gf": 46, "ga": 45, "gd": 1, "pts": 58, "winRate": 58.3, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 2, "d": 5, "l": 1, "gf": 8, "ga": 9, "gd": -1, "pts": 11, "winRate": 66.7}, "2026-Q2": {"sessions": 2, "games": 16, "w": 6, "d": 6, "l": 4, "gf": 23, "ga": 21, "gd": 2, "pts": 24, "winRate": 60.0}, "2026-Q3": {"sessions": 1, "games": 8, "w": 2, "d": 4, "l": 2, "gf": 4, "ga": 4, "gd": 0, "pts": 10, "winRate": 50.0}, "2026-Q4": {"sessions": 1, "games": 8, "w": 4, "d": 1, "l": 3, "gf": 11, "ga": 11, "gd": 0, "pts": 13, "winRate": 57.1}}}, {"name": "황민구", "sessions": 3, "games": 24, "w": 9, "d": 8, "l": 7, "gf": 25, "ga": 22, "gd": 3, "pts": 35, "winRate": 56.2, "byQ": {"2026-Q2": {"sessions": 2, "games": 16, "w": 9, "d": 4, "l": 3, "gf": 20, "ga": 11, "gd": 9, "pts": 31, "winRate": 75.0}, "2026-Q4": {"sessions": 1, "games": 8, "w": 0, "d": 4, "l": 4, "gf": 5, "ga": 11, "gd": -6, "pts": 4, "winRate": 0.0}}}, {"name": "송환규", "sessions": 4, "games": 32, "w": 12, "d": 10, "l": 10, "gf": 32, "ga": 32, "gd": 0, "pts": 46, "winRate": 54.5, "byQ": {"2026-Q1": {"sessions": 2, "games": 16, "w": 7, "d": 5, "l": 4, "gf": 17, "ga": 14, "gd": 3, "pts": 26, "winRate": 63.6}, "2026-Q2": {"sessions": 2, "games": 16, "w": 5, "d": 5, "l": 6, "gf": 15, "ga": 18, "gd": -3, "pts": 20, "winRate": 45.5}}}, {"name": "김기호", "sessions": 6, "games": 50, "w": 21, "d": 11, "l": 18, "gf": 68, "ga": 64, "gd": 4, "pts": 74, "winRate": 53.8, "byQ": {"2026-Q1": {"sessions": 2, "games": 16, "w": 6, "d": 2, "l": 8, "gf": 22, "ga": 27, "gd": -5, "pts": 20, "winRate": 42.9}, "2026-Q2": {"sessions": 2, "games": 16, "w": 6, "d": 5, "l": 5, "gf": 16, "ga": 14, "gd": 2, "pts": 23, "winRate": 54.5}, "2026-Q3": {"sessions": 2, "games": 18, "w": 9, "d": 4, "l": 5, "gf": 30, "ga": 23, "gd": 7, "pts": 31, "winRate": 64.3}}}, {"name": "신윤호", "sessions": 2, "games": 18, "w": 7, "d": 5, "l": 6, "gf": 21, "ga": 20, "gd": 1, "pts": 26, "winRate": 53.8, "byQ": {"2026-Q1": {"sessions": 1, "games": 9, "w": 2, "d": 4, "l": 3, "gf": 10, "ga": 10, "gd": 0, "pts": 10, "winRate": 40.0}, "2026-Q3": {"sessions": 1, "games": 9, "w": 5, "d": 1, "l": 3, "gf": 11, "ga": 10, "gd": 1, "pts": 16, "winRate": 62.5}}}, {"name": "정세진", "sessions": 5, "games": 40, "w": 15, "d": 12, "l": 13, "gf": 40, "ga": 42, "gd": -2, "pts": 57, "winRate": 53.6, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 1, "d": 3, "l": 4, "gf": 4, "ga": 11, "gd": -7, "pts": 6, "winRate": 20.0}, "2026-Q2": {"sessions": 1, "games": 8, "w": 4, "d": 2, "l": 2, "gf": 10, "ga": 7, "gd": 3, "pts": 14, "winRate": 66.7}, "2026-Q3": {"sessions": 2, "games": 16, "w": 5, "d": 6, "l": 5, "gf": 18, "ga": 19, "gd": -1, "pts": 21, "winRate": 50.0}, "2026-Q4": {"sessions": 1, "games": 8, "w": 5, "d": 1, "l": 2, "gf": 8, "ga": 5, "gd": 3, "pts": 16, "winRate": 71.4}}}, {"name": "이호준", "sessions": 3, "games": 23, "w": 9, "d": 6, "l": 8, "gf": 26, "ga": 30, "gd": -4, "pts": 33, "winRate": 52.9, "byQ": {"2026-Q3": {"sessions": 1, "games": 7, "w": 1, "d": 1, "l": 5, "gf": 7, "ga": 18, "gd": -11, "pts": 4, "winRate": 16.7}, "2026-Q4": {"sessions": 2, "games": 16, "w": 8, "d": 5, "l": 3, "gf": 19, "ga": 12, "gd": 7, "pts": 29, "winRate": 72.7}}}, {"name": "안재욱", "sessions": 4, "games": 34, "w": 10, "d": 15, "l": 9, "gf": 25, "ga": 26, "gd": -1, "pts": 45, "winRate": 52.6, "byQ": {"2026-Q2": {"sessions": 2, "games": 15, "w": 5, "d": 6, "l": 4, "gf": 14, "ga": 11, "gd": 3, "pts": 21, "winRate": 55.6}, "2026-Q3": {"sessions": 1, "games": 8, "w": 2, "d": 4, "l": 2, "gf": 4, "ga": 5, "gd": -1, "pts": 10, "winRate": 50.0}, "2026-Q4": {"sessions": 1, "games": 11, "w": 3, "d": 5, "l": 3, "gf": 7, "ga": 10, "gd": -3, "pts": 14, "winRate": 50.0}}}, {"name": "신승진", "sessions": 3, "games": 24, "w": 10, "d": 5, "l": 9, "gf": 43, "ga": 35, "gd": 8, "pts": 35, "winRate": 52.6, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 3, "d": 2, "l": 3, "gf": 12, "ga": 8, "gd": 4, "pts": 11, "winRate": 50.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 7, "d": 3, "l": 6, "gf": 31, "ga": 27, "gd": 4, "pts": 24, "winRate": 53.8}}}, {"name": "배수천", "sessions": 4, "games": 34, "w": 11, "d": 13, "l": 10, "gf": 32, "ga": 33, "gd": -1, "pts": 46, "winRate": 52.4, "byQ": {"2026-Q2": {"sessions": 1, "games": 8, "w": 3, "d": 2, "l": 3, "gf": 10, "ga": 8, "gd": 2, "pts": 11, "winRate": 50.0}, "2026-Q3": {"sessions": 2, "games": 18, "w": 5, "d": 7, "l": 6, "gf": 13, "ga": 18, "gd": -5, "pts": 22, "winRate": 45.5}, "2026-Q4": {"sessions": 1, "games": 8, "w": 3, "d": 4, "l": 1, "gf": 9, "ga": 7, "gd": 2, "pts": 13, "winRate": 75.0}}}, {"name": "신용주", "sessions": 4, "games": 32, "w": 10, "d": 12, "l": 10, "gf": 29, "ga": 31, "gd": -2, "pts": 42, "winRate": 50.0, "byQ": {"2026-Q1": {"sessions": 2, "games": 16, "w": 6, "d": 4, "l": 6, "gf": 17, "ga": 20, "gd": -3, "pts": 22, "winRate": 50.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 4, "d": 8, "l": 4, "gf": 12, "ga": 11, "gd": 1, "pts": 20, "winRate": 50.0}}}, {"name": "이호섭", "sessions": 4, "games": 32, "w": 10, "d": 12, "l": 10, "gf": 32, "ga": 34, "gd": -2, "pts": 42, "winRate": 50.0, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 3, "d": 2, "l": 3, "gf": 14, "ga": 11, "gd": 3, "pts": 11, "winRate": 50.0}, "2026-Q3": {"sessions": 1, "games": 8, "w": 1, "d": 6, "l": 1, "gf": 4, "ga": 9, "gd": -5, "pts": 9, "winRate": 50.0}, "2026-Q4": {"sessions": 2, "games": 16, "w": 6, "d": 4, "l": 6, "gf": 14, "ga": 14, "gd": 0, "pts": 22, "winRate": 50.0}}}, {"name": "최호진", "sessions": 3, "games": 24, "w": 5, "d": 12, "l": 7, "gf": 21, "ga": 21, "gd": 0, "pts": 27, "winRate": 41.7, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 1, "d": 4, "l": 3, "gf": 7, "ga": 8, "gd": -1, "pts": 7, "winRate": 25.0}, "2026-Q2": {"sessions": 1, "games": 8, "w": 2, "d": 5, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 11, "winRate": 66.7}, "2026-Q4": {"sessions": 1, "games": 8, "w": 2, "d": 3, "l": 3, "gf": 7, "ga": 8, "gd": -1, "pts": 9, "winRate": 40.0}}}, {"name": "양승현", "sessions": 5, "games": 39, "w": 11, "d": 12, "l": 16, "gf": 41, "ga": 50, "gd": -9, "pts": 45, "winRate": 40.7, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 1, "d": 5, "l": 2, "gf": 9, "ga": 11, "gd": -2, "pts": 8, "winRate": 33.3}, "2026-Q2": {"sessions": 1, "games": 8, "w": 2, "d": 4, "l": 2, "gf": 8, "ga": 9, "gd": -1, "pts": 10, "winRate": 50.0}, "2026-Q3": {"sessions": 2, "games": 15, "w": 4, "d": 2, "l": 9, "gf": 16, "ga": 24, "gd": -8, "pts": 14, "winRate": 30.8}, "2026-Q4": {"sessions": 1, "games": 8, "w": 4, "d": 1, "l": 3, "gf": 8, "ga": 6, "gd": 2, "pts": 13, "winRate": 57.1}}}, {"name": "이장영", "sessions": 3, "games": 22, "w": 6, "d": 7, "l": 9, "gf": 30, "ga": 28, "gd": 2, "pts": 25, "winRate": 40.0, "byQ": {"2026-Q2": {"sessions": 2, "games": 15, "w": 5, "d": 4, "l": 6, "gf": 19, "ga": 16, "gd": 3, "pts": 19, "winRate": 45.5}, "2026-Q3": {"sessions": 1, "games": 7, "w": 1, "d": 3, "l": 3, "gf": 11, "ga": 12, "gd": -1, "pts": 6, "winRate": 25.0}}}, {"name": "이윤수", "sessions": 3, "games": 25, "w": 7, "d": 7, "l": 11, "gf": 20, "ga": 29, "gd": -9, "pts": 28, "winRate": 38.9, "byQ": {"2026-Q1": {"sessions": 1, "games": 9, "w": 2, "d": 3, "l": 4, "gf": 5, "ga": 7, "gd": -2, "pts": 9, "winRate": 33.3}, "2026-Q2": {"sessions": 2, "games": 16, "w": 5, "d": 4, "l": 7, "gf": 15, "ga": 22, "gd": -7, "pts": 19, "winRate": 41.7}}}, {"name": "장용호", "sessions": 4, "games": 35, "w": 8, "d": 11, "l": 16, "gf": 41, "ga": 57, "gd": -16, "pts": 35, "winRate": 33.3, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 1, "d": 4, "l": 3, "gf": 8, "ga": 11, "gd": -3, "pts": 7, "winRate": 25.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 4, "d": 2, "l": 10, "gf": 23, "ga": 39, "gd": -16, "pts": 14, "winRate": 28.6}, "2026-Q4": {"sessions": 1, "games": 11, "w": 3, "d": 5, "l": 3, "gf": 10, "ga": 7, "gd": 3, "pts": 14, "winRate": 50.0}}}, {"name": "이영중", "sessions": 2, "games": 17, "w": 5, "d": 1, "l": 11, "gf": 13, "ga": 22, "gd": -9, "pts": 16, "winRate": 31.2, "byQ": {"2026-Q3": {"sessions": 2, "games": 17, "w": 5, "d": 1, "l": 11, "gf": 13, "ga": 22, "gd": -9, "pts": 16, "winRate": 31.2}}}, {"name": "조덕기", "sessions": 3, "games": 24, "w": 4, "d": 11, "l": 9, "gf": 18, "ga": 24, "gd": -6, "pts": 23, "winRate": 30.8, "byQ": {"2026-Q1": {"sessions": 2, "games": 16, "w": 3, "d": 9, "l": 4, "gf": 13, "ga": 13, "gd": 0, "pts": 18, "winRate": 42.9}, "2026-Q4": {"sessions": 1, "games": 8, "w": 1, "d": 2, "l": 5, "gf": 5, "ga": 11, "gd": -6, "pts": 5, "winRate": 16.7}}}, {"name": "김상덕", "sessions": 6, "games": 48, "w": 10, "d": 15, "l": 23, "gf": 41, "ga": 59, "gd": -18, "pts": 45, "winRate": 30.3, "byQ": {"2026-Q1": {"sessions": 1, "games": 8, "w": 1, "d": 4, "l": 3, "gf": 8, "ga": 9, "gd": -1, "pts": 7, "winRate": 25.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 2, "d": 5, "l": 9, "gf": 10, "ga": 21, "gd": -11, "pts": 11, "winRate": 18.2}, "2026-Q3": {"sessions": 2, "games": 16, "w": 7, "d": 4, "l": 5, "gf": 17, "ga": 13, "gd": 4, "pts": 25, "winRate": 58.3}, "2026-Q4": {"sessions": 1, "games": 8, "w": 0, "d": 2, "l": 6, "gf": 6, "ga": 16, "gd": -10, "pts": 2, "winRate": 0.0}}}, {"name": "권성민", "sessions": 4, "games": 33, "w": 6, "d": 9, "l": 18, "gf": 26, "ga": 47, "gd": -21, "pts": 27, "winRate": 25.0, "byQ": {"2026-Q1": {"sessions": 1, "games": 7, "w": 1, "d": 2, "l": 4, "gf": 6, "ga": 10, "gd": -4, "pts": 5, "winRate": 20.0}, "2026-Q2": {"sessions": 2, "games": 16, "w": 2, "d": 5, "l": 9, "gf": 10, "ga": 22, "gd": -12, "pts": 11, "winRate": 18.2}, "2026-Q3": {"sessions": 1, "games": 10, "w": 3, "d": 2, "l": 5, "gf": 10, "ga": 15, "gd": -5, "pts": 11, "winRate": 37.5}}}, {"name": "최한호", "sessions": 1, "games": 8, "w": 0, "d": 3, "l": 5, "gf": 5, "ga": 15, "gd": -10, "pts": 3, "winRate": 0.0, "byQ": {"2026-Q3": {"sessions": 1, "games": 8, "w": 0, "d": 3, "l": 5, "gf": 5, "ga": 15, "gd": -10, "pts": 3, "winRate": 0.0}}}], "chem": [{"a": "여도영", "b": "최한호", "together": 15, "w": 11, "d": 3, "l": 1, "gf": 37, "ga": 14, "gd": 23, "pts": 36, "winRate": 91.7, "score": 90}, {"a": "배철호", "b": "여도영", "together": 31, "w": 20, "d": 8, "l": 3, "gf": 66, "ga": 28, "gd": 38, "pts": 68, "winRate": 87.0, "score": 86}, {"a": "김민수", "b": "여도영", "together": 25, "w": 15, "d": 7, "l": 3, "gf": 45, "ga": 21, "gd": 24, "pts": 52, "winRate": 83.3, "score": 82}, {"a": "양승현", "b": "최한호", "together": 15, "w": 10, "d": 2, "l": 3, "gf": 30, "ga": 11, "gd": 19, "pts": 32, "winRate": 76.9, "score": 81}, {"a": "양승현", "b": "이호준", "together": 25, "w": 13, "d": 10, "l": 2, "gf": 28, "ga": 14, "gd": 14, "pts": 49, "winRate": 86.7, "score": 78}, {"a": "여도영", "b": "황민구", "together": 22, "w": 13, "d": 5, "l": 4, "gf": 42, "ga": 21, "gd": 21, "pts": 44, "winRate": 76.5, "score": 78}, {"a": "배철호", "b": "황민구", "together": 44, "w": 25, "d": 12, "l": 7, "gf": 67, "ga": 31, "gd": 36, "pts": 87, "winRate": 78.1, "score": 77}, {"a": "신용주", "b": "최한호", "together": 7, "w": 4, "d": 2, "l": 1, "gf": 13, "ga": 8, "gd": 5, "pts": 14, "winRate": 80.0, "score": 77}, {"a": "배철호", "b": "최한호", "together": 38, "w": 19, "d": 13, "l": 6, "gf": 68, "ga": 37, "gd": 31, "pts": 70, "winRate": 76.0, "score": 75}, {"a": "배철호", "b": "장용호", "together": 23, "w": 12, "d": 8, "l": 3, "gf": 25, "ga": 14, "gd": 11, "pts": 44, "winRate": 80.0, "score": 74}, {"a": "배철호", "b": "조덕기", "together": 16, "w": 10, "d": 3, "l": 3, "gf": 22, "ga": 14, "gd": 8, "pts": 33, "winRate": 76.9, "score": 73}, {"a": "배수천", "b": "최호진", "together": 9, "w": 4, "d": 4, "l": 1, "gf": 6, "ga": 2, "gd": 4, "pts": 16, "winRate": 80.0, "score": 72}, {"a": "배철호", "b": "정세진", "together": 67, "w": 35, "d": 19, "l": 13, "gf": 111, "ga": 65, "gd": 46, "pts": 124, "winRate": 72.9, "score": 72}, {"a": "배철호", "b": "양승현", "together": 100, "w": 52, "d": 31, "l": 17, "gf": 125, "ga": 69, "gd": 56, "pts": 187, "winRate": 75.4, "score": 72}, {"a": "배철호", "b": "신용주", "together": 48, "w": 24, "d": 15, "l": 9, "gf": 67, "ga": 40, "gd": 27, "pts": 87, "winRate": 72.7, "score": 70}, {"a": "배철호", "b": "이광일", "together": 39, "w": 18, "d": 15, "l": 6, "gf": 53, "ga": 35, "gd": 18, "pts": 69, "winRate": 75.0, "score": 70}, {"a": "여도영", "b": "정세진", "together": 44, "w": 22, "d": 12, "l": 10, "gf": 70, "ga": 38, "gd": 32, "pts": 78, "winRate": 68.8, "score": 70}, {"a": "배철호", "b": "이호준", "together": 41, "w": 19, "d": 16, "l": 6, "gf": 50, "ga": 31, "gd": 19, "pts": 73, "winRate": 76.0, "score": 70}, {"a": "김명래", "b": "배철호", "together": 52, "w": 26, "d": 16, "l": 10, "gf": 77, "ga": 50, "gd": 27, "pts": 94, "winRate": 72.2, "score": 69}, {"a": "신용주", "b": "이호준", "together": 24, "w": 11, "d": 9, "l": 4, "gf": 32, "ga": 20, "gd": 12, "pts": 42, "winRate": 73.3, "score": 69}, {"a": "송환규", "b": "최호진", "together": 10, "w": 4, "d": 5, "l": 1, "gf": 10, "ga": 8, "gd": 2, "pts": 17, "winRate": 80.0, "score": 68}, {"a": "김명래", "b": "정대운", "together": 9, "w": 6, "d": 0, "l": 3, "gf": 11, "ga": 7, "gd": 4, "pts": 18, "winRate": 66.7, "score": 67}, {"a": "김명래", "b": "최연수", "together": 9, "w": 6, "d": 0, "l": 3, "gf": 11, "ga": 7, "gd": 4, "pts": 18, "winRate": 66.7, "score": 67}, {"a": "김남현", "b": "정대운", "together": 9, "w": 6, "d": 0, "l": 3, "gf": 11, "ga": 7, "gd": 4, "pts": 18, "winRate": 66.7, "score": 67}, {"a": "신용주", "b": "최연수", "together": 9, "w": 6, "d": 0, "l": 3, "gf": 11, "ga": 7, "gd": 4, "pts": 18, "winRate": 66.7, "score": 67}, {"a": "양승현", "b": "여도영", "together": 55, "w": 25, "d": 17, "l": 13, "gf": 96, "ga": 63, "gd": 33, "pts": 92, "winRate": 65.8, "score": 66}, {"a": "김남현", "b": "여도영", "together": 16, "w": 7, "d": 5, "l": 4, "gf": 34, "ga": 23, "gd": 11, "pts": 26, "winRate": 63.6, "score": 66}, {"a": "이장영", "b": "황민구", "together": 23, "w": 11, "d": 6, "l": 6, "gf": 27, "ga": 12, "gd": 15, "pts": 39, "winRate": 64.7, "score": 66}, {"a": "강병찬", "b": "양승현", "together": 8, "w": 4, "d": 2, "l": 2, "gf": 21, "ga": 17, "gd": 4, "pts": 14, "winRate": 66.7, "score": 66}, {"a": "강병찬", "b": "이광일", "together": 8, "w": 4, "d": 2, "l": 2, "gf": 21, "ga": 17, "gd": 4, "pts": 14, "winRate": 66.7, "score": 66}, {"a": "신윤호", "b": "최한호", "together": 23, "w": 11, "d": 7, "l": 5, "gf": 32, "ga": 22, "gd": 10, "pts": 40, "winRate": 68.8, "score": 66}, {"a": "이호섭", "b": "최한호", "together": 17, "w": 5, "d": 10, "l": 2, "gf": 17, "ga": 16, "gd": 1, "pts": 25, "winRate": 71.4, "score": 61}, {"a": "김민수", "b": "황민구", "together": 32, "w": 16, "d": 8, "l": 8, "gf": 37, "ga": 25, "gd": 12, "pts": 56, "winRate": 66.7, "score": 64}, {"a": "김민수", "b": "손진석", "together": 18, "w": 8, "d": 5, "l": 5, "gf": 16, "ga": 11, "gd": 5, "pts": 29, "winRate": 61.5, "score": 59}, {"a": "김민수", "b": "배철호", "together": 88, "w": 36, "d": 26, "l": 26, "gf": 117, "ga": 89, "gd": 28, "pts": 134, "winRate": 58.1, "score": 58}, {"a": "김민수", "b": "이영중", "together": 49, "w": 19, "d": 17, "l": 13, "gf": 57, "ga": 55, "gd": 2, "pts": 74, "winRate": 59.4, "score": 55}, {"a": "김민수", "b": "이장영", "together": 55, "w": 19, "d": 20, "l": 16, "gf": 76, "ga": 61, "gd": 15, "pts": 77, "winRate": 54.3, "score": 54}, {"a": "양승현", "b": "이호섭", "together": 49, "w": 21, "d": 17, "l": 11, "gf": 57, "ga": 36, "gd": 21, "pts": 80, "winRate": 65.6, "score": 64}, {"a": "이호준", "b": "황민구", "together": 25, "w": 14, "d": 4, "l": 7, "gf": 28, "ga": 21, "gd": 7, "pts": 46, "winRate": 66.7, "score": 64}, {"a": "이광일", "b": "이호준", "together": 19, "w": 10, "d": 4, "l": 5, "gf": 22, "ga": 17, "gd": 5, "pts": 34, "winRate": 66.7, "score": 63}, {"a": "이호준", "b": "장용호", "together": 14, "w": 6, "d": 5, "l": 3, "gf": 13, "ga": 10, "gd": 3, "pts": 23, "winRate": 66.7, "score": 62}, {"a": "최호진", "b": "황민구", "together": 28, "w": 14, "d": 8, "l": 6, "gf": 36, "ga": 30, "gd": 6, "pts": 50, "winRate": 70.0, "score": 64}, {"a": "강병찬", "b": "신용주", "together": 9, "w": 4, "d": 3, "l": 2, "gf": 22, "ga": 18, "gd": 4, "pts": 15, "winRate": 66.7, "score": 64}, {"a": "신용주", "b": "여도영", "together": 41, "w": 18, "d": 12, "l": 11, "gf": 64, "ga": 48, "gd": 16, "pts": 66, "winRate": 62.1, "score": 61}, {"a": "양승현", "b": "장용호", "together": 59, "w": 25, "d": 19, "l": 15, "gf": 65, "ga": 48, "gd": 17, "pts": 94, "winRate": 62.5, "score": 60}, {"a": "여도영", "b": "장용호", "together": 11, "w": 5, "d": 3, "l": 3, "gf": 16, "ga": 15, "gd": 1, "pts": 18, "winRate": 62.5, "score": 58}, {"a": "장용호", "b": "최한호", "together": 8, "w": 4, "d": 1, "l": 3, "gf": 8, "ga": 6, "gd": 2, "pts": 13, "winRate": 57.1, "score": 57}, {"a": "장용호", "b": "정광훈", "together": 6, "w": 2, "d": 2, "l": 2, "gf": 9, "ga": 6, "gd": 3, "pts": 8, "winRate": 50.0, "score": 54}, {"a": "송환규", "b": "조덕기", "together": 24, "w": 12, "d": 5, "l": 7, "gf": 37, "ga": 27, "gd": 10, "pts": 41, "winRate": 63.2, "score": 63}, {"a": "이광일", "b": "조덕기", "together": 25, "w": 12, "d": 6, "l": 7, "gf": 27, "ga": 21, "gd": 6, "pts": 42, "winRate": 63.2, "score": 60}, {"a": "정세진", "b": "조덕기", "together": 41, "w": 15, "d": 17, "l": 9, "gf": 35, "ga": 32, "gd": 3, "pts": 62, "winRate": 62.5, "score": 57}, {"a": "양승현", "b": "조덕기", "together": 32, "w": 14, "d": 7, "l": 11, "gf": 33, "ga": 32, "gd": 1, "pts": 49, "winRate": 56.0, "score": 53}, {"a": "김명래", "b": "조덕기", "together": 51, "w": 19, "d": 16, "l": 16, "gf": 57, "ga": 53, "gd": 4, "pts": 73, "winRate": 54.3, "score": 52}, {"a": "배수천", "b": "여도영", "together": 16, "w": 6, "d": 6, "l": 4, "gf": 26, "ga": 19, "gd": 7, "pts": 24, "winRate": 60.0, "score": 60}, {"a": "김남현", "b": "배수천", "together": 49, "w": 21, "d": 11, "l": 17, "gf": 63, "ga": 50, "gd": 13, "pts": 74, "winRate": 55.3, "score": 55}, {"a": "배수천", "b": "정세진", "together": 93, "w": 33, "d": 34, "l": 26, "gf": 82, "ga": 74, "gd": 8, "pts": 133, "winRate": 55.9, "score": 53}, {"a": "배수천", "b": "신승진", "together": 36, "w": 11, "d": 17, "l": 8, "gf": 33, "ga": 33, "gd": 0, "pts": 50, "winRate": 57.9, "score": 53}, {"a": "배수천", "b": "이광일", "together": 50, "w": 18, "d": 18, "l": 14, "gf": 45, "ga": 40, "gd": 5, "pts": 72, "winRate": 56.2, "score": 53}, {"a": "이호섭", "b": "최호진", "together": 26, "w": 10, "d": 11, "l": 5, "gf": 27, "ga": 21, "gd": 6, "pts": 41, "winRate": 66.7, "score": 61}, {"a": "양승현", "b": "최호진", "together": 35, "w": 12, "d": 17, "l": 6, "gf": 34, "ga": 29, "gd": 5, "pts": 53, "winRate": 66.7, "score": 60}, {"a": "박건호", "b": "최호진", "together": 8, "w": 2, "d": 5, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 11, "winRate": 66.7, "score": 60}, {"a": "이장영", "b": "정세진", "together": 58, "w": 26, "d": 17, "l": 15, "gf": 72, "ga": 49, "gd": 23, "pts": 95, "winRate": 63.4, "score": 62}, {"a": "이윤수", "b": "정세진", "together": 60, "w": 27, "d": 16, "l": 17, "gf": 79, "ga": 59, "gd": 20, "pts": 97, "winRate": 61.4, "score": 60}, {"a": "박건호", "b": "정세진", "together": 8, "w": 2, "d": 5, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 11, "winRate": 66.7, "score": 60}, {"a": "송환규", "b": "이광일", "together": 81, "w": 34, "d": 26, "l": 21, "gf": 80, "ga": 63, "gd": 17, "pts": 128, "winRate": 61.8, "score": 59}, {"a": "이광일", "b": "최호진", "together": 9, "w": 5, "d": 1, "l": 3, "gf": 11, "ga": 10, "gd": 1, "pts": 16, "winRate": 62.5, "score": 59}, {"a": "김명래", "b": "박건호", "together": 8, "w": 2, "d": 5, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 11, "winRate": 66.7, "score": 60}, {"a": "김명래", "b": "송환규", "together": 71, "w": 31, "d": 20, "l": 20, "gf": 88, "ga": 74, "gd": 14, "pts": 113, "winRate": 60.8, "score": 58}, {"a": "김명래", "b": "이호준", "together": 17, "w": 7, "d": 6, "l": 4, "gf": 22, "ga": 20, "gd": 2, "pts": 27, "winRate": 63.6, "score": 58}, {"a": "송환규", "b": "여도영", "together": 15, "w": 6, "d": 6, "l": 3, "gf": 18, "ga": 13, "gd": 5, "pts": 24, "winRate": 66.7, "score": 63}, {"a": "송환규", "b": "이영중", "together": 42, "w": 18, "d": 15, "l": 9, "gf": 38, "ga": 28, "gd": 10, "pts": 69, "winRate": 66.7, "score": 62}, {"a": "배철호", "b": "송환규", "together": 56, "w": 26, "d": 16, "l": 14, "gf": 61, "ga": 46, "gd": 15, "pts": 94, "winRate": 65.0, "score": 62}, {"a": "송환규", "b": "양승현", "together": 79, "w": 34, "d": 25, "l": 20, "gf": 87, "ga": 67, "gd": 20, "pts": 127, "winRate": 63.0, "score": 60}, {"a": "김기호", "b": "정대운", "together": 25, "w": 13, "d": 4, "l": 8, "gf": 25, "ga": 19, "gd": 6, "pts": 43, "winRate": 61.9, "score": 60}, {"a": "이영중", "b": "정대운", "together": 8, "w": 3, "d": 3, "l": 2, "gf": 7, "ga": 6, "gd": 1, "pts": 12, "winRate": 60.0, "score": 56}, {"a": "정대운", "b": "최연수", "together": 17, "w": 9, "d": 1, "l": 7, "gf": 16, "ga": 14, "gd": 2, "pts": 28, "winRate": 56.2, "score": 55}, {"a": "양승현", "b": "정대운", "together": 10, "w": 4, "d": 3, "l": 3, "gf": 8, "ga": 6, "gd": 2, "pts": 15, "winRate": 57.1, "score": 55}, {"a": "김남현", "b": "최연수", "together": 17, "w": 9, "d": 2, "l": 6, "gf": 28, "ga": 22, "gd": 6, "pts": 29, "winRate": 60.0, "score": 60}, {"a": "김기호", "b": "최연수", "together": 16, "w": 9, "d": 1, "l": 6, "gf": 16, "ga": 13, "gd": 3, "pts": 28, "winRate": 60.0, "score": 59}, {"a": "여도영", "b": "최연수", "together": 8, "w": 3, "d": 2, "l": 3, "gf": 17, "ga": 15, "gd": 2, "pts": 11, "winRate": 50.0, "score": 52}, {"a": "김남현", "b": "이호섭", "together": 14, "w": 7, "d": 4, "l": 3, "gf": 13, "ga": 9, "gd": 4, "pts": 25, "winRate": 70.0, "score": 65}, {"a": "김남현", "b": "이호준", "together": 23, "w": 8, "d": 10, "l": 5, "gf": 31, "ga": 22, "gd": 9, "pts": 34, "winRate": 61.5, "score": 60}, {"a": "김남현", "b": "박건호", "together": 8, "w": 2, "d": 5, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 11, "winRate": 66.7, "score": 60}, {"a": "신용주", "b": "이장영", "together": 35, "w": 14, "d": 12, "l": 9, "gf": 38, "ga": 28, "gd": 10, "pts": 54, "winRate": 60.9, "score": 59}, {"a": "배철호", "b": "이장영", "together": 63, "w": 26, "d": 18, "l": 19, "gf": 91, "ga": 66, "gd": 25, "pts": 96, "winRate": 57.8, "score": 58}, {"a": "여도영", "b": "이장영", "together": 25, "w": 11, "d": 6, "l": 8, "gf": 30, "ga": 21, "gd": 9, "pts": 39, "winRate": 57.9, "score": 58}, {"a": "양승현", "b": "이장영", "together": 63, "w": 27, "d": 17, "l": 19, "gf": 77, "ga": 67, "gd": 10, "pts": 98, "winRate": 58.7, "score": 56}, {"a": "강병찬", "b": "여도영", "together": 16, "w": 8, "d": 4, "l": 4, "gf": 36, "ga": 30, "gd": 6, "pts": 28, "winRate": 66.7, "score": 64}, {"a": "강병찬", "b": "신윤호", "together": 8, "w": 4, "d": 2, "l": 2, "gf": 15, "ga": 13, "gd": 2, "pts": 14, "winRate": 66.7, "score": 63}, {"a": "강병찬", "b": "김기호", "together": 8, "w": 4, "d": 2, "l": 2, "gf": 15, "ga": 13, "gd": 2, "pts": 14, "winRate": 66.7, "score": 63}, {"a": "신윤호", "b": "여도영", "together": 62, "w": 25, "d": 24, "l": 13, "gf": 91, "ga": 68, "gd": 23, "pts": 99, "winRate": 65.8, "score": 63}, {"a": "신윤호", "b": "양승현", "together": 101, "w": 43, "d": 31, "l": 27, "gf": 125, "ga": 91, "gd": 34, "pts": 160, "winRate": 61.4, "score": 60}, {"a": "김남현", "b": "신윤호", "together": 79, "w": 33, "d": 22, "l": 24, "gf": 105, "ga": 88, "gd": 17, "pts": 121, "winRate": 57.9, "score": 56}, {"a": "배철호", "b": "신윤호", "together": 80, "w": 31, "d": 26, "l": 23, "gf": 100, "ga": 78, "gd": 22, "pts": 119, "winRate": 57.4, "score": 56}, {"a": "이호섭", "b": "정광훈", "together": 9, "w": 4, "d": 2, "l": 3, "gf": 13, "ga": 8, "gd": 5, "pts": 14, "winRate": 57.1, "score": 60}, {"a": "이호섭", "b": "황민구", "together": 15, "w": 6, "d": 5, "l": 4, "gf": 15, "ga": 9, "gd": 6, "pts": 23, "winRate": 60.0, "score": 60}, {"a": "손진석", "b": "양승현", "together": 18, "w": 10, "d": 2, "l": 6, "gf": 21, "ga": 13, "gd": 8, "pts": 32, "winRate": 62.5, "score": 63}, {"a": "손진석", "b": "이영중", "together": 32, "w": 15, "d": 6, "l": 11, "gf": 39, "ga": 35, "gd": 4, "pts": 51, "winRate": 57.7, "score": 56}, {"a": "손진석", "b": "신용주", "together": 12, "w": 6, "d": 1, "l": 5, "gf": 13, "ga": 10, "gd": 3, "pts": 19, "winRate": 54.5, "score": 55}, {"a": "손진석", "b": "조덕기", "together": 33, "w": 14, "d": 6, "l": 13, "gf": 31, "ga": 27, "gd": 4, "pts": 48, "winRate": 51.9, "score": 52}, {"a": "김명래", "b": "손진석", "together": 25, "w": 10, "d": 6, "l": 9, "gf": 23, "ga": 21, "gd": 2, "pts": 36, "winRate": 52.6, "score": 51}, {"a": "김기호", "b": "정광훈", "together": 7, "w": 3, "d": 2, "l": 2, "gf": 4, "ga": 4, "gd": 0, "pts": 11, "winRate": 60.0, "score": 55}, {"a": "김기호", "b": "김남현", "together": 100, "w": 36, "d": 35, "l": 29, "gf": 99, "ga": 91, "gd": 8, "pts": 143, "winRate": 55.4, "score": 53}, {"a": "김기호", "b": "배철호", "together": 64, "w": 23, "d": 21, "l": 20, "gf": 73, "ga": 61, "gd": 12, "pts": 90, "winRate": 53.5, "score": 53}, {"a": "여도영", "b": "이영중", "together": 33, "w": 14, "d": 9, "l": 10, "gf": 58, "ga": 41, "gd": 17, "pts": 51, "winRate": 58.3, "score": 60}, {"a": "배철호", "b": "이영중", "together": 56, "w": 25, "d": 14, "l": 17, "gf": 80, "ga": 62, "gd": 18, "pts": 89, "winRate": 59.5, "score": 59}, {"a": "안재욱", "b": "이영중", "together": 8, "w": 3, "d": 3, "l": 2, "gf": 7, "ga": 6, "gd": 1, "pts": 12, "winRate": 60.0, "score": 56}, {"a": "김상덕", "b": "정광훈", "together": 7, "w": 2, "d": 4, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 10, "winRate": 66.7, "score": 61}, {"a": "김상덕", "b": "정세진", "together": 56, "w": 18, "d": 22, "l": 16, "gf": 46, "ga": 44, "gd": 2, "pts": 76, "winRate": 52.9, "score": 50}, {"a": "김명래", "b": "김상덕", "together": 34, "w": 11, "d": 12, "l": 11, "gf": 35, "ga": 35, "gd": 0, "pts": 45, "winRate": 50.0, "score": 48}, {"a": "김상덕", "b": "손진석", "together": 28, "w": 10, "d": 6, "l": 12, "gf": 21, "ga": 24, "gd": -3, "pts": 36, "winRate": 45.5, "score": 44}, {"a": "김상덕", "b": "이장영", "together": 56, "w": 16, "d": 20, "l": 20, "gf": 56, "ga": 57, "gd": -1, "pts": 68, "winRate": 44.4, "score": 44}, {"a": "김상덕", "b": "최호진", "together": 47, "w": 11, "d": 22, "l": 14, "gf": 43, "ga": 43, "gd": 0, "pts": 55, "winRate": 44.0, "score": 44}, {"a": "김남현", "b": "정광훈", "together": 5, "w": 2, "d": 2, "l": 1, "gf": 3, "ga": 3, "gd": 0, "pts": 8, "winRate": 66.7, "score": 59}, {"a": "정광훈", "b": "황민구", "together": 7, "w": 3, "d": 2, "l": 2, "gf": 4, "ga": 4, "gd": 0, "pts": 11, "winRate": 60.0, "score": 55}, {"a": "이영중", "b": "정광훈", "together": 7, "w": 3, "d": 2, "l": 2, "gf": 4, "ga": 4, "gd": 0, "pts": 11, "winRate": 60.0, "score": 55}, {"a": "이광일", "b": "이윤수", "together": 61, "w": 25, "d": 20, "l": 16, "gf": 61, "ga": 49, "gd": 12, "pts": 95, "winRate": 61.0, "score": 58}, {"a": "배철호", "b": "이윤수", "together": 25, "w": 12, "d": 5, "l": 8, "gf": 29, "ga": 24, "gd": 5, "pts": 41, "winRate": 60.0, "score": 58}, {"a": "신승진", "b": "이윤수", "together": 65, "w": 26, "d": 19, "l": 20, "gf": 65, "ga": 56, "gd": 9, "pts": 97, "winRate": 56.5, "score": 54}, {"a": "신윤호", "b": "이윤수", "together": 32, "w": 12, "d": 10, "l": 10, "gf": 43, "ga": 39, "gd": 4, "pts": 46, "winRate": 54.5, "score": 53}, {"a": "이윤수", "b": "황민구", "together": 23, "w": 10, "d": 5, "l": 8, "gf": 27, "ga": 25, "gd": 2, "pts": 35, "winRate": 55.6, "score": 53}, {"a": "권성민", "b": "배철호", "together": 34, "w": 14, "d": 12, "l": 8, "gf": 34, "ga": 26, "gd": 8, "pts": 54, "winRate": 63.6, "score": 60}, {"a": "권성민", "b": "박건호", "together": 8, "w": 2, "d": 5, "l": 1, "gf": 7, "ga": 5, "gd": 2, "pts": 11, "winRate": 66.7, "score": 60}, {"a": "권성민", "b": "이호준", "together": 40, "w": 17, "d": 10, "l": 13, "gf": 38, "ga": 32, "gd": 6, "pts": 61, "winRate": 56.7, "score": 55}, {"a": "권성민", "b": "이광일", "together": 50, "w": 19, "d": 15, "l": 16, "gf": 44, "ga": 39, "gd": 5, "pts": 72, "winRate": 54.3, "score": 52}, {"a": "권성민", "b": "김명래", "together": 80, "w": 29, "d": 25, "l": 26, "gf": 91, "ga": 83, "gd": 8, "pts": 112, "winRate": 52.7, "score": 51}, {"a": "권성민", "b": "양승현", "together": 100, "w": 38, "d": 28, "l": 34, "gf": 98, "ga": 93, "gd": 5, "pts": 142, "winRate": 52.8, "score": 51}, {"a": "송환규", "b": "안재욱", "together": 15, "w": 5, "d": 7, "l": 3, "gf": 15, "ga": 12, "gd": 3, "pts": 22, "winRate": 62.5, "score": 58}, {"a": "안재욱", "b": "이현희", "together": 8, "w": 3, "d": 2, "l": 3, "gf": 6, "ga": 5, "gd": 1, "pts": 11, "winRate": 50.0, "score": 50}, {"a": "김남현", "b": "안재욱", "together": 26, "w": 9, "d": 8, "l": 9, "gf": 22, "ga": 23, "gd": -1, "pts": 35, "winRate": 50.0, "score": 48}, {"a": "안재욱", "b": "이호섭", "together": 16, "w": 4, "d": 9, "l": 3, "gf": 9, "ga": 14, "gd": -5, "pts": 21, "winRate": 57.1, "score": 48}, {"a": "안재욱", "b": "양승현", "together": 38, "w": 10, "d": 18, "l": 10, "gf": 28, "ga": 30, "gd": -2, "pts": 48, "winRate": 50.0, "score": 47}, {"a": "송환규", "b": "신승진", "together": 52, "w": 22, "d": 16, "l": 14, "gf": 50, "ga": 43, "gd": 7, "pts": 82, "winRate": 61.1, "score": 57}, {"a": "배철호", "b": "신승진", "together": 51, "w": 22, "d": 13, "l": 16, "gf": 75, "ga": 62, "gd": 13, "pts": 79, "winRate": 57.9, "score": 57}, {"a": "김명래", "b": "신승진", "together": 128, "w": 51, "d": 39, "l": 38, "gf": 157, "ga": 134, "gd": 23, "pts": 192, "winRate": 57.3, "score": 55}, {"a": "신승진", "b": "이장영", "together": 27, "w": 10, "d": 8, "l": 9, "gf": 32, "ga": 28, "gd": 4, "pts": 38, "winRate": 52.6, "score": 52}, {"a": "양승현", "b": "이현희", "together": 15, "w": 6, "d": 5, "l": 4, "gf": 14, "ga": 14, "gd": 0, "pts": 23, "winRate": 60.0, "score": 55}, {"a": "김명래", "b": "이현희", "together": 16, "w": 7, "d": 3, "l": 6, "gf": 20, "ga": 22, "gd": -2, "pts": 24, "winRate": 53.8, "score": 50}, {"a": "손진석", "b": "이현희", "together": 12, "w": 5, "d": 2, "l": 5, "gf": 20, "ga": 22, "gd": -2, "pts": 17, "winRate": 50.0, "score": 47}, {"a": "이현희", "b": "황민구", "together": 5, "w": 1, "d": 3, "l": 1, "gf": 3, "ga": 3, "gd": 0, "pts": 6, "winRate": 50.0, "score": 47}, {"a": "신윤호", "b": "이현희", "together": 29, "w": 10, "d": 8, "l": 11, "gf": 33, "ga": 35, "gd": -2, "pts": 38, "winRate": 47.6, "score": 46}]};
 
 const $=(s,el=document)=>el.querySelector(s);
 const $$=(s,el=document)=>[...el.querySelectorAll(s)];
 const state={
-  tab:'dash',
-  dashSort:{key:'rankNew',dir:1},
-  periodYear:'all', periodQ:'all',
-  boardYear:'all', boardQ:'all',
-  search:''
+  dash:{year:'all',q:'all',search:'',sortKey:'ccpG',sortDir:-1,checked:new Set(),applyChecked:false},
+  board:{year:'all',q:'all'},
+  coach:{year:'all',q:'all',sortKey:'winRate',sortDir:-1,checked:new Set(),applyChecked:false},
+  formPick:new Set()
 };
 
-function yearsOptions(){
+function yearsAvailable(){
   const now=new Date().getFullYear();
-  const ys=new Set([...(DATA.years||[]), now, now+1]); // 자동: 데이터+올해+내년 자리
-  return [...ys].filter(y=>y>=2024).sort((a,b)=>b-a);
+  const ys=new Set(DATA.years||[]);
+  // only years that exist in data, and current year if already in data (no future)
+  return [...ys].filter(y=>y<=now).sort((a,b)=>b-a);
 }
-function periodFields(yearId,qId,yearVal,qVal){
-  const ys=yearsOptions().map(y=>`<option value="${y}" ${String(yearVal)===String(y)?'selected':''}>${y}년</option>`).join('');
-  return `
-    <div class="field"><label>연도</label>
-      <select id="${yearId}"><option value="all">전체 연도</option>${ys}</select></div>
-    <div class="field"><label>기간</label>
-      <select id="${qId}">
-        <option value="all" ${qVal==='all'?'selected':''}>시즌 전체</option>
-        <option value="Q1" ${qVal==='Q1'?'selected':''}>Q1 (1~3월)</option>
-        <option value="Q2" ${qVal==='Q2'?'selected':''}>Q2 (4~6월)</option>
-        <option value="Q3" ${qVal==='Q3'?'selected':''}>Q3 (7~9월)</option>
-        <option value="Q4" ${qVal==='Q4'?'selected':''}>Q4 (10~12월)</option>
-      </select></div>`;
+function periodFields(prefix, st){
+  const ys=yearsAvailable().map(y=>`<option value="${y}">${y}년</option>`).join('');
+  return `<div class="field"><label>연도</label><select id="${prefix}Year">
+      <option value="all">전체 연도</option>${ys}</select></div>
+    <div class="field"><label>기간</label><select id="${prefix}Q">
+      <option value="all">시즌 전체</option>
+      <option value="Q1">Q1</option><option value="Q2">Q2</option>
+      <option value="Q3">Q3</option><option value="Q4">Q4</option></select></div>`;
 }
+function setPeriodSelects(prefix, st){
+  $(`#${prefix}Year`).value=st.year; $(`#${prefix}Q`).value=st.q;
+}
+function readPeriod(prefix, st){
+  st.year=$(`#${prefix}Year`).value; st.q=$(`#${prefix}Q`).value;
+}
+function periodKeys(year,q){
+  const all=DATA.quarters||[];
+  if(year==='all' && q==='all') return null; // season master
+  if(year==='all') return all.filter(k=>k.endsWith('-'+q));
+  if(q==='all') return all.filter(k=>k.startsWith(year+'-'));
+  const key=`${year}-${q}`;
+  return all.includes(key)?[key]:[];
+}
+function pct(n){return (Math.round((n||0)*10)/10).toFixed(1)+'%'}
+function num(n,d=1){return (Math.round((n||0)*10**d)/10**d).toFixed(d)}
+function rc(r){return r===1?'t1':r===2?'t2':r===3?'t3':''}
 
 function switchTab(id){
-  state.tab=id;
   $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
-  ['dash','boards','coach','compare','fun','terms'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==id));
+  ['dash','boards','coach','compare','form','terms'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==id));
 }
 $$('#tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 
-function pct(n){return (Math.round(n*10)/10).toFixed(1)+'%'}
-function num(n,d=1){return (Math.round(n*10**d)/10**d).toFixed(d)}
-function rc(r){return r===1?'t1':r===2?'t2':r===3?'t3':''}
-function delta(a,b){
-  const d=Math.round((b-a)*10)/10;
-  if(Math.abs(d)<0.05) return '<span class="delta flat">±0</span>';
-  return `<span class="delta ${d>0?'up':'down'}">${d>0?'▲':'▼'}${Math.abs(d)}</span>`;
+/** Build player list for a period from form quarters or season master */
+function playersForPeriod(year,q,search){
+  const keys=periodKeys(year,q);
+  let list;
+  if(keys===null){
+    list=DATA.players.map(p=>({...p, rankSource:'season'}));
+  } else if(!keys.length){
+    list=[];
+  } else {
+    list=[];
+    DATA.players.forEach(p=>{
+      const forms=keys.map(k=>p.form[k]).filter(Boolean);
+      if(!forms.length) return;
+      const games=forms.reduce((s,f)=>s+(f.games||0),0);
+      const w=forms.reduce((s,f)=>s+((f.winRate||0)/100*(f.games||0)*0 + 0),0);
+      // approximate W from winRate*decided unknown — use weighted winRate
+      let wrSum=0, wrW=0, pts=0, gf=0, ga=0, goal=0, assist=0, defense=0, save=0, mp=0;
+      forms.forEach(f=>{
+        wrSum+=(f.winRate||0)*(f.games||0); wrW+=(f.games||0);
+        pts+=f.pts||0; gf+=f.gf||0; ga+=f.ga||0;
+        goal+=f.goal||0; assist+=f.assist||0; defense+=f.defense||0; save+=f.save||0;
+        mp+=f.mp!=null?f.mp:((f.mpG||0)*(f.games||0));
+      });
+      const winRate=wrW?wrSum/wrW:0;
+      // if no personal mp breakdown, keep proxy mp
+      if(!(goal||assist||defense||save)){
+        // leave mp from proxy
+      } else {
+        mp=(goal+assist+defense+save)*2;
+      }
+      const points=pts;
+      const ccp=points+mp;
+      list.push({
+        name:p.name, games, winRate:Math.round(winRate*10)/10, goal, assist, defense, save,
+        points, mp:Math.round(mp), mpG:games?Math.round(mp/games*100)/100:0,
+        ccp:Math.round(ccp), ccpG:games?Math.round(ccp/games*100)/100:0,
+        wins:0,draws:0,losses:0, form:p.form
+      });
+    });
+  }
+  const s=(search||'').trim();
+  if(s) list=list.filter(p=>p.name.includes(s));
+  return list;
 }
 
-/* period filter is visual in mock — master sheet is season; quarterly uses q1/q3 snapshots for compare only */
-function playersView(){
-  let list=DATA.players.slice();
-  const q=(state.search||'').trim();
-  if(q) list=list.filter(p=>p.name.includes(q));
-  const {key,dir}=state.dashSort;
-  list.sort((a,b)=>{
-    const av=a[key]??0, bv=b[key]??0;
-    if(typeof av==='string') return av.localeCompare(bv)*dir;
-    return (av-bv)*dir;
+function sortList(list, key, dir){
+  return list.slice().sort((a,b)=>{
+    const av=a[key]??(typeof a[key]==='string'?'':0);
+    const bv=b[key]??0;
+    if(typeof a[key]==='string' || typeof b[key]==='string') return String(a[key]||'').localeCompare(String(b[key]||''))*dir;
+    return ((a[key]??0)-(b[key]??0))*dir;
   });
-  return list;
+}
+function withDynamicRank(list, key, dir){
+  const sorted=sortList(list,key,dir);
+  return sorted.map((p,i)=>({...p, rank:i+1}));
 }
 
 function renderDashFilters(){
   $('#dashFilters').innerHTML=`
-    ${periodFields('dashYear','dashQ',state.periodYear,state.periodQ)}
-    <div class="field full"><label>선수 검색</label><input id="dashSearch" placeholder="이름" value="${state.search||''}" /></div>`;
-  $('#dashYear').value=state.periodYear; $('#dashQ').value=state.periodQ;
-}
-function renderDash(){
-  const cols=[
-    ['rankNew','#'],['name','선수'],['games','경기'],['winRate','승률'],['goal','득'],['assist','도'],
-    ['defense','수'],['save','선'],['points','승점'],['mp','MP'],['mpG','MP/G'],['ccp','CCP'],['ccpG','CCP/G']
-  ];
-  $('#dashHead').innerHTML=cols.map(([k,l])=>{
-    const on=state.dashSort.key===k;
-    const ar=on?(state.dashSort.dir>0?'▲':'▼'):'↕';
-    const sticky=k==='name'||k==='rankNew';
-    return `<th class="sortable ${on?'on':''} ${k==='name'||k==='rankNew'?'sticky':''}" data-k="${k}">${l}<span class="ar">${ar}</span></th>`;
-  }).join('');
-  $$('#dashHead th').forEach(th=>th.onclick=()=>{
-    const k=th.dataset.k;
-    if(state.dashSort.key===k) state.dashSort.dir*=-1; else {state.dashSort.key=k; state.dashSort.dir=(k==='name'||k==='rankNew')?1:-1;}
+    ${periodFields('dash', state.dash)}
+    <div class="field grow"><label>선수 검색</label><input id="dashSearch" placeholder="예: 김" value="${state.dash.search}" /></div>
+    <button class="btn" type="button" id="dashQuery">조회</button>`;
+  setPeriodSelects('dash', state.dash);
+  $('#dashQuery').onclick=()=>{
+    readPeriod('dash', state.dash);
+    state.dash.search=$('#dashSearch').value;
+    state.dash.applyChecked=!!state.dash.checked.size;
     renderDash();
-  });
-  const list=playersView();
-  const avgWr=list.reduce((s,p)=>s+p.winRate,0)/(list.length||1);
-  const avgMp=list.reduce((s,p)=>s+p.mpG,0)/(list.length||1);
-  $('#dashKpi').innerHTML=`
-    <div class="c"><div class="k">선수</div><div class="v">${list.length}</div></div>
-    <div class="c"><div class="k">평균 승률</div><div class="v">${pct(avgWr)}</div></div>
-    <div class="c"><div class="k">평균 MP/G</div><div class="v">${num(avgMp,2)}</div></div>`;
-  $('#dashBody').innerHTML=list.map(p=>`<tr>
-    <td class="sticky"><span class="rank ${rc(p.rankNew)}">${p.rankNew}</span></td>
-    <td class="sticky name">${p.name}</td>
-    <td>${p.games}</td><td>${pct(p.winRate)}</td><td>${p.goal}</td><td>${p.assist}</td>
-    <td>${p.defense}</td><td>${p.save}</td><td>${p.points}</td><td>${p.mp}</td><td>${num(p.mpG,2)}</td>
-    <td>${p.ccp}</td><td>${num(p.ccpG,2)}</td></tr>`).join('');
+  };
+  $('#dashSearch').oninput=()=>{ state.dash.search=$('#dashSearch').value; renderDash(); };
 }
 
-function renderBoardFilters(){
-  $('#boardFilters').innerHTML=periodFields('boardYear','boardQ',state.boardYear,state.boardQ);
+function renderDash(){
+  const cols=[
+    ['rank','순위'],['name','선수'],['games','경기수'],['winRate','승률'],
+    ['goal','득점'],['assist','도움'],['defense','수비'],['save','선방'],
+    ['points','승점'],['mp','MP'],['mpG','MP/G'],['ccp','CCP'],['ccpG','CCP/G']
+  ];
+  $('#dashHead').innerHTML=`<th class="chk sticky"></th>`+cols.map(([k,l])=>{
+    const on=state.dash.sortKey===k;
+    const ar=on?(state.dash.sortDir>0?'▲':'▼'):'↕';
+    const cls=k==='rank'?'rankcol sticky':(k==='name'?'namecol sticky':'');
+    return `<th class="sortable ${on?'on':''} ${cls}" data-k="${k}">${l}<span class="ar">${ar}</span></th>`;
+  }).join('');
+  $$('#dashHead th.sortable').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(state.dash.sortKey===k) state.dash.sortDir*=-1;
+    else { state.dash.sortKey=k; state.dash.sortDir=(k==='name'||k==='rank')?1:-1; }
+    renderDash();
+  });
+
+  let base=playersForPeriod(state.dash.year, state.dash.q, state.dash.search);
+  if(state.dash.applyChecked && state.dash.checked.size){
+    base=base.filter(p=>state.dash.checked.has(p.name));
+  }
+  const ranked=withDynamicRank(base, state.dash.sortKey==='rank'?'ccpG':state.dash.sortKey, state.dash.sortKey==='rank'?-1:state.dash.sortDir);
+  // if sorting by rank column itself, just keep order
+  const rows=state.dash.sortKey==='rank'?withDynamicRank(base,'ccpG',-1):ranked;
+
+  $('#dashChkInfo').textContent=state.dash.checked.size?`선택 ${state.dash.checked.size}명`:'체크 없음 = 전체';
+  $('#dashBody').innerHTML=rows.map((p,i)=>`<tr class="zebra${i%2}">
+    <td class="chk sticky"><input type="checkbox" data-name="${p.name}" ${state.dash.checked.has(p.name)?'checked':''} /></td>
+    <td class="rankcol sticky"><span class="rank ${rc(p.rank)}">${p.rank}</span></td>
+    <td class="namecol sticky">${p.name}</td>
+    <td>${p.games}</td><td>${pct(p.winRate)}</td>
+    <td>${p.goal||0}</td><td>${p.assist||0}</td><td>${p.defense||0}</td><td>${p.save||0}</td>
+    <td>${p.points||0}</td><td>${p.mp||0}</td><td>${num(p.mpG,2)}</td><td>${p.ccp||0}</td><td>${num(p.ccpG,2)}</td>
+  </tr>`).join('') || `<tr><td colspan="14" style="padding:16px;color:var(--muted)">해당 기간 데이터 없음</td></tr>`;
+
+  $$('#dashBody input[type=checkbox]').forEach(cb=>cb.onchange=()=>{
+    if(cb.checked) state.dash.checked.add(cb.dataset.name); else state.dash.checked.delete(cb.dataset.name);
+    $('#dashChkInfo').textContent=state.dash.checked.size?`선택 ${state.dash.checked.size}명 · 조회로 필터`:'체크 없음 = 전체';
+  });
 }
-function boardBlock(title, key, fmt, list){
-  const top=list.slice().sort((a,b)=>(b[key]??0)-(a[key]??0));
-  const first=top.slice(0,5);
-  const rest=top.slice(5,15);
+$('#dashClearChk').onclick=()=>{ state.dash.checked.clear(); state.dash.applyChecked=false; renderDash(); };
+
+function renderBoardFilters(){
+  $('#boardFilters').innerHTML=`${periodFields('board', state.board)}<button class="btn" type="button" id="boardQuery">조회</button>`;
+  setPeriodSelects('board', state.board);
+  $('#boardQuery').onclick=()=>{ readPeriod('board', state.board); renderBoards(); };
+}
+function boardBlock(title,key,fmt,list){
+  const top=sortList(list,key,-1);
+  const first=top.slice(0,5), rest=top.slice(5,15);
   const row=(p,i)=>`<li class="${i>=5?'more':''}"><span class="rank ${rc(i+1)}">${i+1}</span><span>${p.name}</span><span class="val">${fmt(p[key])}</span></li>`;
-  const id='b_'+key;
-  return `<div class="board" id="${id}">
-    <div class="hd">${title}<em>${state.boardYear==='all'?'전체':state.boardYear+'년'} · ${state.boardQ==='all'?'시즌':state.boardQ}</em></div>
+  const id='b_'+key+title.length;
+  return `<div class="board" id="${id}"><div class="hd">${title}<em>${labelPeriod(state.board)}</em></div>
     <ol>${first.map((p,i)=>row(p,i)).join('')}${rest.map((p,i)=>row(p,i+5)).join('')}</ol>
-    <button class="tog" type="button" data-board="${id}">${rest.length?`더보기 · ${rest.length}명`:'전체 여기까지'}</button>
-  </div>`;
+    <button class="tog" type="button" data-board="${id}">${rest.length?'더보기':'끝'}</button></div>`;
+}
+function labelPeriod(st){
+  return `${st.year==='all'?'전체':st.year+'년'} · ${st.q==='all'?'시즌':st.q}`;
 }
 function renderBoards(){
-  const P=DATA.players;
-  const C=DATA.coaches;
+  const P=playersForPeriod(state.board.year,state.board.q,'');
+  const C=coachesForPeriod(state.board.year,state.board.q);
   $('#boardsOut').innerHTML=
-    boardBlock('득점','goal',v=>v,P)+
-    boardBlock('도움','assist',v=>v,P)+
+    boardBlock('득점','goal',v=>v||0,P)+
+    boardBlock('도움','assist',v=>v||0,P)+
     boardBlock('MP/G','mpG',v=>num(v,2),P)+
     boardBlock('CCP/G','ccpG',v=>num(v,2),P)+
     boardBlock('승률','winRate',v=>pct(v),P)+
     boardBlock('감독 승률','winRate',v=>pct(v),C)+
-    boardBlock('감독 승점','pts',v=>v,C)+
-    boardBlock('감독 득실','gd',v=>(v>0?'+':'')+v,C);
+    boardBlock('감독 승점','pts',v=>v||0,C)+
+    boardBlock('감독 득실','gd',v=>(v>0?'+':'')+(v||0),C);
   $$('.board .tog').forEach(btn=>btn.onclick=()=>{
-    const b=$('#'+btn.dataset.board);
-    b.classList.toggle('open');
-    btn.textContent=b.classList.contains('open')?'접기':'더보기 · 추가 순위';
+    const b=$('#'+btn.dataset.board); b.classList.toggle('open');
+    btn.textContent=b.classList.contains('open')?'접기':'더보기';
   });
 }
 
+function coachesForPeriod(year,q){
+  const keys=periodKeys(year,q);
+  if(keys===null) return DATA.coaches.map(c=>({...c}));
+  if(!keys.length) return [];
+  const out=[];
+  DATA.coaches.forEach(c=>{
+    const parts=keys.map(k=>c.byQ[k]).filter(Boolean);
+    if(!parts.length) return;
+    const o={name:c.name,sessions:0,games:0,w:0,d:0,l:0,gf:0,ga:0};
+    parts.forEach(p=>{o.sessions+=p.sessions;o.games+=p.games;o.w+=p.w;o.d+=p.d;o.l+=p.l;o.gf+=p.gf;o.ga+=p.ga;});
+    o.gd=o.gf-o.ga; o.pts=o.w*3+o.d;
+    const dec=o.w+o.l; o.winRate=dec?Math.round(o.w/dec*1000)/10:0;
+    out.push(o);
+  });
+  return out;
+}
+
+function renderCoachFilters(){
+  $('#coachFilters').innerHTML=`${periodFields('coach', state.coach)}<button class="btn" type="button" id="coachQuery">조회</button>`;
+  setPeriodSelects('coach', state.coach);
+  $('#coachQuery').onclick=()=>{ readPeriod('coach', state.coach); state.coach.applyChecked=!!state.coach.checked.size; renderCoach(); };
+}
 function renderCoach(){
-  const C=DATA.coaches;
-  $('#coachFilters').innerHTML=periodFields('coachYear','coachQ','all','all');
-  $('#coachKpi').innerHTML=`
-    <div class="c"><div class="k">감독</div><div class="v">${C.length}</div></div>
-    <div class="c"><div class="k">1위 승률</div><div class="v">${pct(C[0]?.winRate||0)}</div></div>
-    <div class="c"><div class="k">1위</div><div class="v" style="font-size:.9rem">${C[0]?.name||'-'}</div></div>`;
-  $('#coachBody').innerHTML=C.map((c,i)=>`<tr>
-    <td class="sticky name">${c.name}</td><td><span class="rank ${rc(i+1)}">${i+1}</span></td>
+  const cols=[['rank','순위'],['name','감독'],['sessions','세션'],['games','경기수'],['w','승'],['d','무'],['l','패'],['gd','득실'],['pts','승점'],['winRate','승률']];
+  $('#coachHead').innerHTML=`<th class="chk sticky"></th>`+cols.map(([k,l])=>{
+    const on=state.coach.sortKey===k; const ar=on?(state.coach.sortDir>0?'▲':'▼'):'↕';
+    const cls=k==='rank'?'rankcol sticky':(k==='name'?'namecol sticky':'');
+    return `<th class="sortable ${on?'on':''} ${cls}" data-k="${k}">${l}<span class="ar">${ar}</span></th>`;
+  }).join('');
+  $$('#coachHead th.sortable').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(state.coach.sortKey===k) state.coach.sortDir*=-1;
+    else {state.coach.sortKey=k; state.coach.sortDir=(k==='name'||k==='rank')?1:-1;}
+    renderCoach();
+  });
+  let base=coachesForPeriod(state.coach.year,state.coach.q);
+  if(state.coach.applyChecked && state.coach.checked.size) base=base.filter(c=>state.coach.checked.has(c.name));
+  const key=state.coach.sortKey==='rank'?'winRate':state.coach.sortKey;
+  const dir=state.coach.sortKey==='rank'?-1:state.coach.sortDir;
+  const rows=withDynamicRank(base,key,dir);
+  $('#coachChkInfo').textContent=state.coach.checked.size?`선택 ${state.coach.checked.size}명`:'체크 없음 = 전체';
+  $('#coachBody').innerHTML=rows.map((c,i)=>`<tr class="zebra${i%2}">
+    <td class="chk sticky"><input type="checkbox" data-name="${c.name}" ${state.coach.checked.has(c.name)?'checked':''}/></td>
+    <td class="rankcol sticky"><span class="rank ${rc(c.rank)}">${c.rank}</span></td>
+    <td class="namecol sticky">${c.name}</td>
     <td>${c.sessions}</td><td>${c.games}</td><td>${c.w}</td><td>${c.d}</td><td>${c.l}</td>
     <td>${c.gd>0?'+':''}${c.gd}</td><td>${c.pts}</td>
-    <td style="color:var(--lime);font-weight:900">${pct(c.winRate)}</td></tr>`).join('');
-  const ch=C.find(x=>x.name==='최한호');
-  $('#coachNote').textContent=ch
-    ? `예: 최한호 → 세션 ${ch.sessions} · 경기 ${ch.games} (11/18 테스트 저장은 감독_배정에 없어 제외됨)`
-    : '세션은 감독_배정 날짜만 카운트';
+    <td style="color:var(--lime);font-weight:900">${pct(c.winRate)}</td>
+  </tr>`).join('')||`<tr><td colspan="11" style="padding:16px;color:var(--muted)">해당 기간 데이터 없음</td></tr>`;
+  $$('#coachBody input[type=checkbox]').forEach(cb=>cb.onchange=()=>{
+    if(cb.checked) state.coach.checked.add(cb.dataset.name); else state.coach.checked.delete(cb.dataset.name);
+    $('#coachChkInfo').textContent=state.coach.checked.size?`선택 ${state.coach.checked.size}명 · 조회로 필터`:'체크 없음 = 전체';
+  });
 }
-
-function chemFor(a,b){
-  const key=[a,b].sort().join('×');
-  const hit=DATA.chem.find(c=>[c.a,c.b].sort().join('×')===key);
-  return hit?hit.together:0;
-}
-function spark(vals, color){
-  const w=320,h=120,pad=8;
-  const max=Math.max(...vals,0.01), min=Math.min(...vals,0);
-  const pts=vals.map((v,i)=>{
-    const x=pad+i*(w-2*pad)/Math.max(vals.length-1,1);
-    const y=h-pad-((v-min)/(max-min||1))*(h-2*pad);
-    return `${x},${y}`;
-  }).join(' ');
-  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <polyline fill="none" stroke="${color}" stroke-width="3" points="${pts}" />
-    ${vals.map((v,i)=>{
-      const x=pad+i*(w-2*pad)/Math.max(vals.length-1,1);
-      const y=h-pad-((v-min)/(max-min||1))*(h-2*pad);
-      return `<circle cx="${x}" cy="${y}" r="4" fill="${color}" />`;
-    }).join('')}
-  </svg>`;
-}
-function bars(items){
-  const max=Math.max(...items.map(i=>i.v),1);
-  const w=320,h=140,gap=8,bw=(w-gap*(items.length+1))/items.length;
-  return `<svg class="chart" viewBox="0 0 ${w} ${h}">
-    ${items.map((it,i)=>{
-      const bh=(it.v/max)*(h-36);
-      const x=gap+i*(bw+gap), y=h-24-bh;
-      return `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="6" fill="${it.color||'#C6F135'}"/>
-        <text x="${x+bw/2}" y="${h-8}" text-anchor="middle" fill="#9AA0A6" font-size="11">${it.l}</text>
-        <text x="${x+bw/2}" y="${y-4}" text-anchor="middle" fill="#F2F3F4" font-size="11" font-weight="700">${it.v}</text>`;
-    }).join('')}
-  </svg>`;
-}
+$('#coachClearChk').onclick=()=>{ state.coach.checked.clear(); state.coach.applyChecked=false; renderCoach(); };
 
 function bestPartner(name){
-  const hits=DATA.chem.filter(c=>c.a===name||c.b===name).sort((a,b)=>b.together-a.together);
-  if(!hits.length) return DATA.players.find(p=>p.name!==name)?.name||'';
-  const c=hits[0]; return c.a===name?c.b:c.a;
+  const hits=DATA.chem.filter(c=>c.a===name||c.b===name).sort((a,b)=>b.score-a.score);
+  if(!hits[0]) return DATA.players.find(p=>p.name!==name)?.name||'';
+  return hits[0].a===name?hits[0].b:hits[0].a;
+}
+function chemOf(a,b){
+  return DATA.chem.find(c=>(c.a===a&&c.b===b)||(c.a===b&&c.b===a));
 }
 function fillCmp(){
   const opts=DATA.players.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
   $('#cmpPlayer').innerHTML=opts; $('#cmpOther').innerHTML=opts;
-  const me=DATA.players[0]?.name||'';
-  $('#cmpPlayer').value=me;
-  $('#cmpOther').value=bestPartner(me);
+  const me=DATA.players.find(p=>Object.keys(p.form).length>=2)?.name || DATA.players[0].name;
+  $('#cmpPlayer').value=me; $('#cmpOther').value=bestPartner(me);
   $('#cmpPlayer').onchange=()=>{ $('#cmpOther').value=bestPartner($('#cmpPlayer').value); renderCompare(); };
+  $('#cmpOther').onchange=renderCompare;
 }
-function renderCompare(){
-  const mode=$('#cmpMode .on').dataset.mode;
-  const me=DATA.players.find(p=>p.name===$('#cmpPlayer').value)||DATA.players[0];
-  const ot=DATA.players.find(p=>p.name===$('#cmpOther').value)||DATA.players[1];
-  $('#cmpOtherWrap').classList.toggle('hidden', mode==='self');
-  $('#cmpQWrap').classList.toggle('hidden', mode!=='self');
-  if(mode==='self'){
-    const A=me.q1,B=me.q3;
-    $('#cmpOut').innerHTML=`
-      <div class="compare">
-        <div class="side"><div class="tag">Q1</div><div class="who">${me.name}</div>
-          <div class="metric"><span>승률</span><strong>${pct(A.winRate)}</strong></div>
-          <div class="metric"><span>CCP/G</span><strong>${num(A.ccpG,2)}</strong></div>
-          <div class="metric"><span>MP/G</span><strong>${num(A.mpG,2)}</strong></div>
-          <div class="metric"><span>득/도</span><strong>${A.goal}/${A.assist}</strong></div>
-        </div>
-        <div class="side"><div class="tag">Q3</div><div class="who">${me.name}</div>
-          <div class="metric"><span>승률</span><strong>${pct(B.winRate)} ${delta(A.winRate,B.winRate)}</strong></div>
-          <div class="metric"><span>CCP/G</span><strong>${num(B.ccpG,2)} ${delta(A.ccpG,B.ccpG)}</strong></div>
-          <div class="metric"><span>MP/G</span><strong>${num(B.mpG,2)} ${delta(A.mpG,B.mpG)}</strong></div>
-          <div class="metric"><span>득/도</span><strong>${B.goal}/${B.assist}</strong></div>
-        </div>
-      </div>
-      ${spark([A.ccpG,(A.ccpG+B.ccpG)/2,B.ccpG],'#C6F135')}
-      <div class="story">${me.name} 분기 성장 곡선(목업). 실서비스는 기록실_개인기록을 연도·분기 컷으로 집계합니다.</div>`;
-    // fix typo in template - I may have broken a tag
-    return;
-  }
-  const together=chemFor(me.name,ot.name);
-  const score=Math.min(99, Math.round(40 + Math.sqrt(together)*5 + Math.min(me.assist,ot.assist)*0.05));
-  const top=DATA.chem.filter(c=>c.a===me.name||c.b===me.name).slice(0,5);
-  $('#cmpOut').innerHTML=`
-    <div class="side"><div class="tag">실데이터 케미</div><div class="who">${me.name} × ${ot.name}</div>
-      <div class="metric"><span>같은 팀 경기 수</span><strong>${together}회</strong></div>
-      <div class="metric"><span>케미 점수</span><strong style="color:var(--lime)">${score}</strong></div>
-      <div class="metric"><span>근거</span><strong>지난_팀_구성 동시출전</strong></div>
-    </div>
-    <div class="chem-score">
-      <div class="c"><div>동시출전</div><div class="s">${together}</div></div>
-      <div class="c"><div>케미</div><div class="s">${score}</div></div>
-    </div>
-    ${bars(top.map(c=>({l:(c.a===me.name?c.b:c.a).slice(0,3), v:c.together, color:'#C6F135'})))}
-    <div class="story">가능합니다. 지난_팀_구성에서 같은 날·같은 팀 동시출전을 세면 됩니다. (김기호×이영중 136회 등) 나중에 세션 타임라인 득점-도움 페어도 가산 가능.</div>
-    <p class="note">그래프: ${me.name}의 실제 동시출전 TOP 파트너</p>`;
-}
-
-function renderFun(){
-  const topChem=DATA.chem.slice(0,5);
-  const hot=DATA.players.slice().sort((a,b)=>b.mpG-a.mpG).slice(0,3);
-  $('#funOut').innerHTML=`
-    <div class="card"><h3>🔥 클럽 케미 TOP</h3>
-      <ol style="list-style:none">${topChem.map((c,i)=>`<li style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)"><span>${i+1}. ${c.a} × ${c.b}</span><b style="color:var(--lime)">${c.together}</b></li>`).join('')}</ol>
-      <p class="note">지난_팀_구성 동시출전</p>
-    </div>
-    <div class="card"><h3>📈 이번 시즌 MP/G 폼</h3>
-      ${spark(hot.map(p=>p.mpG),'#5B8CFF')}
-      <p class="note">${hot.map(p=>p.name).join(' · ')}</p>
-    </div>
-    <div class="card"><h3>🗓️ 연도 자동</h3>
-      <p>기간 옵션은 시트에 있는 연도(${(DATA.years||[]).join(', ')}) + 올해/내년을 자동 추가합니다. 2027년이 되면 선택지에 자동 등장.</p>
-    </div>
-    <div class="card"><h3>🎯 한줄 리포트</h3>
-      <p>${DATA.players[0].name}은(는) 새 MP 기준 ${DATA.players[0].mp}점 · 수비·선방에도 2점을 주면 기여도가 재정렬됩니다.</p>
-    </div>`;
-}
-
-$('#dashQuery').onclick=()=>{
-  state.periodYear=$('#dashYear').value; state.periodQ=$('#dashQ').value; state.search=$('#dashSearch').value;
-  renderDash();
-};
-$('#boardQuery').onclick=()=>{
-  state.boardYear=$('#boardYear').value; state.boardQ=$('#boardQ').value; renderBoards();
-};
-$('#coachQuery').onclick=()=>renderCoach();
 $$('#cmpMode button').forEach(b=>b.onclick=()=>{
   $$('#cmpMode button').forEach(x=>x.classList.toggle('on',x===b)); renderCompare();
 });
-['cmpPlayer','cmpOther','cmpQ'].forEach(id=>{
-  // bound after fill
-});
 
+function radarSVG(labels, series){
+  // series: [{name,color,values:[0-100]}]
+  const N=labels.length, cx=180, cy=150, R=105;
+  const rings=4;
+  let bg='';
+  for(let i=rings;i>=1;i--){
+    const r=R*i/rings;
+    const op=0.04+i*0.03;
+    bg+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(230,235,255,${op})" stroke="rgba(255,255,255,.08)" />`;
+  }
+  // axes
+  let axes='';
+  for(let i=0;i<N;i++){
+    const ang=-Math.PI/2+i*2*Math.PI/N;
+    const x=cx+Math.cos(ang)*R, y=cy+Math.sin(ang)*R;
+    axes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(255,255,255,.12)" />`;
+    const lx=cx+Math.cos(ang)*(R+22), ly=cy+Math.sin(ang)*(R+22);
+    axes+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#c5cad3" font-size="11" font-weight="700">${labels[i]}</text>`;
+  }
+  function poly(vals, stroke, fill){
+    const pts=vals.map((v,i)=>{
+      const ang=-Math.PI/2+i*2*Math.PI/N;
+      const r=R*(Math.max(0,Math.min(100,v))/100);
+      return `${cx+Math.cos(ang)*r},${cy+Math.sin(ang)*r}`;
+    }).join(' ');
+    let dots='';
+    vals.forEach((v,i)=>{
+      const ang=-Math.PI/2+i*2*Math.PI/N;
+      const r=R*(Math.max(0,Math.min(100,v))/100);
+      const x=cx+Math.cos(ang)*r, y=cy+Math.sin(ang)*r;
+      dots+=`<circle cx="${x}" cy="${y}" r="4" fill="#111" stroke="${stroke}" stroke-width="2" />`;
+    });
+    return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />${dots}`;
+  }
+  const polys=series.map(s=>poly(s.values,s.color,s.fill)).join('');
+  return `<svg viewBox="0 0 360 300">${bg}${axes}${polys}</svg>`;
+}
+
+function quarterPair(p){
+  const keys=Object.keys(p.form).sort();
+  if(keys.length<2) return null;
+  return [keys[0], keys[keys.length-1]];
+}
+function metricBundle(f){
+  if(!f) return null;
+  return {
+    '승률': f.winRate||0,
+    'MP/G': (f.mpG||0)*25, // scale ~0-100 assuming mpG~0-4
+    '승점/G': (f.ppg||0)*40,
+    '득실': Math.max(0, Math.min(100, 50+(f.gd||0)/2)),
+    '경기수': Math.min(100,(f.games||0)),
+    '공격': Math.min(100, ((f.goal||0)+(f.assist||0))*3),
+    '수비': Math.min(100, ((f.defense||0)+(f.save||0))*8)
+  };
+}
+
+function renderCompare(){
+  const mode=$('#cmpMode .on').dataset.mode;
+  const me=DATA.players.find(p=>p.name===$('#cmpPlayer').value);
+  const ot=DATA.players.find(p=>p.name===$('#cmpOther').value);
+  $('#cmpOtherWrap').classList.toggle('hidden', mode==='self');
+  if(mode==='self'){
+    const pair=quarterPair(me);
+    if(!pair){ $('#cmpOut').innerHTML='<p class="note">비교할 분기 데이터가 부족합니다.</p>'; return; }
+    const A=me.form[pair[0]], B=me.form[pair[1]];
+    const mA=metricBundle(A), mB=metricBundle(B);
+    const labels=Object.keys(mA);
+    $('#cmpOut').innerHTML=`
+      <div class="legend"><span><i style="background:#ff6b9d"></i>${pair[0]}</span>
+        <span><i style="background:#6b8cff"></i>${pair[1]}</span></div>
+      <div class="radar-wrap">${radarSVG(labels,[
+        {color:'#ff6b9d', fill:'rgba(255,107,157,.22)', values:labels.map(k=>mA[k])},
+        {color:'#6b8cff', fill:'rgba(107,140,255,.22)', values:labels.map(k=>mB[k])}
+      ])}</div>
+      <div class="side">
+        ${labels.map(k=>{
+          const rawA=k==='MP/G'?num(A.mpG,2):k==='승률'?pct(A.winRate):k==='승점/G'?num(A.ppg,2):k==='득실'?A.gd:k==='경기수'?A.games:k==='공격'?((A.goal||0)+(A.assist||0)):((A.defense||0)+(A.save||0));
+          const rawB=k==='MP/G'?num(B.mpG,2):k==='승률'?pct(B.winRate):k==='승점/G'?num(B.ppg,2):k==='득실'?B.gd:k==='경기수'?B.games:k==='공격'?((B.goal||0)+(B.assist||0)):((B.defense||0)+(B.save||0));
+          return `<div class="metric"><span>${k}</span><strong>${rawA} → ${rawB}</strong></div>`;
+        }).join('')}
+      </div>
+      <p class="note">${me.name} · 첫 관측 분기 vs 최근 분기 레이더</p>`;
+    return;
+  }
+  const c=chemOf(me.name,ot.name);
+  if(!c){ $('#cmpOut').innerHTML='<p class="note">같이 뛴 기록이 충분하지 않습니다.</p>'; return; }
+  // radar for chemistry dims
+  const labels=['승률','승점효율','득실','동시출전','안정'];
+  const wr=c.winRate;
+  const ptsEff=Math.min(100,(c.pts/c.together)*35);
+  const gdEff=Math.max(0,Math.min(100,50+(c.gd/c.together)*20));
+  const tog=Math.min(100,c.together);
+  const stab=Math.min(100, 40 + (c.d/c.together)*60);
+  $('#cmpOut').innerHTML=`
+    <div class="scorebig">${c.score}<span style="font-size:.9rem;color:var(--muted)"> / 100</span></div>
+    <div class="legend" style="margin-top:4px"><span>${me.name} × ${ot.name}</span></div>
+    <div class="radar-wrap">${radarSVG(labels,[
+      {color:'#C6F135', fill:'rgba(198,241,53,.2)', values:[wr, ptsEff, gdEff, tog, stab]}
+    ])}</div>
+    <div class="side">
+      <div class="metric"><span>같은 팀 경기</span><strong>${c.together}회</strong></div>
+      <div class="metric"><span>승 / 무 / 패</span><strong>${c.w} / ${c.d} / ${c.l}</strong></div>
+      <div class="metric"><span>승률</span><strong>${pct(c.winRate)}</strong></div>
+      <div class="metric"><span>승점</span><strong>${c.pts}</strong></div>
+      <div class="metric"><span>득실</span><strong>${c.gd>0?'+':''}${c.gd}</strong></div>
+    </div>
+    <p class="note">케미 = 같은 팀일 때 승률·승점·득실 중심 100점 (도움 페어 미사용)</p>`;
+}
+
+/** Form index: first quarter = 100 */
+function formSeries(p, metric){
+  const keys=Object.keys(p.form).sort();
+  if(!keys.length) return null;
+  const raw=keys.map(k=>{
+    const f=p.form[k];
+    let v=0;
+    if(metric==='mpG') v=f.mpG||0;
+    else if(metric==='winRate') v=f.winRate||0;
+    else if(metric==='ppg') v=f.ppg||0;
+    else if(metric==='gd') v=f.gd||0;
+    return {k,v};
+  });
+  const base=raw[0].v || 0.0001;
+  return raw.map(r=>({k:r.k, index: Math.round(r.v/base*1000)/10, raw:r.v}));
+}
+function formTrend(series){
+  if(!series || series.length<2) return 0;
+  return series[series.length-1].index - series[0].index;
+}
+function renderFormChips(){
+  $('#formChips').innerHTML=DATA.players.map(p=>`<label><input type="checkbox" data-n="${p.name}" ${state.formPick.has(p.name)?'checked':''}/> ${p.name}</label>`).join('');
+  $$('#formChips input').forEach(cb=>cb.onchange=()=>{
+    if(cb.checked) state.formPick.add(cb.dataset.n); else state.formPick.delete(cb.dataset.n);
+  });
+}
+function renderForm(){
+  const metric=$('#formMetric').value;
+  const view=$('#formView').value;
+  let picked=[];
+  if(view==='pick'){
+    picked=DATA.players.filter(p=>state.formPick.has(p.name));
+    if(!picked.length) picked=DATA.players.slice(0,3);
+  } else if(view==='hot' || view==='cold'){
+    const scored=DATA.players.map(p=>{
+      const s=formSeries(p,metric); return {p,s,t:formTrend(s)};
+    }).filter(x=>x.s && x.s.length>=2);
+    scored.sort((a,b)=> view==='hot'?(b.t-a.t):(a.t-b.t));
+    picked=scored.slice(0,5).map(x=>x.p);
+  } else {
+    // all - show top 6 by |trend| for readability + average line
+    const scored=DATA.players.map(p=>{
+      const s=formSeries(p,metric); return {p,s,t:formTrend(s)};
+    }).filter(x=>x.s && x.s.length>=2);
+    scored.sort((a,b)=>Math.abs(b.t)-Math.abs(a.t));
+    picked=scored.slice(0,6).map(x=>x.p);
+  }
+  const colors=['#C6F135','#6b8cff','#ff6b9d','#3DDC97','#FFC857','#c39bff'];
+  const allKeys=[...new Set(picked.flatMap(p=>Object.keys(p.form)))].sort();
+  const w=360,h=200,padL=28,padR=10,padT=16,padB=28;
+  const series=picked.map((p,i)=>({name:p.name, color:colors[i%colors.length], pts:formSeries(p,metric)}));
+  const idxs=series.flatMap(s=>s.pts?s.pts.map(x=>x.index):[]);
+  const min=Math.min(70, ...idxs, 100), max=Math.max(130, ...idxs, 100);
+  function xy(qi, index){
+    const x=padL+qi*(w-padL-padR)/Math.max(allKeys.length-1,1);
+    const y=padT+(h-padT-padB)*(1-(index-min)/(max-min||1));
+    return [x,y];
+  }
+  let grid='';
+  for(let g=0;g<4;g++){
+    const y=padT+g*(h-padT-padB)/3;
+    grid+=`<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="rgba(255,255,255,.08)" />`;
+  }
+  // baseline 100
+  const y100=xy(0,100)[1];
+  grid+=`<line x1="${padL}" y1="${y100}" x2="${w-padR}" y2="${y100}" stroke="rgba(198,241,53,.35)" stroke-dasharray="4 4" />`;
+  let labels='';
+  allKeys.forEach((k,i)=>{
+    const [x]=xy(i,100);
+    labels+=`<text x="${x}" y="${h-8}" text-anchor="middle" fill="#9AA0A6" font-size="9">${k.replace('20','').replace('-','')}</text>`;
+  });
+  let paths='';
+  series.forEach(s=>{
+    if(!s.pts) return;
+    const map=Object.fromEntries(s.pts.map(p=>[p.k,p.index]));
+    const pts=allKeys.map((k,i)=> map[k]==null?null:xy(i,map[k])).filter(Boolean);
+    if(pts.length<2) return;
+    const d=pts.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' ');
+    paths+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.5" />`;
+    pts.forEach(([x,y])=>{ paths+=`<circle cx="${x}" cy="${y}" r="3.2" fill="#111" stroke="${s.color}" stroke-width="2" />`; });
+  });
+  $('#formChart').innerHTML=grid+paths+labels;
+  $('#formList').innerHTML=series.map(s=>{
+    const t=formTrend(s.pts);
+    const arrow=t>2?'상승':(t<-2?'하락':'보합');
+    const col=t>2?'#3DDC97':(t<-2?'#FF6B6B':'#9AA0A6');
+    const last=s.pts?s.pts[s.pts.length-1].index:'-';
+    return `<div class="metric"><span style="color:${s.color}">● ${s.name}</span><strong style="color:${col}">${arrow} · 지수 ${last}</strong></div>`;
+  }).join('');
+}
+$('#formQuery').onclick=renderForm;
+
+// boot
 renderDashFilters();
 renderBoardFilters();
+renderCoachFilters();
 renderDash();
 renderBoards();
 renderCoach();
 fillCmp();
-['cmpPlayer','cmpOther','cmpQ'].forEach(id=>$('#'+id).onchange=renderCompare);
 renderCompare();
-renderFun();
+renderFormChips();
+renderForm();
+
 </script>
 </body>
 </html>
