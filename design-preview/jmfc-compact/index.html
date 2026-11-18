@@ -1636,7 +1636,7 @@ function bootFromServer(attempt){
     if(phone){ phone.style.borderRadius='28px'; phone.style.border='1px solid #cbd5e1'; phone.style.boxShadow='0 20px 50px rgba(15,23,42,.18)'; phone.style.minHeight='720px'; phone.style.maxWidth='430px'; phone.style.margin='0 auto'; }
     loadSessionPin();
     render();
-    toast('공유 목업 · 드래프트 첫 입장에서 세션 핀 4자리를 설정하세요', 5000);
+    toast('연습용 목업 · 드래프트 입장 시 세션 핀 4자리를 직접 설정하세요', 4500);
     return;
   }
   toast(tries?('다시 불러오는 중… ('+(tries+1)+')'):'불러오는 중… · '+APP_BUILD, 8000);
