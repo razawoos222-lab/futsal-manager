@@ -15,12 +15,16 @@ const CONFIG = {
   /** 감독순위 웹앱(통계대시보드) 스프레드시트 */
   STATS_SPREADSHEET_ID: '1A_rY2T1Tk1G5_tQq6SxNSxr7k330bHqD4rXCElS1BiA',
   /**
-   * GitHub FORM/CLUB UI만 사용 (옛 Cinzel/파란 참석조사 UI는 쓰지 않음).
-   * Script Properties UI_HTML_URL / UI_GIT_REF 로 덮어쓸 수 있습니다.
+   * GitHub FORM/CLUB UI — doGet이 매 요청 raw에서 불러옴.
+   * index.html만 고치면 이 브랜치에 push → GAS 재배포 없이 새로고침으로 반영.
+   * Code.gs 서버 로직 변경만 Apps Script 붙여넣기 + 새 버전 배포 필요.
+   * Script Properties UI_GIT_REF / UI_HTML_URL 로 덮어쓸 수 있음.
    */
-  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html',
-  UI_GIT_REF: 'cursor/formclub-palette-mockup-7fc5',
-  UI_GIT_REPO: 'razawoos222-lab/futsal-manager'
+  UI_HTML_URL: 'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/fix-coach-disappear-7fc5/live/index.html',
+  UI_GIT_REF: 'cursor/fix-coach-disappear-7fc5',
+  UI_GIT_REPO: 'razawoos222-lab/futsal-manager',
+  /** true면 매 요청 CONFIG 브랜치로 Script Properties를 다시 맞춤 (기본 권장) */
+  PIN_UI_TO_CONFIG_ON_LOAD: true
 };
 
 const TEAM_ALL = ['RED', 'BLUE', 'YELLOW', 'BLACK'];
@@ -82,6 +86,7 @@ function buildInitialState_() {
     subCtx: null,
     addCtx: null,
     baseTeams: null,
+    baseCoaches: null,
     updatedAt: Date.now(),
     matchElapsedSec: 0,
     alerted2min: false,
@@ -89,20 +94,49 @@ function buildInitialState_() {
   };
 }
 
+/** CONFIG(또는 UI_GIT_REF) 기준으로 raw HTML URL 생성 */
+function githubLiveIndexUrl_(ref) {
+  const repo = resolveGitRepo_();
+  const r = String(ref || resolveGitRef_() || 'main').trim();
+  return 'https://raw.githubusercontent.com/' + repo + '/' + r + '/live/index.html';
+}
+
+/**
+ * 웹앱이 항상 GitHub UI를 보게 Script Properties를 CONFIG 브랜치로 고정.
+ * Code.gs를 한 번만 붙여넣으면 이후 index.html은 push만으로 반영.
+ */
+function ensureGithubUiPinned_() {
+  const props = PropertiesService.getScriptProperties();
+  const ref = String(CONFIG.UI_GIT_REF || 'main').trim();
+  const url = String(CONFIG.UI_HTML_URL || githubLiveIndexUrl_(ref)).trim();
+  const pin = CONFIG.PIN_UI_TO_CONFIG_ON_LOAD !== false;
+  const curRef = (props.getProperty('UI_GIT_REF') || '').trim();
+  const curUrl = (props.getProperty('UI_HTML_URL') || '').trim();
+  if (pin || !curRef || !curUrl) {
+    props.setProperty('UI_GIT_REF', ref);
+    props.setProperty('UI_HTML_URL', url);
+  }
+  return { ref: props.getProperty('UI_GIT_REF'), url: props.getProperty('UI_HTML_URL') };
+}
+
 function resolveUiHtmlUrl_() {
+  ensureGithubUiPinned_();
   const props = PropertiesService.getScriptProperties();
   const fromProp = (props.getProperty('UI_HTML_URL') || '').trim();
   if (fromProp) return fromProp;
-  return (CONFIG.UI_HTML_URL || '').trim();
+  return githubLiveIndexUrl_(resolveGitRef_());
 }
 
 /** FORM/CLUB 새 UI인지 — 옛 main UI(Cinzel 참석조사) 거르기 */
 function isFormclubUiHtml_(text) {
   if (!text) return false;
-  return text.indexOf('2026-11-17-live-v18') >= 0
+  return text.indexOf('2026-11-18-live-v20') >= 0
+    || text.indexOf('2026-11-17-live-v19') >= 0
+    || text.indexOf('2026-11-17-live-v18') >= 0
     || text.indexOf('formclub draft UI') >= 0
     || text.indexOf('--lime:#C6F135') >= 0
-    || text.indexOf('sessionPin') >= 0;
+    || text.indexOf('sessionPin') >= 0
+    || text.indexOf('baseCoaches') >= 0;
 }
 
 function uniqueUrls_(list) {
@@ -250,6 +284,9 @@ function serveJmfcAdmin_(action) {
 }
 
 function doGet(e) {
+  // 매 요청 CONFIG 브랜치로 GitHub UI 고정 (index.html push → 재배포 없이 반영)
+  ensureGithubUiPinned_();
+
   const params = (e && e.parameter) || {};
   const action = String(params.jmfc || params.action || '').trim();
   if (action) {
@@ -279,23 +316,35 @@ function doGet(e) {
   return serveUiSetupNeeded_('GitHub UI fetch failed · local index is old Cinzel UI');
 }
 
-/** FORM/CLUB UI(GitHub)를 쓰도록 설정 */
+/** FORM/CLUB UI(GitHub)를 쓰도록 설정 — CONFIG 브랜치로 고정 */
 function useGithubUiPrBranch() {
+  const pinned = ensureGithubUiPinned_();
+  // PIN이 꺼져 있어도 이 함수는 CONFIG로 강제 고정
+  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', CONFIG.UI_GIT_REF);
   PropertiesService.getScriptProperties().setProperty(
     'UI_HTML_URL',
-    'https://raw.githubusercontent.com/razawoos222-lab/futsal-manager/cursor/formclub-palette-mockup-7fc5/live/index.html'
+    CONFIG.UI_HTML_URL || githubLiveIndexUrl_(CONFIG.UI_GIT_REF)
   );
-  PropertiesService.getScriptProperties().setProperty('UI_GIT_REF', 'cursor/formclub-palette-mockup-7fc5');
-  return 'UI_HTML_URL → formclub UI';
+  return 'UI → GitHub ' + CONFIG.UI_GIT_REF + ' · ' + (pinned.url || CONFIG.UI_HTML_URL);
+}
+
+/** 별칭 (관리 URL ?jmfc=setup) */
+function useGithubRefPrBranch() {
+  return useGithubUiPrBranch();
 }
 
 /** 원격 UI 끄고 프로젝트 HTML 파일만 사용 */
 function useLocalUiFile() {
   PropertiesService.getScriptProperties().deleteProperty('UI_HTML_URL');
+  PropertiesService.getScriptProperties().deleteProperty('UI_GIT_REF');
   return 'UI_HTML_URL cleared · local index.html';
 }
 
 function resolveGitRef_() {
+  // PIN_UI_TO_CONFIG_ON_LOAD 이면 CONFIG가 항상 우선 (자동 고정)
+  if (CONFIG.PIN_UI_TO_CONFIG_ON_LOAD !== false && CONFIG.UI_GIT_REF) {
+    return String(CONFIG.UI_GIT_REF).trim();
+  }
   const props = PropertiesService.getScriptProperties();
   return (props.getProperty('UI_GIT_REF') || CONFIG.UI_GIT_REF || 'main').trim();
 }
@@ -517,7 +566,7 @@ function getMasterPlayersFromSheet() {
     const winRatePct = normalizeWinRatePct_(row[13]);
     return {
       name: row[0],
-      position: row[1],
+      // position unused — keep sheet col but do not send to client
       att: Number(row[2]) || 5,
       def: Number(row[3]) || 5,
       // N열 승률 — 퍼센트(0~100)로 내려보내 0.5% 오표시 방지
@@ -893,8 +942,8 @@ function updateAndArchiveSession(payload) {
     // 4) 세션 아카이브 (지난 경기 결과 불러오기용)
     upsertSessionArchive_(payload);
 
-    // 저장 후 감독기록도 배정표·지난팀구성 기준으로 재동기화
-    try { syncCoachArchiveFromAssignments_(); } catch (e) { console.error('coach sync', e); }
+    // 감독기록 전체 재집계는 저장 경로에서 제외 (버벅임 원인).
+    // 클라이언트가 boot 후 syncCoachArchiveNow()를 따로 호출함.
 
     // 5) 앱 상태 초기화
     SpreadsheetApp.flush();

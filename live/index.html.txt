@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC GAS web app · formclub draft UI · BUILD 2026-11-17-live-v18 -->
+<!-- JMFC GAS web app · formclub draft UI · BUILD 2026-11-18-live-v20 -->
 <head>
   <base target="_top">
   <meta charset="UTF-8" />
@@ -469,7 +469,6 @@ function mapMasterPlayer(p){
   const winRatePct=normalizeWinRatePct(raw);
   return {
     name:p.name,
-    position:p.position||'',
     winRatePct,
     ccpPerGame:Number(p.ccp)!=null&&p.ccp!==undefined?Number(p.ccp):(Number(p.ccpPerGame)||0),
     games:Number(p.games)||0,
@@ -558,23 +557,42 @@ function applyServerState(s){
   if(!state.teamStats) state.teamStats=emptyTeamStats();
   if(!state.playerStats) state.playerStats={};
   if(!state.coaches) state.coaches={};
+  if(!state.baseCoaches&&state.coaches&&Object.keys(state.coaches).length){
+    state.baseCoaches=JSON.parse(JSON.stringify(state.coaches));
+  }
   if(!state.attending) state.attending=[];
   if(!state.matchHistory) state.matchHistory=[];
   loadSessionPin();
   if(typeof state.draftCompleted!=='boolean') state.draftCompleted=false;
   state.modal=null; state.timerRunning=false;
+  // 결과/수정 화면이면 세션 감독 확정본으로 맞춤 (경기 중 임시 이양·코트아웃 잔여 방지)
+  if(keepScreen==='results'||keepScreen==='edit'||!state.matchLive){
+    if(state.baseCoaches&&Object.keys(state.baseCoaches).length) state.coaches=JSON.parse(JSON.stringify(state.baseCoaches));
+  }
   ensureCoachesInTeams();
   // 타이머 중 원격 덮어쓰기로 시계가 튀지 않게
   if(keepTimer&&keepScreen==='match'){ state.secondsLeft=keepLeft; }
 }
-function ensureCoachesInTeams(){
+function sessionCoaches(){
+  const base=state.baseCoaches;
+  if(base&&typeof base==='object'&&Object.keys(base).length) return base;
+  return state.coaches||{};
+}
+function ensureCoachesInTeams(target){
+  const teams=target||state.teams;
+  if(!teams||typeof teams!=='object') return teams;
   teamNames().forEach(t=>{
     const c=state.coaches[t];
     if(!c) return;
-    TEAM_ALL.forEach(x=>{ if(x!==t) state.teams[x]=(state.teams[x]||[]).filter(n=>n!==c); });
-    state.teams[t]=state.teams[t]||[];
-    if(!state.teams[t].includes(c)) state.teams[t].unshift(c);
+    TEAM_ALL.forEach(x=>{ if(x!==t) teams[x]=(teams[x]||[]).filter(n=>n!==c); });
+    teams[t]=teams[t]||[];
+    if(!teams[t].includes(c)) teams[t].unshift(c);
   });
+  return teams;
+}
+function clearCoachAssignment(name){
+  if(!name||!state.coaches) return;
+  Object.keys(state.coaches).forEach(k=>{ if(state.coaches[k]===name) delete state.coaches[k]; });
 }
 function pullRemoteState(silent){
   if(!IS_GAS||state.timerRunning||gasBusy||gasQueue.length) return;
@@ -610,7 +628,7 @@ const state={
   score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],
   matchHistory:[],editingMatchId:null,
   modal:null,sessionLabel:'세션 진행중',
-  subCtx:null, addCtx:null, baseTeams:null,
+  subCtx:null, addCtx:null, baseTeams:null, baseCoaches:null,
   updatedAt:Date.now(), matchElapsedSec:0, alerted2min:false, matchLive:false,
   drawerOpen:false, histOpen:false, timelineOpen:false
 };
@@ -640,9 +658,14 @@ function openDraftEntryPin(){
   else openPinModal('enter-draft','드래프트 입장','핀번호 4자리를 누르세요');
 }
 function buildSessionPayload(){
-  ensureCoachesInTeams();
+  // 세션 저장용 감독은 확정본(baseCoaches) 우선 — 경기 중 코트아웃/이양으로 live coaches가 비어도 보관
+  const coaches={...sessionCoaches()};
+  const prevCoaches={...state.coaches};
+  state.coaches={...coaches}; // coachLeaders/winningCoachRows용 임시
   const best=coachLeaders()[0]||null;
-  return {savedAt:new Date().toISOString(),sessionDate:state.sessionDate,sessionDateLabel:sheetDateStr(state.sessionDate),teamMode:state.teamMode,attending:state.attending,coaches:state.coaches,teams:teamsForPersist(),playerStats:state.playerStats,teamStats:state.teamStats,matchCount:state.matchCount,matchHistory:state.matchHistory,baseTeams:state.baseTeams,draftCompleted:!!state.draftCompleted,sessionPin:state.sessionPin,bestCoach:best?{name:best.name,team:best.team,pts:best.pts}:null,winningCoaches:winningCoachRows(),sheetHint:'기록실_감독기록/감독기록 + 우승감독(winningCoaches)'};
+  const payload={savedAt:new Date().toISOString(),sessionDate:state.sessionDate,sessionDateLabel:sheetDateStr(state.sessionDate),teamMode:state.teamMode,attending:state.attending,coaches,teams:teamsForPersist(),playerStats:state.playerStats,teamStats:state.teamStats,matchCount:state.matchCount,matchHistory:state.matchHistory,baseTeams:state.baseTeams?JSON.parse(JSON.stringify(state.baseTeams)):null,baseCoaches:state.baseCoaches?JSON.parse(JSON.stringify(state.baseCoaches)):{...coaches},draftCompleted:!!state.draftCompleted,sessionPin:state.sessionPin,bestCoach:best?{name:best.name,team:best.team,pts:best.pts}:null,winningCoaches:winningCoachRows(),sheetHint:'기록실_감독기록/감독기록 + 우승감독(winningCoaches)'};
+  state.coaches=prevCoaches;
+  return payload;
 }
 function persistLocal(){
   try{
@@ -672,7 +695,7 @@ function wipeLineupForDate(date){
   try{const map=readArchive(); if(map[date]){delete map[date]; writeArchive(map);}}catch(_){}
   try{const last=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(last&&last.sessionDate===date) localStorage.removeItem(STORAGE_KEY);}catch(_){}
   if(state.sessionDate===date){
-    state.teams=emptyTeams(); state.coaches={}; state.draftSlots=[]; state.baseTeams=null; state.draftCompleted=false;
+    state.teams=emptyTeams(); state.coaches={}; state.draftSlots=[]; state.baseTeams=null; state.baseCoaches=null; state.draftCompleted=false;
     state.playerStats={}; state.teamStats=emptyTeamStats(); state.matchHistory=[]; state.matchCount=1; state.playing=[];
     persistSessionPin();
   }
@@ -695,9 +718,27 @@ function finishDraftToLineup(){
 
 function go(screen){if(state.screen==='match'&&screen!=='match') stopTimer(); render._jumpTop=true;state.screen=screen;state.modal=null;state.subCtx=null;state.addCtx=null;state.drawerOpen=false;persistState();render();}
 function ensureStat(name,homeTeam){if(!state.playerStats[name])state.playerStats[name]={goal:0,assist:0,defense:0,save:0,wins:0,draws:0,losses:0,homeTeam:homeTeam||null};if(homeTeam&&!state.playerStats[name].homeTeam)state.playerStats[name].homeTeam=homeTeam;return state.playerStats[name];}
-function snapshotBaseTeams(){state.baseTeams=JSON.parse(JSON.stringify(state.teams));}
-function restoreBaseTeams(){if(!state.baseTeams)return;state.teams=JSON.parse(JSON.stringify(state.baseTeams));}
-function teamsForPersist(){return state.baseTeams?JSON.parse(JSON.stringify(state.baseTeams)):JSON.parse(JSON.stringify(state.teams));}
+function snapshotBaseTeams(){
+  ensureCoachesInTeams();
+  state.baseTeams=JSON.parse(JSON.stringify(state.teams));
+  state.baseCoaches=JSON.parse(JSON.stringify(state.coaches||{}));
+}
+function restoreBaseTeams(){
+  if(state.baseCoaches&&typeof state.baseCoaches==='object'){
+    state.coaches=JSON.parse(JSON.stringify(state.baseCoaches));
+  }
+  if(!state.baseTeams) return;
+  state.teams=JSON.parse(JSON.stringify(state.baseTeams));
+  ensureCoachesInTeams();
+}
+function teamsForPersist(){
+  const src=state.baseTeams?JSON.parse(JSON.stringify(state.baseTeams)):JSON.parse(JSON.stringify(state.teams));
+  const prev={...state.coaches};
+  if(state.baseCoaches&&Object.keys(state.baseCoaches).length) state.coaches={...state.baseCoaches};
+  ensureCoachesInTeams(src);
+  state.coaches=prev;
+  return src;
+}
 function formatDateLabel(iso){if(!iso)return '';const [y,m,d]=String(iso).replace(/\./g,'-').split('-');return `${y}.${m}.${d}`;}
 function sheetDateStr(iso){const s=String(iso||state.sessionDate||todayStr()).trim();const m=s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);if(m) return `${m[1]}-${('0'+m[2]).slice(-2)}-${('0'+m[3]).slice(-2)}`;return s.replace(/\./g,'-');}
 function fmtTime(sec){const s=Math.max(0,Math.floor(Number(sec)||0));const m=Math.floor(s/60);const r=s%60;return `${m}:${String(r).padStart(2,'0')}`;}
@@ -784,12 +825,16 @@ function applySavedPayload(data){
   state.teamMode=Number(data.teamMode)||3;
   state.attending=[...(data.attending||[])];
   state.coaches={...(data.coaches||{})};
+  state.baseCoaches=data.baseCoaches?JSON.parse(JSON.stringify(data.baseCoaches)):(Object.keys(state.coaches).length?JSON.parse(JSON.stringify(state.coaches)):null);
+  if(state.baseCoaches&&Object.keys(state.baseCoaches).length) state.coaches={...state.baseCoaches};
   state.teams=data.teams?JSON.parse(JSON.stringify(data.teams)):emptyTeams();
   state.playerStats=data.playerStats?JSON.parse(JSON.stringify(data.playerStats)):{};
   state.teamStats=data.teamStats?JSON.parse(JSON.stringify(data.teamStats)):emptyTeamStats();
   state.matchHistory=Array.isArray(data.matchHistory)?JSON.parse(JSON.stringify(data.matchHistory)):[];
   state.matchCount=Number(data.matchCount)||Math.max(1,(state.matchHistory.length||0)+1);
   state.baseTeams=data.baseTeams?JSON.parse(JSON.stringify(data.baseTeams)):JSON.parse(JSON.stringify(state.teams));
+  ensureCoachesInTeams();
+  if(!state.baseCoaches||!Object.keys(state.baseCoaches).length) state.baseCoaches=JSON.parse(JSON.stringify(state.coaches||{}));
   state.draftSlots=[]; state.playing=[]; state.score={A:0,B:0}; state.selectedPlayer=null; state.recordStack=[]; state.timeline=[]; state.editingMatchId=null; state.modal=null;
   state.sessionLabel=formatDateLabel(state.sessionDate)+' · 세션 불러옴';
   return true;
@@ -803,7 +848,7 @@ function loadSavedSession(date){
   toast(`${formatDateLabel(state.sessionDate)} 세션 불러옴`);
   go('results');
 }
-function winningCoachRows(){return (state.matchHistory||[]).map(h=>{let w=null;if(h.scoreA>h.scoreB)w=h.a;else if(h.scoreB>h.scoreA)w=h.b;if(!w)return null;return {sessionDate:state.sessionDate,matchNum:h.num,winnerTeam:w,coachName:state.coaches[w]||null,scoreA:h.scoreA,scoreB:h.scoreB,a:h.a,b:h.b};}).filter(x=>x&&x.coachName);}
+function winningCoachRows(){const coaches=sessionCoaches();return (state.matchHistory||[]).map(h=>{let w=null;if(h.scoreA>h.scoreB)w=h.a;else if(h.scoreB>h.scoreA)w=h.b;if(!w)return null;return {sessionDate:state.sessionDate,matchNum:h.num,winnerTeam:w,coachName:coaches[w]||null,scoreA:h.scoreA,scoreB:h.scoreB,a:h.a,b:h.b};}).filter(x=>x&&x.coachName);}
 function saveSession(andNew){
   if(saveBusy){ toast('이미 저장 중입니다…'); return; }
   saveBusy=true;
@@ -824,7 +869,7 @@ function saveSession(andNew){
     });
   } else { setTimeout(finish, 280); }
 }
-function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,sessionPin:null,draftCompleted:false,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});clearSessionPinStore();toast(clearStorage?'기록 리셋 · 새 세션 · 핀 다시 설정':'새 세션 · 드래프트에서 핀 다시 설정',4500);persistState(true);render();}
+function softNewSession(clearStorage){stopTimer();if(clearStorage){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}Object.assign(state,{screen:'attendance',sessionDate:todayStr(),teamMode:3,attending:[],coaches:{},coachPickTeam:null,teams:emptyTeams(),playerStats:{},teamStats:emptyTeamStats(),draftSlots:[],snakeMode:false,draftPickTeam:null,sessionPin:null,draftCompleted:false,playing:[],duration:600,secondsLeft:600,timerRunning:false,matchTab:'lineup',score:{A:0,B:0},matchCount:1,selectedPlayer:null,recordStack:[],timeline:[],matchHistory:[],editingMatchId:null,modal:null,sessionLabel:'세션 진행중',subCtx:null,addCtx:null,baseTeams:null,baseCoaches:null,updatedAt:Date.now(),matchElapsedSec:0,alerted2min:false,matchLive:false});clearSessionPinStore();toast(clearStorage?'기록 리셋 · 새 세션 · 핀 다시 설정':'새 세션 · 드래프트에서 핀 다시 설정',4500);persistState(true);render();}
 
 function seedNov7Base(){}
 function loadNov7(silent){toast('GAS 모드에서는 샘플 로드 없음');}
@@ -1103,8 +1148,15 @@ function renderMatch(){
 ${body}
 ${navRow('matchSelect',null,false, state.editingMatchId?'data-act="ask-end-match"':'data-act="match-next"', state.editingMatchId?'수정 저장 →':'다음 →')}</div>`;}
 
-function coachLeaders(){return Object.entries(state.coaches).map(([team,name])=>{const s=state.teamStats[team]||{wins:0,draws:0,goalsFor:0,goalsAgainst:0};const pts=(s.wins||0)*3+(s.draws||0);const gd=(s.goalsFor||0)-(s.goalsAgainst||0);return {name,team,pts,gd,v:pts};}).filter(x=>x.name).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||a.name.localeCompare(b.name,'ko'));}
+function coachLeaders(){return Object.entries(sessionCoaches()).map(([team,name])=>{const s=state.teamStats[team]||{wins:0,draws:0,goalsFor:0,goalsAgainst:0};const pts=(s.wins||0)*3+(s.draws||0);const gd=(s.goalsFor||0)-(s.goalsAgainst||0);return {name,team,pts,gd,v:pts};}).filter(x=>x.name).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||a.name.localeCompare(b.name,'ko'));}
+function restoreSessionCoachesForResults(){
+  if(state.baseCoaches&&Object.keys(state.baseCoaches).length){
+    state.coaches=JSON.parse(JSON.stringify(state.baseCoaches));
+  }
+  ensureCoachesInTeams();
+}
 function renderResults(){
+  restoreSessionCoachesForResults();
   const atk=topList('atk'), dfn=topList('dfn'), coach=coachLeaders();
   const mvpCard=(list,eyebrow)=>{
     if(!list.length) return `<div class="result-hero"><div class="eyebrow">${eyebrow}</div><div class="mvp-names"><span>-</span></div></div>`;
@@ -1147,7 +1199,10 @@ ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','cl
 </div>
 <div class="nav-row"><button class="btn btn-sec" data-act="go" data-screen="${state.matchLive?'match':'matchSelect'}">← 이전</button><button class="btn btn-sec" data-act="toggle-drawer">메뉴</button></div>`;
 }
-function renderEdit(){return `<h2>기록 수정</h2><p class="sub">숫자 변경 시 MP 재계산</p>${activeDetailOrder().map(t=>{const names=state.teams[t]||[];return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead><tbody>${names.map(n=>{const s=ensureStat(n,t);return `<tr data-edit-name="${n}"><td>${n}</td><td><input type="number" min="0" data-f="goal" value="${s.goal||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="assist" value="${s.assist||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="defense" value="${s.defense||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="save" value="${s.save||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td class="mp" data-mp>${mpOf(s)}</td></tr>`;}).join('')}</tbody></table></div>`;}).join('')}<div class="result-btns"><button class="btn btn-cta" data-act="save-edit">수정 완료 → 결과로</button></div>${navRow('results',null,false,'data-act="save-edit"','수정 완료 →')}`;}
+function renderEdit(){
+  restoreSessionCoachesForResults();
+  return `<h2>기록 수정</h2><p class="sub">숫자 변경 시 MP 재계산 · 감독(C) 유지</p>${activeDetailOrder().map(t=>{const coach=state.coaches[t];const names=rosterOrdered(t);return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead><tbody>${names.map(n=>{const s=ensureStat(n,t);const isC=n===coach;return `<tr data-edit-name="${n}"><td class="player-cell"><span class="pn">${n}</span>${isC?'<span class="cap">C</span>':''}</td><td><input type="number" min="0" data-f="goal" value="${s.goal||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="assist" value="${s.assist||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="defense" value="${s.defense||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="save" value="${s.save||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td class="mp" data-mp>${mpOf(s)}</td></tr>`;}).join('')}</tbody></table></div>`;}).join('')}<div class="result-btns"><button class="btn btn-cta" data-act="save-edit">수정 완료 → 결과로</button></div>${navRow('results',null,false,'data-act="save-edit"','수정 완료 →')}`;
+}
 
 function stopTimer(){state.timerRunning=false;if(timerId){clearInterval(timerId);timerId=null;}}
 function updateTimerUI(){syncMatchElapsed();const text=document.getElementById('timer-text'); if(text) text.textContent=fmtTime(state.secondsLeft); const prog=document.getElementById('timer-prog'); if(prog){const circ=2*Math.PI*46; const ratio=state.duration>0?Math.max(0,Math.min(1,state.secondsLeft/state.duration)):0; prog.style.strokeDasharray=String(circ); prog.style.strokeDashoffset=String(circ*(1-ratio));}}
@@ -1171,8 +1226,8 @@ function toggleTimer(){
     // ===120만 보면 틱 스킵 시 놓치므로 <=120
     if(state.secondsLeft<=120&&!state.alerted2min){
       state.alerted2min=true;
-      playBeepBurst(4);
-      toast('종료 2분 전',4000);
+      playBeepBurst(5);
+      toast('종료 2분 전',5000);
     }
     if(state.secondsLeft<=0){
       stopTimer();
@@ -1320,9 +1375,9 @@ function bind(){
     else if(act==='add-target'){state.modal={...state.modal,targetTeam:el.dataset.team}; render();}
     else if(act==='open-player-sheet'){state.modal={type:'player-sheet',name:el.dataset.name,team:el.dataset.team}; render();}
     else if(act==='sheet-sub'){state.modal={type:'sub',team:el.dataset.team,out:el.dataset.name,lockedOut:true}; render();}
-    else if(act==='sheet-remove'){const name=el.dataset.name; const team=el.dataset.team; const wasCoach=state.coaches[team]===name; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==name); if(wasCoach) delete state.coaches[team]; const wait=waitingTeams()[0]; if(wait&&!(state.teams[wait]||[]).includes(name)){state.teams[wait]=state.teams[wait]||[]; state.teams[wait].push(name);} state.modal=null; toast(wasCoach?`${name} 감독 코트 아웃`:`${name} 코트 아웃`); render();}
+    else if(act==='sheet-remove'){const name=el.dataset.name; const team=el.dataset.team; const wasCoach=state.coaches[team]===name; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==name); if(wasCoach) delete state.coaches[team]; /* baseCoaches는 유지 → 경기 종료/결과에서 복구 */ const wait=waitingTeams()[0]; if(wait&&!(state.teams[wait]||[]).includes(name)){state.teams[wait]=state.teams[wait]||[]; state.teams[wait].push(name);} state.modal=null; toast(wasCoach?`${name} 감독 코트 아웃 (세션 감독 유지)`:`${name} 코트 아웃`); render();}
     else if(act==='shot-share'){shareShotPreview();}
-    else if(act==='do-add'){const name=el.dataset.name; const to=state.modal.targetTeam; if(!state.attending.includes(name)) state.attending.push(name); Object.keys(state.teams).forEach(t=>{state.teams[t]=(state.teams[t]||[]).filter(n=>n!==name);}); state.teams[to]=state.teams[to]||[]; if(!state.teams[to].includes(name)) state.teams[to].push(name); ensureStat(name,to); /* baseTeams 유지: 용병/추가는 이 경기만 */ state.modal=null; toast(`${name} → ${to}`); render();}
+    else if(act==='do-add'){const name=el.dataset.name; const to=state.modal.targetTeam; if(!state.attending.includes(name)) state.attending.push(name); clearCoachAssignment(name); Object.keys(state.teams).forEach(t=>{state.teams[t]=(state.teams[t]||[]).filter(n=>n!==name);}); state.teams[to]=state.teams[to]||[]; if(!state.teams[to].includes(name)) state.teams[to].push(name); ensureStat(name,to); /* baseTeams/baseCoaches 유지: 용병·추가는 이 경기만 */ state.modal=null; toast(`${name} → ${to}`); render();}
     else if(act==='open-remove'){state.modal={type:'remove',team:state.playing[0]}; render();}
     else if(act==='remove-target'){state.modal={...state.modal,team:el.dataset.team}; render();}
     else if(act==='do-remove'){const name=el.dataset.name; const team=el.dataset.team||state.modal.team; if(state.coaches[team]===name) return toast('감독은 제거 불가'); state.teams[team]=(state.teams[team]||[]).filter(n=>n!==name); const wait=waitingTeams()[0]; if(wait&&!(state.teams[wait]||[]).includes(name)){state.teams[wait]=state.teams[wait]||[]; state.teams[wait].push(name);} state.modal=null; toast(`${name} 제거`); render();}
@@ -1336,8 +1391,8 @@ function bind(){
     else if(act==='sub-target'){state.modal={...state.modal,team:el.dataset.team,out:null}; render();}
     else if(act==='sub-out'){state.modal={...state.modal,out:el.dataset.name}; render();}
     else if(act==='do-sub'){const out=state.modal.out; const inn=el.dataset.name; const from=el.dataset.from; const team=state.modal.team; if(!out) return; const outWasCoach=state.coaches[team]===out; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); if(from) state.teams[from]=(state.teams[from]||[]).filter(n=>n!==inn); Object.keys(state.teams).forEach(tt=>{state.teams[tt]=(state.teams[tt]||[]).filter(n=>n!==inn);}); if(!state.teams[team].includes(inn)) state.teams[team].push(inn);
-      const wait=waitingTeams()[0]; if(wait&&!state.teams[wait].includes(out)) state.teams[wait].push(out); ensureStat(inn,team); if(outWasCoach){ state.coaches[team]=inn; } ensureCoachesInTeams(); state.modal=null; toast(outWasCoach?`${out} ↔ ${inn} (감독 이양)`:`${out} ↔ ${inn}`); render();}
-    else if(act==='do-sub-remove'){const out=state.modal.out; const team=state.modal.team; if(!out) return; const outWasCoach=state.coaches[team]===out; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); if(outWasCoach) delete state.coaches[team]; const wait=waitingTeams()[0]; if(wait) state.teams[wait].push(out); state.modal=null; toast(`${out} 코트 아웃`); render();}
+      const wait=waitingTeams()[0]; if(wait&&!state.teams[wait].includes(out)) state.teams[wait].push(out); ensureStat(inn,team); if(outWasCoach){ clearCoachAssignment(inn); state.coaches[team]=inn; } else { clearCoachAssignment(inn); } ensureCoachesInTeams(); state.modal=null; toast(outWasCoach?`${out} ↔ ${inn} (경기 중 감독 이양)`:`${out} ↔ ${inn}`); render();}
+    else if(act==='do-sub-remove'){const out=state.modal.out; const team=state.modal.team; if(!out) return; const outWasCoach=state.coaches[team]===out; state.teams[team]=(state.teams[team]||[]).filter(n=>n!==out); if(outWasCoach) delete state.coaches[team]; const wait=waitingTeams()[0]; if(wait) state.teams[wait].push(out); state.modal=null; toast(outWasCoach?`${out} 감독 코트 아웃 (세션 감독 유지)`:`${out} 코트 아웃`); render();}
     else if(act==='steps-scroll'){const box=document.getElementById('steps'); if(box) box.scrollBy({left:Number(el.dataset.dir)*140,behavior:'smooth'});}
     else if(act==='go-step'){const s=el.dataset.screen; if(!FLOW.includes(s)&&s!=='edit') return; if(s==='draft'&&state.screen!=='draft'&&state.draftCompleted){ openPinModal('reenter-draft','드래프트 재입장','핀번호 4자리를 입력하세요'); return; } go(s);}
     else if(act==='go'){ const s=el.dataset.screen; if(s==='matchSelect'&&state.screen==='match') state.matchLive=true; if(s==='draft'&&state.screen!=='draft'&&state.draftCompleted){ openPinModal('reenter-draft','드래프트 재입장','핀번호 4자리를 입력하세요'); return; } go(s);}
@@ -1371,7 +1426,7 @@ function bind(){
     else if(act==='confirm-save-new'){state.modal=null; render(); toast('저장 시작…', 4000); saveSession(true);}
     else if(act==='reset-new'){state.modal={type:'confirm-reset-new'}; render();}
     else if(act==='confirm-reset-new'){state.modal=null; if(IS_GAS){ google.script.run.withSuccessHandler(res=>{const s=(res&&res.data)?res.data:res; applyServerState(s||{}); softNewSession(true);}).withFailureHandler(()=>softNewSession(true)).resetSession(); } else softNewSession(true); }
-    else if(act==='save-edit'){document.querySelectorAll('tr[data-edit-name]').forEach(row=>{const n=row.dataset.editName; const s=ensureStat(n); row.querySelectorAll('input[data-f]').forEach(inp=>{s[inp.dataset.f]=Math.max(0,Number(inp.value)||0);});}); persistLocal(); toast('수정 반영 · 자동 저장됨'); go('results');}
+    else if(act==='save-edit'){restoreSessionCoachesForResults(); document.querySelectorAll('tr[data-edit-name]').forEach(row=>{const n=row.dataset.editName; const s=ensureStat(n); row.querySelectorAll('input[data-f]').forEach(inp=>{s[inp.dataset.f]=Math.max(0,Number(inp.value)||0);});}); persistLocal(); toast('수정 반영 · 감독 유지 · 자동 저장됨'); go('results');}
   };});
   document.querySelectorAll('tr[data-edit-name] input[data-f]').forEach(inp=>{inp.oninput=()=>{const row=inp.closest('tr'); const tmp={goal:0,assist:0,defense:0,save:0}; row.querySelectorAll('input[data-f]').forEach(el=>{tmp[el.dataset.f]=Math.max(0,Number(el.value)||0);}); const cell=row.querySelector('[data-mp]'); if(cell) cell.textContent=mpOf(tmp);};});
 }
@@ -1543,7 +1598,7 @@ function render(){
   requestAnimationFrame(restore);
   setTimeout(restore, 0);
 }
-const APP_BUILD='2026-11-17-live-v18';
+const APP_BUILD='2026-11-18-live-v20';
 function applyInitialPayload(data){
   PLAYERS=(data.masterPlayers||[]).map(mapMasterPlayer);
   refreshPlayerIndex();
@@ -1575,7 +1630,7 @@ function bootFromServer(attempt){
     if(phone){ phone.style.borderRadius='0'; phone.style.border='none'; phone.style.boxShadow='none'; phone.style.minHeight='100dvh'; phone.style.maxWidth='100%'; phone.style.margin='0'; }
   }
   if(!IS_GAS){
-    PLAYERS=[{"name": "강병찬", "position": "아라", "winRatePct": 61.54, "ccpPerGame": 2.17, "games": 18, "isMercenary": false}, {"name": "권성민", "position": "픽소", "winRatePct": 44.4, "ccpPerGame": 1.71, "games": 342, "isMercenary": false}, {"name": "김기호", "position": "올라운더", "winRatePct": 47.59, "ccpPerGame": 2.3, "games": 423, "isMercenary": false}, {"name": "김남현", "position": "아라", "winRatePct": 55.26, "ccpPerGame": 2.16, "games": 277, "isMercenary": false}, {"name": "김명래", "position": "피보", "winRatePct": 53.42, "ccpPerGame": 2.51, "games": 446, "isMercenary": false}, {"name": "김민수", "position": "올라운더", "winRatePct": 50.0, "ccpPerGame": 2.17, "games": 294, "isMercenary": false}, {"name": "김상덕", "position": "아라", "winRatePct": 36.13, "ccpPerGame": 1.69, "games": 321, "isMercenary": false}, {"name": "박건호", "position": "아라", "winRatePct": 66.67, "ccpPerGame": 1.63, "games": 8, "isMercenary": false}, {"name": "배수천", "position": "픽소", "winRatePct": 45.21, "ccpPerGame": 2.05, "games": 267, "isMercenary": false}, {"name": "배철호", "position": "올라운더", "winRatePct": 61.98, "ccpPerGame": 2.47, "games": 272, "isMercenary": false}, {"name": "손진석", "position": "아라", "winRatePct": 48.12, "ccpPerGame": 1.67, "games": 167, "isMercenary": false}, {"name": "송환규", "position": "아라", "winRatePct": 53.49, "ccpPerGame": 1.94, "games": 295, "isMercenary": false}, {"name": "신승진", "position": "픽소", "winRatePct": 45.9, "ccpPerGame": 1.8, "games": 339, "isMercenary": false}, {"name": "신용주", "position": "피보", "winRatePct": 49.6, "ccpPerGame": 2.05, "games": 352, "isMercenary": false}, {"name": "신윤호", "position": "피보", "winRatePct": 51.04, "ccpPerGame": 2.41, "games": 398, "isMercenary": false}, {"name": "안재욱", "position": "아라", "winRatePct": 38.71, "ccpPerGame": 1.59, "games": 104, "isMercenary": false}, {"name": "양승현", "position": "올라운더", "winRatePct": 56.79, "ccpPerGame": 2.12, "games": 399, "isMercenary": false}, {"name": "여도영", "position": "피보", "winRatePct": 62.65, "ccpPerGame": 3.68, "games": 119, "isMercenary": false}, {"name": "용병1", "position": "아라", "winRatePct": 0.0, "ccpPerGame": 0.0, "games": 0, "isMercenary": true}, {"name": "용병2", "position": "아라", "winRatePct": 0.0, "ccpPerGame": 0.0, "games": 0, "isMercenary": true}, {"name": "용병3", "position": "아라", "winRatePct": 0.0, "ccpPerGame": 0.0, "games": 0, "isMercenary": true}, {"name": "용병4", "position": "아라", "winRatePct": 0.0, "ccpPerGame": 0.0, "games": 0, "isMercenary": true}, {"name": "용병5", "position": "아라", "winRatePct": 0.0, "ccpPerGame": 0.0, "games": 0, "isMercenary": true}, {"name": "용병6", "position": "아라", "winRatePct": 0.0, "ccpPerGame": 0.0, "games": 0, "isMercenary": true}, {"name": "이광일", "position": "픽소", "winRatePct": 52.75, "ccpPerGame": 1.72, "games": 316, "isMercenary": false}, {"name": "이영중", "position": "피보", "winRatePct": 50.68, "ccpPerGame": 2.09, "games": 387, "isMercenary": false}, {"name": "이윤수", "position": "피보", "winRatePct": 50.99, "ccpPerGame": 2.66, "games": 276, "isMercenary": false}, {"name": "이장영", "position": "아라", "winRatePct": 48.35, "ccpPerGame": 1.85, "games": 259, "isMercenary": false}, {"name": "이현희", "position": "아라", "winRatePct": 44.3, "ccpPerGame": 1.56, "games": 104, "isMercenary": false}, {"name": "이호섭", "position": "아라", "winRatePct": 49.29, "ccpPerGame": 2.09, "games": 204, "isMercenary": false}, {"name": "이호준", "position": "아라", "winRatePct": 54.88, "ccpPerGame": 1.91, "games": 119, "isMercenary": false}, {"name": "장용호", "position": "아라", "winRatePct": 46.97, "ccpPerGame": 1.57, "games": 271, "isMercenary": false}, {"name": "정광훈", "position": "아라", "winRatePct": 50.0, "ccpPerGame": 1.96, "games": 73, "isMercenary": false}, {"name": "정대운", "position": "아라", "winRatePct": 53.13, "ccpPerGame": 2.05, "games": 43, "isMercenary": false}, {"name": "정세진", "position": "올라운더", "winRatePct": 52.36, "ccpPerGame": 2.0, "games": 394, "isMercenary": false}, {"name": "조덕기", "position": "픽소", "winRatePct": 45.28, "ccpPerGame": 1.72, "games": 150, "isMercenary": false}, {"name": "최연수", "position": "아라", "winRatePct": 47.83, "ccpPerGame": 1.65, "games": 57, "isMercenary": false}, {"name": "최원태", "position": "아라", "winRatePct": 35.71, "ccpPerGame": 1.47, "games": 17, "isMercenary": false}, {"name": "최한호", "position": "아라", "winRatePct": 50.0, "ccpPerGame": 2.17, "games": 96, "isMercenary": false}, {"name": "최호진", "position": "아라", "winRatePct": 55.14, "ccpPerGame": 1.93, "games": 173, "isMercenary": false}, {"name": "황민구", "position": "아라", "winRatePct": 50.52, "ccpPerGame": 1.65, "games": 273, "isMercenary": false}].map(mapMasterPlayer);
+    PLAYERS=[{"name": "강병찬","winRatePct": 61.54,"ccpPerGame": 2.17,"games": 18,"isMercenary": false},{"name": "권성민","winRatePct": 44.4,"ccpPerGame": 1.71,"games": 342,"isMercenary": false},{"name": "김기호","winRatePct": 47.59,"ccpPerGame": 2.3,"games": 423,"isMercenary": false},{"name": "김남현","winRatePct": 55.26,"ccpPerGame": 2.16,"games": 277,"isMercenary": false},{"name": "김명래","winRatePct": 53.42,"ccpPerGame": 2.51,"games": 446,"isMercenary": false},{"name": "김민수","winRatePct": 50.0,"ccpPerGame": 2.17,"games": 294,"isMercenary": false},{"name": "김상덕","winRatePct": 36.13,"ccpPerGame": 1.69,"games": 321,"isMercenary": false},{"name": "박건호","winRatePct": 66.67,"ccpPerGame": 1.63,"games": 8,"isMercenary": false},{"name": "배수천","winRatePct": 45.21,"ccpPerGame": 2.05,"games": 267,"isMercenary": false},{"name": "배철호","winRatePct": 61.98,"ccpPerGame": 2.47,"games": 272,"isMercenary": false},{"name": "손진석","winRatePct": 48.12,"ccpPerGame": 1.67,"games": 167,"isMercenary": false},{"name": "송환규","winRatePct": 53.49,"ccpPerGame": 1.94,"games": 295,"isMercenary": false},{"name": "신승진","winRatePct": 45.9,"ccpPerGame": 1.8,"games": 339,"isMercenary": false},{"name": "신용주","winRatePct": 49.6,"ccpPerGame": 2.05,"games": 352,"isMercenary": false},{"name": "신윤호","winRatePct": 51.04,"ccpPerGame": 2.41,"games": 398,"isMercenary": false},{"name": "안재욱","winRatePct": 38.71,"ccpPerGame": 1.59,"games": 104,"isMercenary": false},{"name": "양승현","winRatePct": 56.79,"ccpPerGame": 2.12,"games": 399,"isMercenary": false},{"name": "여도영","winRatePct": 62.65,"ccpPerGame": 3.68,"games": 119,"isMercenary": false},{"name": "용병1","winRatePct": 0.0,"ccpPerGame": 0.0,"games": 0,"isMercenary": true},{"name": "용병2","winRatePct": 0.0,"ccpPerGame": 0.0,"games": 0,"isMercenary": true},{"name": "용병3","winRatePct": 0.0,"ccpPerGame": 0.0,"games": 0,"isMercenary": true},{"name": "용병4","winRatePct": 0.0,"ccpPerGame": 0.0,"games": 0,"isMercenary": true},{"name": "용병5","winRatePct": 0.0,"ccpPerGame": 0.0,"games": 0,"isMercenary": true},{"name": "용병6","winRatePct": 0.0,"ccpPerGame": 0.0,"games": 0,"isMercenary": true},{"name": "이광일","winRatePct": 52.75,"ccpPerGame": 1.72,"games": 316,"isMercenary": false},{"name": "이영중","winRatePct": 50.68,"ccpPerGame": 2.09,"games": 387,"isMercenary": false},{"name": "이윤수","winRatePct": 50.99,"ccpPerGame": 2.66,"games": 276,"isMercenary": false},{"name": "이장영","winRatePct": 48.35,"ccpPerGame": 1.85,"games": 259,"isMercenary": false},{"name": "이현희","winRatePct": 44.3,"ccpPerGame": 1.56,"games": 104,"isMercenary": false},{"name": "이호섭","winRatePct": 49.29,"ccpPerGame": 2.09,"games": 204,"isMercenary": false},{"name": "이호준","winRatePct": 54.88,"ccpPerGame": 1.91,"games": 119,"isMercenary": false},{"name": "장용호","winRatePct": 46.97,"ccpPerGame": 1.57,"games": 271,"isMercenary": false},{"name": "정광훈","winRatePct": 50.0,"ccpPerGame": 1.96,"games": 73,"isMercenary": false},{"name": "정대운","winRatePct": 53.13,"ccpPerGame": 2.05,"games": 43,"isMercenary": false},{"name": "정세진","winRatePct": 52.36,"ccpPerGame": 2.0,"games": 394,"isMercenary": false},{"name": "조덕기","winRatePct": 45.28,"ccpPerGame": 1.72,"games": 150,"isMercenary": false},{"name": "최연수","winRatePct": 47.83,"ccpPerGame": 1.65,"games": 57,"isMercenary": false},{"name": "최원태","winRatePct": 35.71,"ccpPerGame": 1.47,"games": 17,"isMercenary": false},{"name": "최한호","winRatePct": 50.0,"ccpPerGame": 2.17,"games": 96,"isMercenary": false},{"name": "최호진","winRatePct": 55.14,"ccpPerGame": 1.93,"games": 173,"isMercenary": false},{"name": "황민구","winRatePct": 50.52,"ccpPerGame": 1.65,"games": 273,"isMercenary": false}].map(mapMasterPlayer);
     refreshPlayerIndex();
     // phone frame for mockup browsing
     document.body.style.padding='16px'; document.body.style.background='linear-gradient(160deg,#e8eef8,#f7f8fb)';
