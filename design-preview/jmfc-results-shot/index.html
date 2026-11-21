@@ -83,7 +83,7 @@ table.pl th:first-child,table.pl td:first-child{text-align:left;padding-left:2px
 </head>
 <body>
 <div class="wrap">
-  <p class="note">결과 화면 스샷 목업 · MVP/여백/정렬/글씨 개선<br>선수 기록·감독은 <b>원본 유지</b> (팀13/5 vs 선수합14/6 불일치는 그대로 표시)</p>
+  <p class="note">결과 화면 스샷 목업 · MVP/여백/정렬/글씨 개선<br>선수 기록 기준 · 팀 득점도 <b>14 / 6</b>으로 맞춤</p>
 
   <div class="phone" id="shot">
     <h2>오늘의 경기 결과</h2>
@@ -115,11 +115,11 @@ table.pl th:first-child,table.pl td:first-child{text-align:left;padding-left:2px
         </thead>
         <tbody>
           <tr>
-            <td>1</td><td class="t-RED">RED</td><td>10</td><td>6</td><td>2</td><td>2</td><td>13</td><td>5</td>
+            <td>1</td><td class="t-RED">RED</td><td>10</td><td>6</td><td>2</td><td>2</td><td>14</td><td>6</td>
             <td class="gd">+8</td><td>75%</td><td>20</td>
           </tr>
           <tr>
-            <td>2</td><td class="t-BLUE">BLUE</td><td>10</td><td>2</td><td>2</td><td>6</td><td>5</td><td>13</td>
+            <td>2</td><td class="t-BLUE">BLUE</td><td>10</td><td>2</td><td>2</td><td>6</td><td>6</td><td>14</td>
             <td class="gd">−8</td><td>25%</td><td>8</td>
           </tr>
         </tbody>
@@ -144,7 +144,7 @@ table.pl th:first-child,table.pl td:first-child{text-align:left;padding-left:2px
           <tr><td>이장영</td><td>1</td><td>3</td><td>0</td><td>0</td><td>8</td></tr>
         </tbody>
       </table>
-      <div class="warn">선수 득점 합 14 ≠ 팀 득점 13 (원본 불일치 유지)</div>
+      <div class="ok">선수 득점 합 14 = 팀 득점 14</div>
     </div>
 
     <div class="card team-card BLUE">
@@ -164,10 +164,10 @@ table.pl th:first-child,table.pl td:first-child{text-align:left;padding-left:2px
           <tr><td>배철호</td><td>0</td><td>1</td><td>0</td><td>1</td><td>3</td></tr>
         </tbody>
       </table>
-      <div class="warn">선수 득점 합 6 ≠ 팀 득점 5 (원본 불일치 유지)</div>
+      <div class="ok">선수 득점 합 6 = 팀 득점 6</div>
     </div>
 
-    <p class="hint">※ 선수 득점/감독(C)은 스샷 원본 그대로입니다. 팀 순위 득점과 1점씩 어긋나는 문제는 앱 집계 버그로 따로 고칩니다.</p>
+    <p class="hint">※ 선수 개인 득점 합을 기준으로 팀 순위 득점·실점을 맞춘 개선안입니다. (원인: 기록 수정 시 팀 득점이 안 따라감)</p>
   </div>
 
   <div class="compare">
