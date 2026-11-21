@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<!-- JMFC GAS web app · formclub draft UI · BUILD 2026-11-18-live-v20 -->
+<!-- JMFC GAS web app · formclub draft UI · BUILD 2026-11-21-live-v21 -->
 <head>
   <base target="_top">
   <meta charset="UTF-8" />
@@ -1201,7 +1201,7 @@ ${activeDetailOrder().map(t=>teamPlayerTable(t).replace('class="result-card','cl
 }
 function renderEdit(){
   restoreSessionCoachesForResults();
-  return `<h2>기록 수정</h2><p class="sub">숫자 변경 시 MP 재계산 · 감독(C) 유지</p>${activeDetailOrder().map(t=>{const coach=state.coaches[t];const names=rosterOrdered(t);return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead><tbody>${names.map(n=>{const s=ensureStat(n,t);const isC=n===coach;return `<tr data-edit-name="${n}"><td class="player-cell"><span class="pn">${n}</span>${isC?'<span class="cap">C</span>':''}</td><td><input type="number" min="0" data-f="goal" value="${s.goal||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="assist" value="${s.assist||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="defense" value="${s.defense||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="save" value="${s.save||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td class="mp" data-mp>${mpOf(s)}</td></tr>`;}).join('')}</tbody></table></div>`;}).join('')}<div class="result-btns"><button class="btn btn-cta" data-act="save-edit">수정 완료 → 결과로</button></div>${navRow('results',null,false,'data-act="save-edit"','수정 완료 →')}`;
+  return `<h2>기록 수정</h2><p class="sub">득점 수정 시 팀 순위 득점도 같이 반영 · 감독(C) 유지</p>${activeDetailOrder().map(t=>{const coach=state.coaches[t];const names=rosterOrdered(t);return `<div class="result-card team-${t}"><div class="team-title t-${t}">TEAM ${t}</div><table class="data"><thead><tr><th>선수</th><th>득점</th><th>도움</th><th>수비</th><th>선방</th><th>MP</th></tr></thead><tbody>${names.map(n=>{const s=ensureStat(n,t);const isC=n===coach;return `<tr data-edit-name="${n}" data-edit-team="${t}"><td class="player-cell"><span class="pn">${n}</span>${isC?'<span class="cap">C</span>':''}</td><td><input type="number" min="0" data-f="goal" value="${s.goal||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="assist" value="${s.assist||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="defense" value="${s.defense||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td><input type="number" min="0" data-f="save" value="${s.save||0}" style="width:2.6rem;text-align:center;font-weight:800;border:1px solid #d4d4d8;border-radius:8px;padding:4px 0" /></td><td class="mp" data-mp>${mpOf(s)}</td></tr>`;}).join('')}</tbody></table></div>`;}).join('')}<div class="result-btns"><button class="btn btn-cta" data-act="save-edit">수정 완료 → 결과로</button></div>${navRow('results',null,false,'data-act="save-edit"','수정 완료 →')}`;
 }
 
 function stopTimer(){state.timerRunning=false;if(timerId){clearInterval(timerId);timerId=null;}}
@@ -1272,6 +1272,34 @@ function rebuildTeamStatsFromHistory(){
     if(h.scoreA>h.scoreB){A.wins++;B.losses++;} else if(h.scoreA<h.scoreB){B.wins++;A.losses++;} else {A.draws++;B.draws++;}
   });
   state.teamStats=stats;
+}
+
+/** 기록 수정으로 개인 득점이 바뀌면 팀 순위 득점/실점도 같이 맞춘다 */
+function applyTeamGoalDeltas(deltas){
+  const entries=Object.entries(deltas||{}).filter(([,d])=>d);
+  if(!entries.length) return;
+  const history=state.matchHistory||[];
+  if(!history.length){
+    entries.forEach(([team,diff])=>{
+      if(!state.teamStats[team]) state.teamStats[team]={matchesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0};
+      state.teamStats[team].goalsFor=Math.max(0,(Number(state.teamStats[team].goalsFor)||0)+diff);
+    });
+    const active=teamNames().filter(t=>(state.teamStats[t]&&((state.teamStats[t].matchesPlayed||0)>0||deltas[t])));
+    if(active.length===2){
+      state.teamStats[active[0]].goalsAgainst=state.teamStats[active[1]].goalsFor||0;
+      state.teamStats[active[1]].goalsAgainst=state.teamStats[active[0]].goalsFor||0;
+    }
+    return;
+  }
+  entries.forEach(([team,diff])=>{
+    for(let i=history.length-1;i>=0;i--){
+      const h=history[i];
+      if(h.a===team){ h.scoreA=Math.max(0,(Number(h.scoreA)||0)+diff); break; }
+      if(h.b===team){ h.scoreB=Math.max(0,(Number(h.scoreB)||0)+diff); break; }
+    }
+  });
+  rebuildTeamStatsFromHistory();
+  rebuildPlayerWdlFromHistory();
 }
 
 /** 경기 수정 후에도 개인 승/무/패가 맞게 남도록 history 기준으로 재계산 */
@@ -1426,7 +1454,7 @@ function bind(){
     else if(act==='confirm-save-new'){state.modal=null; render(); toast('저장 시작…', 4000); saveSession(true);}
     else if(act==='reset-new'){state.modal={type:'confirm-reset-new'}; render();}
     else if(act==='confirm-reset-new'){state.modal=null; if(IS_GAS){ google.script.run.withSuccessHandler(res=>{const s=(res&&res.data)?res.data:res; applyServerState(s||{}); softNewSession(true);}).withFailureHandler(()=>softNewSession(true)).resetSession(); } else softNewSession(true); }
-    else if(act==='save-edit'){restoreSessionCoachesForResults(); document.querySelectorAll('tr[data-edit-name]').forEach(row=>{const n=row.dataset.editName; const s=ensureStat(n); row.querySelectorAll('input[data-f]').forEach(inp=>{s[inp.dataset.f]=Math.max(0,Number(inp.value)||0);});}); persistLocal(); toast('수정 반영 · 감독 유지 · 자동 저장됨'); go('results');}
+    else if(act==='save-edit'){restoreSessionCoachesForResults(); const deltas={}; document.querySelectorAll('tr[data-edit-name]').forEach(row=>{const n=row.dataset.editName; const team=row.dataset.editTeam; const s=ensureStat(n,team); const oldGoal=Number(s.goal)||0; row.querySelectorAll('input[data-f]').forEach(inp=>{s[inp.dataset.f]=Math.max(0,Number(inp.value)||0);}); const d=(Number(s.goal)||0)-oldGoal; if(team&&d) deltas[team]=(deltas[team]||0)+d;}); applyTeamGoalDeltas(deltas); persistLocal(); toast(Object.keys(deltas).length?'수정 반영 · 팀 득점 동기화 · 자동 저장됨':'수정 반영 · 감독 유지 · 자동 저장됨'); go('results');}
   };});
   document.querySelectorAll('tr[data-edit-name] input[data-f]').forEach(inp=>{inp.oninput=()=>{const row=inp.closest('tr'); const tmp={goal:0,assist:0,defense:0,save:0}; row.querySelectorAll('input[data-f]').forEach(el=>{tmp[el.dataset.f]=Math.max(0,Number(el.value)||0);}); const cell=row.querySelector('[data-mp]'); if(cell) cell.textContent=mpOf(tmp);};});
 }
