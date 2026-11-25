@@ -488,6 +488,15 @@ function syncCoachArchiveNow() {
   return safeExecute(() => syncCoachArchiveFromAssignments_());
 }
 
+/** 한 번만 실행: 1시간마다 감독 기록을 자동 갱신하는 트리거를 등록 (중복 등록 방지) */
+function installCoachSyncTrigger() {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'syncCoachArchiveNow') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('syncCoachArchiveNow').timeBased().everyHours(1).create();
+  return 'installed';
+}
+
 function findSheetByPrefix_(ss, exactName, prefix) {
   let sh = ss.getSheetByName(exactName);
   if (sh) return sh;
@@ -521,22 +530,37 @@ function buildCoachArchiveRowsFromAssignments_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const leadSheet = findSheetByPrefix_(ss, CONFIG.TEAM_LEADERS_SHEET, '감독_배정_2026');
   const pastSheet = ss.getSheetByName(CONFIG.PAST_TEAMS_SHEET);
-  if (!leadSheet || leadSheet.getLastRow() < 2) {
-    return { rows: [], reason: 'no-leaders' };
-  }
   if (!pastSheet || pastSheet.getLastRow() < 2) {
     return { rows: [], reason: 'no-past-teams' };
   }
 
-  const leadVals = leadSheet.getRange(2, 1, leadSheet.getLastRow() - 1, 2).getValues();
   const coachesByDate = {};
-  leadVals.forEach(r => {
+  // 1) 감독_배정_2026 (수기 입력분)
+  if (leadSheet && leadSheet.getLastRow() >= 2) leadSheet.getRange(2, 1, leadSheet.getLastRow() - 1, 2).getValues().forEach(r => {
     const d = normalizeDateKey_(r[0]);
     const name = r[1] ? String(r[1]).trim() : '';
     if (!d || !name || name === '합계') return;
     if (!coachesByDate[d]) coachesByDate[d] = [];
     if (coachesByDate[d].indexOf(name) < 0) coachesByDate[d].push(name);
   });
+
+  // 2) 세션_결과_아카이브에 저장된 세션별 감독 배정 (수기 입력 없이 자동 반영)
+  const archSheet = ss.getSheetByName(CONFIG.SESSION_ARCHIVE_SHEET);
+  if (archSheet && archSheet.getLastRow() >= 2) {
+    archSheet.getRange(2, 1, archSheet.getLastRow() - 1, 4).getValues().forEach(r => {
+      const d = normalizeDateKey_(r[0]);
+      if (!d) return;
+      let j = null;
+      try { j = JSON.parse(String(r[3] || '{}')); } catch (e) { return; }
+      const cs = (j && j.coaches) || {};
+      Object.keys(cs).forEach(team => {
+        const name = cs[team] ? String(cs[team]).trim() : '';
+        if (!name || name === '합계') return;
+        if (!coachesByDate[d]) coachesByDate[d] = [];
+        if (coachesByDate[d].indexOf(name) < 0) coachesByDate[d].push(name);
+      });
+    });
+  }
 
   const pastLast = pastSheet.getLastRow();
   const pastWidth = Math.max(12, pastSheet.getLastColumn());
